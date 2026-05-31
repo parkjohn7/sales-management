@@ -198,33 +198,35 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-lg font-bold">리드 등록</h3>
         {status === "saved" && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-mint/10 px-2 py-1 text-xs font-bold text-mint">
+          <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-1 text-xs font-bold text-violet-700">
             <Check className="h-3 w-3" aria-hidden="true" />
             저장됨
           </span>
         )}
       </div>
       <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
-        <label className="block text-sm font-medium">
-          고객사
-          <input
-            required
-            value={form.company_name}
-            onChange={(event) => update("company_name", event.target.value)}
-            className="mt-1 w-full rounded-md border border-line px-3 py-2.5 text-sm"
-            placeholder="예: 체리랩"
-          />
-        </label>
-        <label className="block text-sm font-medium">
-          담당자
-          <input
-            required
-            value={form.contact_name}
-            onChange={(event) => update("contact_name", event.target.value)}
-            className="mt-1 w-full rounded-md border border-line px-3 py-2.5 text-sm"
-            placeholder="예: 김매니저"
-          />
-        </label>
+        <div className="grid gap-3 md:grid-cols-2">
+          <label className="block text-sm font-medium">
+            고객사
+            <input
+              required
+              value={form.company_name}
+              onChange={(event) => update("company_name", event.target.value)}
+              className="mt-1 w-full rounded-md border border-line px-3 py-2.5 text-sm"
+              placeholder="예: 체리랩"
+            />
+          </label>
+          <label className="block text-sm font-medium">
+            담당자
+            <input
+              required
+              value={form.contact_name}
+              onChange={(event) => update("contact_name", event.target.value)}
+              className="mt-1 w-full rounded-md border border-line px-3 py-2.5 text-sm"
+              placeholder="예: 김매니저"
+            />
+          </label>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm font-medium">
             이메일
@@ -329,7 +331,7 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
         <button
           type="submit"
           disabled={status === "saving"}
-          className="w-full rounded-md bg-mint px-4 py-2.5 text-base font-bold text-white disabled:opacity-60"
+          className="w-full rounded-md bg-violet-600 px-4 py-2.5 text-base font-bold text-white disabled:opacity-60"
         >
           {status === "saving" ? "저장 중" : "리드 저장"}
         </button>
@@ -640,8 +642,97 @@ function LeadSection({
 
   return (
     <section className="space-y-4">
-      <MobileSalesEntry onCreateLead={onCreateLead} />
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
+        <div className="space-y-4">
+          <MobileSalesEntry onCreateLead={onCreateLead} />
+          <aside className={`${panelClass} p-4`}>
+            <h3 className="text-lg font-bold">리드 상세/전환</h3>
+            {selectedLead ? (
+              <>
+                <dl className="mt-3 grid gap-3 text-sm md:grid-cols-2">
+                  <div>
+                    <dt className="text-slate-500">고객사</dt>
+                    <dd className="font-bold">{selectedLead.company_name}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-500">담당자</dt>
+                    <dd>{selectedLead.contact_name}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-500">직책</dt>
+                    <dd>{selectedLead.title || "직책 없음"}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-500">직원 수</dt>
+                    <dd>
+                      <input
+                        key={selectedLead.id}
+                        aria-label="선택 리드 직원 수"
+                        defaultValue={selectedLead.employee_count ?? ""}
+                        type="number"
+                        min="0"
+                        onBlur={(event) => void saveLeadEmployeeCount(selectedLead, event.target.value)}
+                        className="mt-1 w-full rounded-md border border-line px-3 py-2 text-sm"
+                        placeholder="직원 수 직접 입력"
+                      />
+                    </dd>
+                  </div>
+                  <div className="md:col-span-2">
+                    <dt className="text-slate-500">소스/캠페인</dt>
+                    <dd>
+                      {selectedLead.lead_source || selectedLead.source_channel} ·{" "}
+                      {selectedLead.campaign_name || "캠페인 없음"}
+                    </dd>
+                  </div>
+                  <div className="md:col-span-2">
+                    <dt className="text-slate-500">점수/등급</dt>
+                    <dd>
+                      {selectedLead.lead_score}점 · {selectedLead.lead_grade}
+                    </dd>
+                  </div>
+                  <div className="md:col-span-2">
+                    <dt className="text-slate-500">문의</dt>
+                    <dd>{selectedLead.inquiry_content || "문의 내용 없음"}</dd>
+                  </div>
+                </dl>
+                <form className="mt-3 space-y-2.5" onSubmit={handleConvert}>
+                  <label className="block text-sm font-medium">
+                    영업기회명
+                    <input
+                      value={convertForm.opportunity_name}
+                      onChange={(event) =>
+                        setConvertForm((current) => ({
+                          ...current,
+                          opportunity_name: event.target.value
+                        }))
+                      }
+                      className="mt-1 w-full rounded-md border border-line px-3 py-2"
+                      placeholder={`${selectedLead.company_name} 도입`}
+                    />
+                  </label>
+                  <label className="block text-sm font-medium">
+                    예상 금액
+                    <input
+                      type="number"
+                      min="0"
+                      value={convertForm.amount}
+                      onChange={(event) =>
+                        setConvertForm((current) => ({ ...current, amount: event.target.value }))
+                      }
+                      className="mt-1 w-full rounded-md border border-line px-3 py-2"
+                    />
+                  </label>
+                  <button className="w-full rounded-md bg-violet-600 px-4 py-2 font-bold text-white">
+                    고객사/영업기회 전환
+                  </button>
+                  {status && <p className="text-sm font-medium text-slate-700">{status}</p>}
+                </form>
+              </>
+            ) : (
+              <p className="mt-3 text-sm text-slate-600">전환할 리드가 없습니다.</p>
+            )}
+          </aside>
+        </div>
         <div className={`${panelClass} overflow-hidden`}>
           <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2.5">
             <h3 className="text-lg font-bold">리드 목록</h3>
@@ -712,94 +803,6 @@ function LeadSection({
             </table>
           </div>
         </div>
-        <aside className={`${panelClass} p-4`}>
-          <h3 className="text-lg font-bold">리드 상세/전환</h3>
-          {selectedLead ? (
-            <>
-              <dl className="mt-4 space-y-3 text-sm">
-                <div>
-                  <dt className="text-slate-500">고객사</dt>
-                  <dd className="font-bold">{selectedLead.company_name}</dd>
-                </div>
-                <div>
-                  <dt className="text-slate-500">담당자</dt>
-                  <dd>{selectedLead.contact_name}</dd>
-                </div>
-                <div>
-                  <dt className="text-slate-500">직책/소스</dt>
-                  <dd>
-                    {selectedLead.title || "직책 없음"} · {selectedLead.lead_source || selectedLead.source_channel}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-slate-500">캠페인/Rating</dt>
-                  <dd>
-                    {selectedLead.campaign_name || "캠페인 없음"} · {selectedLead.rating || "Rating 없음"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-slate-500">점수/등급</dt>
-                  <dd>
-                    {selectedLead.lead_score}점 · {selectedLead.lead_grade}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-slate-500">직원 수</dt>
-                  <dd>
-                    <input
-                      key={selectedLead.id}
-                      aria-label="선택 리드 직원 수"
-                      defaultValue={selectedLead.employee_count ?? ""}
-                      type="number"
-                      min="0"
-                      onBlur={(event) => void saveLeadEmployeeCount(selectedLead, event.target.value)}
-                      className="mt-1 w-full rounded-md border border-line px-3 py-2 text-sm"
-                      placeholder="직원 수 직접 입력"
-                    />
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-slate-500">문의</dt>
-                  <dd>{selectedLead.inquiry_content || "문의 내용 없음"}</dd>
-                </div>
-              </dl>
-              <form className="mt-4 space-y-3" onSubmit={handleConvert}>
-                <label className="block text-sm font-medium">
-                  영업기회명
-                  <input
-                    value={convertForm.opportunity_name}
-                    onChange={(event) =>
-                      setConvertForm((current) => ({
-                        ...current,
-                        opportunity_name: event.target.value
-                      }))
-                    }
-                    className="mt-1 w-full rounded-md border border-line px-3 py-2"
-                    placeholder={`${selectedLead.company_name} 도입`}
-                  />
-                </label>
-                <label className="block text-sm font-medium">
-                  예상 금액
-                  <input
-                    type="number"
-                    min="0"
-                    value={convertForm.amount}
-                    onChange={(event) =>
-                      setConvertForm((current) => ({ ...current, amount: event.target.value }))
-                    }
-                    className="mt-1 w-full rounded-md border border-line px-3 py-2"
-                  />
-                </label>
-                <button className="w-full rounded-md bg-mint px-4 py-2 font-bold text-white">
-                  고객사/영업기회 전환
-                </button>
-                {status && <p className="text-sm font-medium text-slate-700">{status}</p>}
-              </form>
-            </>
-          ) : (
-            <p className="mt-4 text-sm text-slate-600">전환할 리드가 없습니다.</p>
-          )}
-        </aside>
       </div>
     </section>
   );
@@ -971,7 +974,7 @@ function AccountSection({
               className="w-full rounded-md border border-line px-3 py-2"
               placeholder="웹사이트"
             />
-            <button className="w-full rounded-md bg-mint px-4 py-2 font-bold text-white">
+            <button className="w-full rounded-md bg-violet-600 px-4 py-2 font-bold text-white">
               고객사 저장
             </button>
           </div>
@@ -1455,7 +1458,7 @@ function ActivitySection({
             className="min-h-24 w-full rounded-md border border-line px-3 py-2"
             placeholder="활동 내용"
           />
-          <button className="w-full rounded-md bg-mint px-4 py-2 font-bold text-white">
+          <button className="w-full rounded-md bg-violet-600 px-4 py-2 font-bold text-white">
             활동 저장
           </button>
           {status && <p className="text-sm font-medium text-slate-700">{status}</p>}
@@ -1658,7 +1661,7 @@ function IntegrationSection({ onDataChanged }: { onDataChanged: DashboardProps["
             className="min-h-24 w-full rounded-md border border-line px-3 py-2"
             placeholder="원문 문의 내용"
           />
-          <button className="w-full rounded-md bg-mint px-4 py-2 font-bold text-white">
+          <button className="w-full rounded-md bg-violet-600 px-4 py-2 font-bold text-white">
             연동 리드 생성
           </button>
           {status && <p className="text-sm font-medium text-slate-700">{status}</p>}
@@ -1739,7 +1742,7 @@ function AdminSection({
         <button
           type="button"
           onClick={handleSave}
-          className="mt-4 rounded-md bg-mint px-4 py-2 text-sm font-bold text-white"
+          className="mt-4 rounded-md bg-violet-600 px-4 py-2 text-sm font-bold text-white"
         >
           관리자 설정 저장
         </button>
