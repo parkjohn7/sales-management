@@ -97,8 +97,8 @@ function statusPillClass(value: string) {
 const panelClass = "rounded-md border border-slate-200 bg-white shadow-sm";
 const tableClass = "w-full min-w-[760px] border-separate border-spacing-0 text-left text-sm";
 const compactTableClass = "w-full min-w-[620px] border-separate border-spacing-0 text-left text-sm";
-const thClass = "border-b border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-500";
-const tdClass = "border-b border-slate-100 px-3 py-2 align-middle";
+const thClass = "border-b border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-bold text-slate-600";
+const tdClass = "border-b border-slate-100 px-3 py-1.5 align-middle";
 const cherryTextClass = "font-bold text-rose-700";
 const cherryHoverRowClass = "bg-white hover:bg-rose-50";
 
@@ -189,7 +189,7 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
   return (
     <section className="mt-4 rounded-lg border border-line bg-white p-4 lg:hidden">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-base font-bold">모바일 리드 입력</h3>
+        <h3 className="text-lg font-bold">모바일 리드 입력</h3>
         {status === "saved" && (
           <span className="inline-flex items-center gap-1 rounded-full bg-mint/10 px-2 py-1 text-xs font-bold text-mint">
             <Check className="h-3 w-3" aria-hidden="true" />
@@ -204,7 +204,7 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
             required
             value={form.company_name}
             onChange={(event) => update("company_name", event.target.value)}
-            className="mt-1 w-full rounded-md border border-line px-3 py-3 text-base"
+            className="mt-1 w-full rounded-md border border-line px-3 py-2.5 text-sm"
             placeholder="예: 체리랩"
           />
         </label>
@@ -214,7 +214,7 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
             required
             value={form.contact_name}
             onChange={(event) => update("contact_name", event.target.value)}
-            className="mt-1 w-full rounded-md border border-line px-3 py-3 text-base"
+            className="mt-1 w-full rounded-md border border-line px-3 py-2.5 text-sm"
             placeholder="예: 김매니저"
           />
         </label>
@@ -225,7 +225,7 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
               type="email"
               value={form.email}
               onChange={(event) => update("email", event.target.value)}
-              className="mt-1 w-full rounded-md border border-line px-3 py-3 text-base"
+              className="mt-1 w-full rounded-md border border-line px-3 py-2.5 text-sm"
             />
           </label>
           <label className="block text-sm font-medium">
@@ -233,7 +233,7 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
             <input
               value={form.phone}
               onChange={(event) => update("phone", event.target.value)}
-              className="mt-1 w-full rounded-md border border-line px-3 py-3 text-base"
+              className="mt-1 w-full rounded-md border border-line px-3 py-2.5 text-sm"
             />
           </label>
         </div>
@@ -243,7 +243,7 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
             <input
               value={form.title}
               onChange={(event) => update("title", event.target.value)}
-              className="mt-1 w-full rounded-md border border-line px-3 py-3 text-base"
+              className="mt-1 w-full rounded-md border border-line px-3 py-2.5 text-sm"
             />
           </label>
           <label className="block text-sm font-medium">
@@ -251,7 +251,7 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
             <select
               value={form.lead_source}
               onChange={(event) => update("lead_source", event.target.value)}
-              className="mt-1 w-full rounded-md border border-line px-3 py-3 text-base"
+              className="mt-1 w-full rounded-md border border-line px-3 py-2.5 text-sm"
             >
               <option value="Mobile">Mobile</option>
               <option value="Web">Web</option>
@@ -268,7 +268,7 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
               min="0"
               value={form.annual_revenue}
               onChange={(event) => update("annual_revenue", event.target.value)}
-              className="mt-1 w-full rounded-md border border-line px-3 py-3 text-base"
+              className="mt-1 w-full rounded-md border border-line px-3 py-2.5 text-sm"
             />
           </label>
           <label className="block text-sm font-medium">
@@ -278,7 +278,7 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
               min="0"
               value={form.employee_count}
               onChange={(event) => update("employee_count", Number(event.target.value))}
-              className="mt-1 w-full rounded-md border border-line px-3 py-3 text-base"
+              className="mt-1 w-full rounded-md border border-line px-3 py-2.5 text-sm"
             />
           </label>
         </div>
@@ -287,7 +287,7 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
           <input
             value={form.campaign_name}
             onChange={(event) => update("campaign_name", event.target.value)}
-            className="mt-1 w-full rounded-md border border-line px-3 py-3 text-base"
+            className="mt-1 w-full rounded-md border border-line px-3 py-2.5 text-sm"
           />
         </label>
         <label className="block text-sm font-medium">
@@ -295,7 +295,7 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
           <textarea
             value={form.inquiry_content}
             onChange={(event) => update("inquiry_content", event.target.value)}
-            className="mt-1 min-h-24 w-full rounded-md border border-line px-3 py-3 text-base"
+            className="mt-1 min-h-24 w-full rounded-md border border-line px-3 py-2.5 text-sm"
           />
         </label>
         <div className="grid grid-cols-2 gap-2 text-sm">
@@ -320,7 +320,7 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
         <button
           type="submit"
           disabled={status === "saving"}
-          className="w-full rounded-md bg-mint px-4 py-3 text-base font-bold text-white disabled:opacity-60"
+          className="w-full rounded-md bg-mint px-4 py-2.5 text-base font-bold text-white disabled:opacity-60"
         >
           {status === "saving" ? "저장 중" : "리드 저장"}
         </button>
@@ -383,9 +383,9 @@ function StageMatrix({
   const businessRows = buildBusinessRows(opportunities, leads);
 
   return (
-    <section className="mt-5 rounded-lg border border-line bg-white p-4 sm:p-5">
+    <section className="mt-4 rounded-lg border border-line bg-white p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-base font-bold">사업별 스테이지 매핑</h3>
+        <h3 className="text-lg font-bold">사업별 스테이지 매핑</h3>
         <span className="text-sm text-slate-600">세로는 사업, 가로는 단계</span>
       </div>
       <div className="mt-4 overflow-x-auto">
@@ -458,7 +458,7 @@ function DashboardHome({
   const topOpportunities = opportunities.slice(0, 5);
 
   return (
-    <section className="space-y-5">
+    <section className="space-y-4">
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard icon={Flame} label="Hot Lead" value={`${kpis.hot_leads}건`} tone="coral" />
         <MetricCard icon={Target} label="신규 리드" value={`${kpis.new_leads}건`} tone="mint" />
@@ -466,18 +466,18 @@ function DashboardHome({
         <MetricCard icon={Activity} label="활동 기록" value={`${kpis.activity_count}건`} tone="ink" />
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
-        <div className={`${panelClass} p-5`}>
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
+        <div className={`${panelClass} p-4`}>
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-bold">Revenue Analytics</h3>
+              <h3 className="text-lg font-bold">Revenue Analytics</h3>
               <p className="mt-1 text-sm text-slate-500">스테이지별 예상 매출 흐름</p>
             </div>
             <span className="rounded-full bg-rose-50 px-3 py-1 text-xs font-bold text-rose-700">
               Live Pipeline
             </span>
           </div>
-          <div className="mt-5 h-72">
+          <div className="mt-4 h-72">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={forecastTrend}>
                 <defs>
@@ -502,10 +502,10 @@ function DashboardHome({
           </div>
         </div>
 
-        <div className={`${panelClass} p-5`}>
-          <h3 className="text-base font-bold">User Insights</h3>
+        <div className={`${panelClass} p-4`}>
+          <h3 className="text-lg font-bold">User Insights</h3>
           <p className="mt-1 text-sm text-slate-500">채널별 리드 인입 품질</p>
-          <div className="mt-5 h-72">
+          <div className="mt-4 h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={channelRows}>
                 <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" vertical={false} />
@@ -520,11 +520,11 @@ function DashboardHome({
         </div>
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className={`${panelClass} overflow-hidden`}>
-          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
-            <h3 className="text-base font-bold">Top Opportunities</h3>
-            <span className="text-xs font-semibold text-slate-500">{topOpportunities.length} rows</span>
+          <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2.5">
+            <h3 className="text-lg font-bold">Top Opportunities</h3>
+            <span className="text-sm font-semibold text-slate-500">{topOpportunities.length} rows</span>
           </div>
           <div className="overflow-x-auto">
             <table className={tableClass}>
@@ -556,8 +556,8 @@ function DashboardHome({
           </div>
         </div>
 
-        <div className={`${panelClass} p-5`}>
-          <h3 className="text-base font-bold">Sales Health</h3>
+        <div className={`${panelClass} p-4`}>
+          <h3 className="text-lg font-bold">Sales Health</h3>
           <div className="mt-4 space-y-4">
             {[
               ["Forecast Coverage", Number(kpis.forecast_amount), "#be123c"],
@@ -617,13 +617,13 @@ function LeadSection({
   }
 
   return (
-    <section className="space-y-5">
+    <section className="space-y-4">
       <MobileSalesEntry onCreateLead={onCreateLead} />
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className={`${panelClass} overflow-hidden`}>
-          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
-            <h3 className="text-base font-bold">리드 목록</h3>
-            <span className="text-xs font-semibold text-slate-500">{leads.length} rows</span>
+          <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2.5">
+            <h3 className="text-lg font-bold">리드 목록</h3>
+            <span className="text-sm font-semibold text-slate-500">{leads.length} rows</span>
           </div>
           <div className="overflow-x-auto">
             <table className={tableClass}>
@@ -679,8 +679,8 @@ function LeadSection({
             </table>
           </div>
         </div>
-        <aside className={`${panelClass} p-5`}>
-          <h3 className="text-base font-bold">리드 상세/전환</h3>
+        <aside className={`${panelClass} p-4`}>
+          <h3 className="text-lg font-bold">리드 상세/전환</h3>
           {selectedLead ? (
             <>
               <dl className="mt-4 space-y-3 text-sm">
@@ -715,7 +715,7 @@ function LeadSection({
                   <dd>{selectedLead.inquiry_content || "문의 내용 없음"}</dd>
                 </div>
               </dl>
-              <form className="mt-5 space-y-3" onSubmit={handleConvert}>
+              <form className="mt-4 space-y-3" onSubmit={handleConvert}>
                 <label className="block text-sm font-medium">
                   영업기회명
                   <input
@@ -838,10 +838,10 @@ function AccountSection({
   }
 
   return (
-    <section className="grid min-w-0 gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
-      <div className="space-y-5">
-        <form className="rounded-lg border border-line bg-white p-5" onSubmit={handleCreateAccount}>
-          <h3 className="text-base font-bold">고객사 등록</h3>
+    <section className="grid min-w-0 gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
+      <div className="space-y-4">
+        <form className="rounded-lg border border-line bg-white p-4" onSubmit={handleCreateAccount}>
+          <h3 className="text-lg font-bold">고객사 등록</h3>
           <div className="mt-4 space-y-3">
             <input
               required
@@ -928,8 +928,8 @@ function AccountSection({
             </button>
           </div>
         </form>
-        <form className="rounded-lg border border-line bg-white p-5" onSubmit={handleCreateContact}>
-          <h3 className="text-base font-bold">연락처 등록</h3>
+        <form className="rounded-lg border border-line bg-white p-4" onSubmit={handleCreateContact}>
+          <h3 className="text-lg font-bold">연락처 등록</h3>
           <div className="mt-4 space-y-3">
             <select
               required
@@ -995,11 +995,11 @@ function AccountSection({
           </div>
         </form>
       </div>
-      <div className="min-w-0 space-y-5">
+      <div className="min-w-0 space-y-4">
         <section className={`${panelClass} overflow-hidden`}>
-          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
-          <h3 className="text-base font-bold">고객사 CRUD</h3>
-            <span className="text-xs font-semibold text-slate-500">{accounts.length} rows</span>
+          <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2.5">
+          <h3 className="text-lg font-bold">고객사 CRUD</h3>
+            <span className="text-sm font-semibold text-slate-500">{accounts.length} rows</span>
           </div>
           <div className="overflow-x-auto">
             <table className={compactTableClass}>
@@ -1056,9 +1056,9 @@ function AccountSection({
           </div>
         </section>
         <section className={`${panelClass} overflow-hidden`}>
-          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
-          <h3 className="text-base font-bold">연락처 CRUD</h3>
-            <span className="text-xs font-semibold text-slate-500">{contacts.length} rows</span>
+          <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2.5">
+          <h3 className="text-lg font-bold">연락처 CRUD</h3>
+            <span className="text-sm font-semibold text-slate-500">{contacts.length} rows</span>
           </div>
           <div className="overflow-x-auto">
             <table className={compactTableClass}>
@@ -1153,12 +1153,12 @@ function OpportunitySection({
   }
 
   return (
-    <section className="space-y-5">
+    <section className="space-y-4">
       <StageMatrix opportunities={opportunities} leads={leads} />
       <div className={`${panelClass} overflow-hidden`}>
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
-        <h3 className="text-base font-bold">영업기회 상세</h3>
-          <span className="text-xs font-semibold text-slate-500">{opportunities.length} rows</span>
+        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2.5">
+        <h3 className="text-lg font-bold">영업기회 상세</h3>
+          <span className="text-sm font-semibold text-slate-500">{opportunities.length} rows</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1080px] border-separate border-spacing-0 text-left text-sm">
@@ -1306,9 +1306,9 @@ function ActivitySection({
   }
 
   return (
-    <section className="grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
-      <form className="rounded-lg border border-line bg-white p-5" onSubmit={handleCreateActivity}>
-        <h3 className="text-base font-bold">활동 등록</h3>
+    <section className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
+      <form className="rounded-lg border border-line bg-white p-4" onSubmit={handleCreateActivity}>
+        <h3 className="text-lg font-bold">활동 등록</h3>
         <div className="mt-4 space-y-3">
           <input
             value={form.subject}
@@ -1414,9 +1414,9 @@ function ActivitySection({
         </div>
       </form>
       <div className={`${panelClass} overflow-hidden`}>
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
-        <h3 className="text-base font-bold">활동 목록</h3>
-          <span className="text-xs font-semibold text-slate-500">{activities.length} rows</span>
+        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2.5">
+        <h3 className="text-lg font-bold">활동 목록</h3>
+          <span className="text-sm font-semibold text-slate-500">{activities.length} rows</span>
         </div>
         <div className="overflow-x-auto">
           <table className={tableClass}>
@@ -1480,7 +1480,7 @@ function ActivitySection({
 
 function ReportSection({ reports }: { reports: DashboardReports }) {
   return (
-    <section className="space-y-5">
+    <section className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           icon={Target}
@@ -1507,9 +1507,9 @@ function ReportSection({ reports }: { reports: DashboardReports }) {
           tone="gold"
         />
       </div>
-      <div className="grid gap-5 xl:grid-cols-2">
-        <section className="rounded-lg border border-line bg-white p-5">
-          <h3 className="text-base font-bold">채널 성과 리포트</h3>
+      <div className="grid gap-4 xl:grid-cols-2">
+        <section className="rounded-lg border border-line bg-white p-4">
+          <h3 className="text-lg font-bold">채널 성과 리포트</h3>
           <div className="mt-4 space-y-3">
             {reports.channels.map((channel) => (
               <article key={channel.source_channel} className="rounded-md border border-line p-4">
@@ -1521,8 +1521,8 @@ function ReportSection({ reports }: { reports: DashboardReports }) {
             ))}
           </div>
         </section>
-        <section className="rounded-lg border border-line bg-white p-5">
-          <h3 className="text-base font-bold">담당자 활동 리포트</h3>
+        <section className="rounded-lg border border-line bg-white p-4">
+          <h3 className="text-lg font-bold">담당자 활동 리포트</h3>
           <div className="mt-4 space-y-3">
             {reports.activities_by_owner.map((row) => (
               <article key={row.owner_id} className="rounded-md border border-line p-4">
@@ -1572,9 +1572,9 @@ function IntegrationSection({ onDataChanged }: { onDataChanged: DashboardProps["
   }
 
   return (
-    <section className="grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
-      <form className="rounded-lg border border-line bg-white p-5" onSubmit={handleSubmit}>
-        <h3 className="text-base font-bold">연동 리드 테스트</h3>
+    <section className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
+      <form className="rounded-lg border border-line bg-white p-4" onSubmit={handleSubmit}>
+        <h3 className="text-lg font-bold">연동 리드 테스트</h3>
         <div className="mt-4 space-y-3">
           <select
             value={channel}
@@ -1616,8 +1616,8 @@ function IntegrationSection({ onDataChanged }: { onDataChanged: DashboardProps["
           {status && <p className="text-sm font-medium text-slate-700">{status}</p>}
         </div>
       </form>
-      <div className="rounded-lg border border-line bg-white p-5">
-        <h3 className="text-base font-bold">연동 운영 기준</h3>
+      <div className="rounded-lg border border-line bg-white p-4">
+        <h3 className="text-lg font-bold">연동 운영 기준</h3>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {[
             ["인증", "X-API-Key 헤더로 홈페이지/챗봇 인입을 보호합니다."],
@@ -1662,9 +1662,9 @@ function AdminSection({
   }
 
   return (
-    <section className="space-y-5">
-      <div className="rounded-lg border border-line bg-white p-5">
-        <h3 className="text-base font-bold">관리자 설정</h3>
+    <section className="space-y-4">
+      <div className="rounded-lg border border-line bg-white p-4">
+        <h3 className="text-lg font-bold">관리자 설정</h3>
         <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {stages.map((stage) => (
             <label
@@ -1697,8 +1697,8 @@ function AdminSection({
         </button>
         {status && <p className="mt-3 text-sm font-medium text-slate-700">{status}</p>}
       </div>
-      <div className="rounded-lg border border-line bg-white p-5">
-        <h3 className="text-base font-bold">운영 정책</h3>
+      <div className="rounded-lg border border-line bg-white p-4">
+        <h3 className="text-lg font-bold">운영 정책</h3>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {rolePolicies.map((policy) => (
             <article key={policy.role} className="rounded-md border border-line p-4">
@@ -1744,12 +1744,12 @@ export function Dashboard({
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-rose-200">Cherrylab</p>
             <h1 className="mt-1 text-2xl font-bold">Cherrysales</h1>
           </div>
-          <nav className="mt-8 space-y-1 text-sm">
+          <nav className="mt-7 space-y-1 text-base">
             {menuItems.map((item) => (
               <button
                 key={item}
                 onClick={() => setActiveView(item)}
-                className={`flex w-full items-center rounded-md px-3 py-2 text-left ${
+                className={`flex w-full items-center rounded-md px-3 py-2.5 text-left font-semibold ${
                   item === activeView
                     ? "bg-rose-500 text-white"
                     : "bg-transparent text-slate-200 hover:bg-white/10"
@@ -1761,8 +1761,8 @@ export function Dashboard({
           </nav>
         </aside>
 
-        <section className="min-w-0 flex-1 rounded-r-md border border-l-0 border-rose-100 bg-white/80 p-5 shadow-sm">
-          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
+        <section className="min-w-0 flex-1 rounded-r-md border border-l-0 border-rose-100 bg-white/80 p-4 shadow-sm">
+          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
             <div>
               <p className="text-sm font-bold text-rose-700">Cherrylab Sales Cloud</p>
               <h2 className="text-2xl font-bold">Cherrysales</h2>
@@ -1773,7 +1773,7 @@ export function Dashboard({
           </header>
 
           {usingMockData && (
-            <div className="mt-4 rounded-md border border-gold/30 bg-gold/10 px-4 py-3 text-sm text-ink">
+            <div className="mt-4 rounded-md border border-gold/30 bg-gold/10 px-4 py-2.5 text-sm text-ink">
               API 서버 연결 전이라 샘플 데이터로 화면을 표시하고 있습니다.
             </div>
           )}
@@ -1783,14 +1783,14 @@ export function Dashboard({
               <button
                 key={item}
                 onClick={() => setActiveView(item)}
-                className={`shrink-0 rounded-md px-3 py-2 text-sm font-medium ${menuClass(item)}`}
+                className={`shrink-0 rounded-md px-3 py-2 text-base font-semibold ${menuClass(item)}`}
               >
                 {item}
               </button>
             ))}
           </nav>
 
-          <div className="mt-5">
+          <div className="mt-4">
             {activeView === "대시보드" && (
               <DashboardHome
                 kpis={kpis}
