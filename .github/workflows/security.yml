@@ -1,0 +1,33 @@
+name: Security Checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Secret scan basic
+        run: |
+          ! grep -R "OPENAI_API_KEY=\|AWS_SECRET_ACCESS_KEY=\|PRIVATE_KEY" . \
+            --exclude-dir=.git \
+            --exclude-dir=node_modules \
+            --exclude-dir=.venv || exit 1
+
+      - name: Dependency audit Node
+        if: hashFiles('package.json') != ''
+        run: |
+          corepack enable
+          pnpm audit --audit-level high || true
+
+      - name: Python dependency audit placeholder
+        if: hashFiles('pyproject.toml') != ''
+        run: |
+          echo "Add pip-audit or safety if Python project requires dependency audit."

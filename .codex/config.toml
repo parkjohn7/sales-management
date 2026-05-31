@@ -1,0 +1,26 @@
+# Project-level Codex configuration
+
+reasoning_effort = "high"
+sandbox_mode = "workspace-write"
+approval_policy = "on-request"
+
+project_doc_fallback_filenames = ["TEAM_GUIDE.md", ".agents.md"]
+project_doc_max_bytes = 65536
+
+log_dir = "./.codex-log"
+hide_agent_reasoning = true
+
+[profiles.fast]
+reasoning_effort = "medium"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+[profiles.strict]
+reasoning_effort = "high"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+[profiles.review]
+reasoning_effort = "high"
+approval_policy = "never"
+sandbox_mode = "read-only"

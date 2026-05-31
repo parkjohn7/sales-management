@@ -1,0 +1,32 @@
+name: Quality Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check required harness files
+        run: |
+          test -f AGENTS.md
+          test -f .harness/rules/coding-standards.md
+          test -f .harness/rules/testing-rules.md
+          test -f .harness/rules/review-rules.md
+
+      - name: Check forbidden markers
+        run: |
+          if [ -d src ] || [ -d tests ]; then
+            ! grep -R "debugger\|TODO SECURITY\|HACK" src tests 2>/dev/null || exit 1
+          fi
+
+      - name: PR evidence reminder
+        run: |
+          echo "PR must include test evidence and risk assessment."

@@ -1,0 +1,29 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Codex / logs
+.codex-log/
+
+# Node
+node_modules/
+dist/
+build/
+.next/
+coverage/
+
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.pyc
+
+# Harness runtime artifacts
+.harness/runs/*/tmp/
