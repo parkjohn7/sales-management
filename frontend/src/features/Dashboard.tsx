@@ -198,14 +198,14 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-lg font-bold">리드 등록</h3>
         {status === "saved" && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-1 text-xs font-bold text-violet-700">
+          <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-1 text-xs font-bold text-rose-700">
             <Check className="h-3 w-3" aria-hidden="true" />
             저장됨
           </span>
         )}
       </div>
       <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm font-medium">
             고객사
             <input
@@ -331,7 +331,7 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
         <button
           type="submit"
           disabled={status === "saving"}
-          className="w-full rounded-md bg-violet-600 px-4 py-2.5 text-base font-bold text-white disabled:opacity-60"
+          className="w-full rounded-md bg-rose-600 px-4 py-2.5 text-base font-bold text-white disabled:opacity-60"
         >
           {status === "saving" ? "저장 중" : "리드 저장"}
         </button>
@@ -649,7 +649,7 @@ function LeadSection({
             <h3 className="text-lg font-bold">리드 상세/전환</h3>
             {selectedLead ? (
               <>
-                <dl className="mt-3 grid gap-3 text-sm md:grid-cols-2">
+                <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <dt className="text-slate-500">고객사</dt>
                     <dd className="font-bold">{selectedLead.company_name}</dd>
@@ -677,20 +677,20 @@ function LeadSection({
                       />
                     </dd>
                   </div>
-                  <div className="md:col-span-2">
+                  <div className="col-span-2">
                     <dt className="text-slate-500">소스/캠페인</dt>
                     <dd>
                       {selectedLead.lead_source || selectedLead.source_channel} ·{" "}
                       {selectedLead.campaign_name || "캠페인 없음"}
                     </dd>
                   </div>
-                  <div className="md:col-span-2">
+                  <div className="col-span-2">
                     <dt className="text-slate-500">점수/등급</dt>
                     <dd>
                       {selectedLead.lead_score}점 · {selectedLead.lead_grade}
                     </dd>
                   </div>
-                  <div className="md:col-span-2">
+                  <div className="col-span-2">
                     <dt className="text-slate-500">문의</dt>
                     <dd>{selectedLead.inquiry_content || "문의 내용 없음"}</dd>
                   </div>
@@ -722,7 +722,7 @@ function LeadSection({
                       className="mt-1 w-full rounded-md border border-line px-3 py-2"
                     />
                   </label>
-                  <button className="w-full rounded-md bg-violet-600 px-4 py-2 font-bold text-white">
+                  <button className="w-full rounded-md bg-rose-600 px-4 py-2 font-bold text-white">
                     고객사/영업기회 전환
                   </button>
                   {status && <p className="text-sm font-medium text-slate-700">{status}</p>}
@@ -744,12 +744,8 @@ function LeadSection({
                 <tr>
                   <th className={thClass}>고객사</th>
                   <th className={thClass}>담당자</th>
-                  <th className={`${thClass} hidden md:table-cell`}>직책</th>
-                  <th className={thClass}>채널</th>
-                  <th className={`${thClass} hidden lg:table-cell`}>소스</th>
-                  <th className={`${thClass} hidden lg:table-cell`}>Rating</th>
-                  <th className={`${thClass} hidden xl:table-cell`}>캠페인</th>
-                  <th className={`${thClass} hidden xl:table-cell`}>매출/직원</th>
+                  <th className={`${thClass} hidden sm:table-cell`}>직책</th>
+                  <th className={`${thClass} hidden md:table-cell`}>직원 수</th>
                   <th className={thClass}>등급</th>
                   <th className={thClass}>점수</th>
                   <th className={thClass}>상태</th>
@@ -766,13 +762,8 @@ function LeadSection({
                   >
                     <td className={`${tdClass} ${cherryTextClass}`}>{lead.company_name}</td>
                     <td className={tdClass}>{lead.contact_name}</td>
-                    <td className={`${tdClass} hidden md:table-cell`}>{lead.title || "-"}</td>
-                    <td className={tdClass}>{lead.source_channel}</td>
-                    <td className={`${tdClass} hidden lg:table-cell`}>{lead.lead_source || "-"}</td>
-                    <td className={`${tdClass} hidden lg:table-cell`}>{lead.rating || "-"}</td>
-                    <td className={`${tdClass} hidden xl:table-cell`}>{lead.campaign_name || "-"}</td>
-                    <td className={`${tdClass} hidden xl:table-cell`}>
-                      {lead.annual_revenue ? money(lead.annual_revenue) : "-"}
+                    <td className={`${tdClass} hidden sm:table-cell`}>{lead.title || "-"}</td>
+                    <td className={`${tdClass} hidden md:table-cell`}>
                       <input
                         key={`${lead.id}-${lead.employee_count ?? "empty"}`}
                         aria-label={`${lead.company_name} 직원 수`}
@@ -781,10 +772,9 @@ function LeadSection({
                         min="0"
                         onClick={(event) => event.stopPropagation()}
                         onBlur={(event) => void saveLeadEmployeeCount(lead, event.target.value)}
-                        className="ml-2 w-20 rounded border border-slate-200 bg-white px-2 py-1 text-right text-sm"
+                        className="w-20 rounded border border-slate-200 bg-white px-2 py-1 text-right text-sm"
                         placeholder="직원"
                       />
-                      <span className="ml-1 text-slate-500">명</span>
                     </td>
                     <td className={tdClass}>
                       <span className={`rounded-full px-2 py-1 text-xs font-bold ${gradeClass(lead.lead_grade)}`}>
@@ -974,7 +964,7 @@ function AccountSection({
               className="w-full rounded-md border border-line px-3 py-2"
               placeholder="웹사이트"
             />
-            <button className="w-full rounded-md bg-violet-600 px-4 py-2 font-bold text-white">
+            <button className="w-full rounded-md bg-rose-600 px-4 py-2 font-bold text-white">
               고객사 저장
             </button>
           </div>
@@ -1458,7 +1448,7 @@ function ActivitySection({
             className="min-h-24 w-full rounded-md border border-line px-3 py-2"
             placeholder="활동 내용"
           />
-          <button className="w-full rounded-md bg-violet-600 px-4 py-2 font-bold text-white">
+          <button className="w-full rounded-md bg-rose-600 px-4 py-2 font-bold text-white">
             활동 저장
           </button>
           {status && <p className="text-sm font-medium text-slate-700">{status}</p>}
@@ -1661,7 +1651,7 @@ function IntegrationSection({ onDataChanged }: { onDataChanged: DashboardProps["
             className="min-h-24 w-full rounded-md border border-line px-3 py-2"
             placeholder="원문 문의 내용"
           />
-          <button className="w-full rounded-md bg-violet-600 px-4 py-2 font-bold text-white">
+          <button className="w-full rounded-md bg-rose-600 px-4 py-2 font-bold text-white">
             연동 리드 생성
           </button>
           {status && <p className="text-sm font-medium text-slate-700">{status}</p>}
@@ -1742,7 +1732,7 @@ function AdminSection({
         <button
           type="button"
           onClick={handleSave}
-          className="mt-4 rounded-md bg-violet-600 px-4 py-2 text-sm font-bold text-white"
+          className="mt-4 rounded-md bg-rose-600 px-4 py-2 text-sm font-bold text-white"
         >
           관리자 설정 저장
         </button>
