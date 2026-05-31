@@ -29,18 +29,28 @@ Generated at: <YYYY-MM-DD HH:mm:ss>
 |---|---|
 |  |  |
 
-## 6. Architecture Boundaries
+## 6. Parallel Work Conflicts
+
+| Shared file or module | Potential conflict | Coordination plan |
+|---|---|---|
+|  |  |  |
+
+## 7. Architecture Boundaries
 
 Do not modify:
 
 - 
 
-## 7. Existing Patterns
+## 8. Existing Patterns
 
 Follow:
 
 - 
 
-## 8. Risk Areas
+## 9. Merge Sequencing
+
+-
+
+## 10. Risk Areas
 
 -

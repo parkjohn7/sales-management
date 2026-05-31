@@ -4,7 +4,8 @@
 
 SalesMangemetService is a sales management system for tracking customers, opportunities, follow-up activities, and sales performance.
 The initial product direction is a Korean-language internal business tool.
-The production tech stack is not decided yet.
+The product name in Korean is `영업관리시스템`; do not describe it with external CRM category acronyms in product-facing documentation.
+The production tech stack is React + TypeScript + Tailwind CSS, FastAPI, PostgreSQL, Docker Compose, and development JWT RBAC.
 Codex must preserve architecture, quality, tests, and maintainability.
 
 ## Repository layout
@@ -16,6 +17,21 @@ Codex must preserve architecture, quality, tests, and maintainability.
 - `.harness/`: rules, templates, skills, and run records
 - `scripts/harness/`: verification and automation scripts
 - `.github/workflows/`: CI quality gates
+
+## Agent workstream model
+
+Feature work is split by agent-owned workstreams. Each agent must work on an independent
+`codex/<agent>/<feature>` branch and must not revert or rewrite work from other agents.
+
+- Planner Agent: product requirements, glossary, API/data-model docs, workstream map
+- Backend Foundation Agent: FastAPI app, database session, migrations, common API responses
+- Domain Agent: domain models, scoring, pipeline, forecast, lead conversion services
+- API Agent: `/api/v1` routers, schemas, pagination, filtering, error mapping
+- Frontend Agent: React/Tailwind UI, API client, screens, loading/empty/error states
+- Security Agent: development JWT, RBAC, role scopes, audit-log behavior
+- Integration Agent: website/chatbot lead ingestion endpoints
+- Test Agent: unit/integration/frontend/e2e tests and verification reports
+- Merge Agent: PR review, conflict resolution, `make verify`, merge sequencing
 
 ## Required development flow
 

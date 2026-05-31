@@ -1,0 +1,169 @@
+export type LeadGrade = "HOT" | "WARM" | "COLD";
+export type PipelineStage =
+  | "LEAD"
+  | "QUALIFIED"
+  | "PROPOSAL"
+  | "NEGOTIATION"
+  | "CLOSED_WON"
+  | "CLOSED_LOST";
+
+export interface DashboardKpis {
+  new_leads: number;
+  hot_leads: number;
+  forecast_amount: string;
+  closed_won_amount: string;
+  activity_count: number;
+}
+
+export interface PipelineSummary {
+  stage: PipelineStage;
+  probability: number;
+  count: number;
+  amount: string;
+}
+
+export interface LeadSummary {
+  id: string;
+  company_name: string;
+  contact_name: string;
+  email?: string | null;
+  phone?: string | null;
+  source_channel: string;
+  inquiry_content?: string | null;
+  lead_score: number;
+  lead_grade: LeadGrade;
+  status: string;
+}
+
+export interface OpportunitySummary {
+  id: string;
+  account_id?: string;
+  contact_id?: string | null;
+  lead_id?: string | null;
+  name: string;
+  stage: PipelineStage;
+  amount: string;
+  probability: number;
+  forecast_amount: string;
+  account_name?: string;
+  owner_name?: string;
+  expected_close_date?: string | null;
+  next_activity?: string;
+}
+
+export interface AccountSummary {
+  id: string;
+  name: string;
+  business_number?: string | null;
+  industry?: string | null;
+  website?: string | null;
+  address?: string | null;
+}
+
+export interface ContactSummary {
+  id: string;
+  account_id: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  title?: string | null;
+  role_type?: string | null;
+}
+
+export interface ActivitySummary {
+  id: string;
+  lead_id?: string | null;
+  opportunity_id?: string | null;
+  activity_type: string;
+  activity_date: string;
+  description?: string | null;
+  owner_id?: string | null;
+}
+
+export interface RolePolicy {
+  role: string;
+  data_scope: string;
+  permissions: string[];
+}
+
+export interface AdminSettings {
+  stage_probabilities: Record<PipelineStage, number>;
+  lead_scoring_policy: Record<string, number>;
+  integration_policy: Record<string, boolean | string>;
+  updated_by?: string | null;
+  updated_at?: string | null;
+}
+
+export interface DashboardReports {
+  channels: Array<{
+    source_channel: string;
+    lead_count: number;
+    hot_lead_count: number;
+  }>;
+  activities_by_owner: Array<{
+    owner_id: string;
+    activity_count: number;
+    [key: string]: string | number;
+  }>;
+  pipeline: PipelineSummary[];
+  integration: {
+    website_leads: number;
+    chatbot_leads: number;
+  };
+}
+
+export interface LeadCreateInput {
+  company_name: string;
+  contact_name: string;
+  email?: string;
+  phone?: string;
+  source_channel: string;
+  inquiry_content?: string;
+  budget_confirmed: boolean;
+  authority_confirmed: boolean;
+  timeline_within_3_months: boolean;
+  price_page_visit_count: number;
+  downloaded_material: boolean;
+}
+
+export interface LeadConvertInput {
+  opportunity_name?: string;
+  amount: string;
+}
+
+export interface OpportunityStageChangeInput {
+  stage: PipelineStage;
+  reason?: string;
+  closed_date?: string;
+  lost_reason?: string;
+}
+
+export interface AccountInput {
+  name: string;
+  business_number?: string;
+  industry?: string;
+  website?: string;
+  address?: string;
+}
+
+export interface ContactInput {
+  account_id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  title?: string;
+  role_type?: string;
+}
+
+export interface ActivityInput {
+  lead_id?: string;
+  opportunity_id?: string;
+  activity_type: string;
+  activity_date: string;
+  description?: string;
+}
+
+export interface IntegrationLeadInput extends LeadCreateInput {
+  raw_payload?: Record<string, unknown>;
+  chatbot_log?: Record<string, unknown>;
+}

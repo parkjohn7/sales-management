@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: sales_management
+      POSTGRES_USER: sales
+      POSTGRES_PASSWORD: sales
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sales -d sales_management"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      APP_ENV: local
+      DATABASE_URL: postgresql+psycopg://sales:sales@postgres:5432/sales_management
+      DEV_TOKEN_SECRET: local-dev-token-secret-change-me
+      INTEGRATION_API_KEY: local-integration-key
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: http://localhost:8000/api/v1
+    ports:
+      - "5173:8080"
+    depends_on:
+      - backend
+
+volumes:
+  postgres-data:

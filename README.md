@@ -1,40 +1,47 @@
-# Codex + Harness Starter Repository
+# 영업관리시스템
 
-This repository template is designed for quality-first AI-assisted development with Codex.
+React + FastAPI 기반의 영업관리시스템입니다.
+리드, 고객사, 연락처, 영업기회, 활동, Forecast, Dashboard, 개발용 JWT RBAC를 작은 기능 단위로 확장합니다.
 
-Core workflow:
+## Stack
 
-```text
-Task Spec -> Impact Map -> Execution Plan -> Approval -> Implementation -> Tests -> Verification -> Review -> PR
-```
+- Frontend: React, TypeScript, Tailwind CSS, Vite
+- Backend: FastAPI, SQLAlchemy, Alembic
+- Database: PostgreSQL for Docker/local integration, SQLite fallback for quick local development
+- Verification: pytest, ruff, mypy, Vitest
 
 ## Quick start
 
 ```bash
-git init
 make setup
-make harness-impact TASK_ID=initial-check
-codex --ask-for-approval never "Summarize the current instructions."
+make dev-backend
+make dev-frontend
 ```
 
-## Required first task
+Backend API: `http://localhost:8000/api/v1/health`
+Frontend: `http://localhost:5173`
 
-Before writing production code, create the initial architecture documents:
+## Docker Compose
+
+```bash
+docker compose up --build
+```
+
+## Verification
+
+```bash
+make lint
+make typecheck
+make test
+make verify
+```
+
+## Agent Workflow
+
+Each feature should be implemented by an agent-owned branch:
 
 ```text
-docs/architecture/overview.md
-docs/architecture/data-model.md
-docs/architecture/api-contract.md
+codex/<agent>/<feature>
 ```
 
-Prompt:
-
-```text
-Do not write production code yet.
-Read AGENTS.md and the harness templates.
-Create the initial architecture documents:
-- docs/architecture/overview.md
-- docs/architecture/data-model.md
-- docs/architecture/api-contract.md
-After writing docs, do not implement code. Report open questions and risks.
-```
+The Test Agent verifies each branch before the Merge Agent merges it into `develop`.

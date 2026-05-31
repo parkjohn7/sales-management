@@ -1,62 +1,81 @@
-.PHONY: setup lint typecheck test test-unit test-integration test-e2e verify harness-impact harness-review harness-log
+.PHONY: setup lint lint-backend lint-frontend typecheck typecheck-backend typecheck-frontend test test-unit test-integration test-frontend test-e2e verify dev-backend dev-frontend harness-impact harness-review harness-log
 
 TASK_ID ?= manual-$(shell date +%Y%m%d-%H%M%S)
 
 setup:
-	@echo "Setup project dependencies"
-	@if [ -f package.json ]; then \
-		if command -v pnpm >/dev/null 2>&1; then pnpm install; else npm install; fi; \
+	@echo "Setup 영업관리시스템 development dependencies"
+	@if [ -f backend/pyproject.toml ]; then \
+		if command -v uv >/dev/null 2>&1; then cd backend && uv sync --extra dev; \
+		else echo "uv is required for backend setup"; exit 1; fi; \
 	fi
-	@if [ -f pyproject.toml ]; then \
-		if command -v uv >/dev/null 2>&1; then uv sync; \
-		elif command -v poetry >/dev/null 2>&1; then poetry install; \
-		else python -m pip install -e .; fi; \
-	fi
-
-lint:
-	@echo "Run lint"
-	@if [ -f package.json ]; then \
-		if command -v pnpm >/dev/null 2>&1; then pnpm lint; else npm run lint; fi; \
-	elif [ -f pyproject.toml ]; then \
-		ruff check .; \
-	else \
-		echo "No lint target configured yet"; \
+	@if [ -f frontend/package.json ]; then \
+		if command -v pnpm >/dev/null 2>&1; then pnpm --dir frontend install; else npm --prefix frontend install; fi; \
 	fi
 
-typecheck:
-	@echo "Run typecheck"
-	@if [ -f package.json ]; then \
-		if command -v pnpm >/dev/null 2>&1; then pnpm typecheck; else npm run typecheck; fi; \
-	elif [ -f pyproject.toml ]; then \
-		mypy .; \
-	else \
-		echo "No typecheck target configured yet"; \
+lint: lint-backend lint-frontend
+	@echo "Lint complete"
+
+lint-backend:
+	@echo "Run backend lint"
+	@if [ -f backend/pyproject.toml ]; then \
+		cd backend && uv run ruff check app tests; \
+	else echo "No backend lint target configured"; \
 	fi
 
-test:
-	@echo "Run tests"
-	@if [ -f package.json ]; then \
-		if command -v pnpm >/dev/null 2>&1; then pnpm test; else npm test; fi; \
-	elif [ -f pyproject.toml ]; then \
-		pytest -q; \
-	else \
-		echo "No test target configured yet"; \
+lint-frontend:
+	@echo "Run frontend lint"
+	@if [ -f frontend/package.json ]; then \
+		if command -v pnpm >/dev/null 2>&1; then pnpm --dir frontend lint; else npm --prefix frontend run lint; fi; \
+	else echo "No frontend lint target configured"; \
 	fi
+
+typecheck: typecheck-backend typecheck-frontend
+	@echo "Typecheck complete"
+
+typecheck-backend:
+	@echo "Run backend typecheck"
+	@if [ -f backend/pyproject.toml ]; then \
+		cd backend && uv run mypy app; \
+	else echo "No backend typecheck target configured"; \
+	fi
+
+typecheck-frontend:
+	@echo "Run frontend typecheck"
+	@if [ -f frontend/package.json ]; then \
+		if command -v pnpm >/dev/null 2>&1; then pnpm --dir frontend typecheck; else npm --prefix frontend run typecheck; fi; \
+	else echo "No frontend typecheck target configured"; \
+	fi
+
+test: test-unit test-integration test-frontend
+	@echo "Tests complete"
 
 test-unit:
 	@echo "Run unit tests"
-	@if [ -d tests/unit ] && [ -f pyproject.toml ]; then pytest tests/unit -q; else echo "No unit test target configured yet"; fi
+	@if [ -d backend/tests/unit ]; then cd backend && uv run pytest tests/unit -q; else echo "No unit test target configured"; fi
 
 test-integration:
 	@echo "Run integration tests"
-	@if [ -d tests/integration ] && [ -f pyproject.toml ]; then pytest tests/integration -q; else echo "No integration test target configured yet"; fi
+	@if [ -d backend/tests/integration ]; then cd backend && uv run pytest tests/integration -q; else echo "No integration test target configured"; fi
+
+test-frontend:
+	@echo "Run frontend tests"
+	@if [ -f frontend/package.json ]; then \
+		if command -v pnpm >/dev/null 2>&1; then pnpm --dir frontend test; else npm --prefix frontend run test; fi; \
+	else echo "No frontend test target configured"; \
+	fi
 
 test-e2e:
 	@echo "Run e2e tests"
-	@if [ -d tests/e2e ] && [ -f pyproject.toml ]; then pytest tests/e2e -q; else echo "No e2e test target configured yet"; fi
+	@echo "No e2e test target configured yet"
 
 verify: lint typecheck test
 	@echo "Verification complete"
+
+dev-backend:
+	cd backend && uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+dev-frontend:
+	@if command -v pnpm >/dev/null 2>&1; then pnpm --dir frontend dev; else npm --prefix frontend run dev; fi
 
 harness-impact:
 	bash scripts/harness/generate-impact-map.sh $(TASK_ID)

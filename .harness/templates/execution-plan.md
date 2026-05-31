@@ -4,6 +4,14 @@
 
 - `path/to/file`: <change summary>
 
+## 1.1 Files to Read Only
+
+- `path/to/file`: <reason>
+
+## 1.2 Shared File Coordination
+
+- `path/to/shared-file`: <coordination note>
+
 ## 2. Implementation Steps
 
 1. 
@@ -26,6 +34,10 @@ make verify
 ## 5. Assumptions
 
 - [ASSUMPTION] 
+
+## 5.1 Rollback Scope
+
+- 
 
 ## 6. Approval Required
 

@@ -2,25 +2,27 @@
 
 ## 1. Background
 
-The project is being initialized from the Codex + Harness starter.
-The first implementation should establish a small but usable sales-management foundation instead of jumping directly into a large CRM.
+The project is being initialized as a Korean-language 영업관리시스템.
+The first implementation establishes a small but usable sales-management foundation instead of jumping directly into a broad enterprise product.
 
 ## 2. Goal
 
-Build the first approved MVP slice for managing customers, sales opportunities, and follow-up activities.
-The implementation plan must be approved before production code is written.
+Build the first approved MVP slice for managing Leads, Accounts, Contacts, Opportunities, Activities, Forecast, Dashboard, and development JWT RBAC.
 
 ## 3. Non-goals
 
 - Do not implement unrelated features.
-- Do not add production dependencies without approval.
+- Do not call the product by external CRM category acronyms in product-facing documentation.
 - Do not implement billing, accounting, marketing automation, or complex CRM integrations in the first slice.
+- Do not implement production OIDC/SSO in v1.
 
 ## 4. Acceptance Criteria
 
 - [ ] Architecture docs are updated.
 - [ ] First MVP workflow is defined before implementation.
 - [ ] Tests are defined for any business logic introduced.
+- [ ] `make verify` runs backend and frontend checks.
+- [ ] Lead score, forecast, stage change, and permission behavior are covered by tests.
 - [ ] Verification commands pass.
 
 ## 5. Verification Commands

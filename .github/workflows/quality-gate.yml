@@ -23,8 +23,8 @@ jobs:
 
       - name: Check forbidden markers
         run: |
-          if [ -d src ] || [ -d tests ]; then
-            ! grep -R "debugger\|TODO SECURITY\|HACK" src tests 2>/dev/null || exit 1
+          if [ -d backend ] || [ -d frontend ]; then
+            ! grep -R "debugger\|TODO SECURITY\|HACK" backend frontend 2>/dev/null || exit 1
           fi
 
       - name: PR evidence reminder

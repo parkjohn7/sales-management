@@ -5,28 +5,33 @@
 | Entity | Purpose |
 |---|---|
 | User | System account for sales staff and managers. |
-| Customer | Company or individual being sold to. |
-| Contact | Person linked to a customer. |
+| Account | Customer company or sales target organization. |
+| Contact | Person linked to an Account. |
+| Lead | Incoming sales lead before conversion. |
 | Opportunity | Potential sale tracked through pipeline stages. |
 | Activity | Follow-up task, call, meeting, email, or note. |
-| PipelineStage | Configurable sales stage such as lead, proposal, negotiation, won, lost. |
+| StageHistory | Opportunity stage change history. |
+| AuditLog | Immutable record of sensitive business actions. |
 
 ## 2. Relationships
 
 ```text
 User 1 --- N Opportunity
-Customer 1 --- N Contact
-Customer 1 --- N Opportunity
+Account 1 --- N Contact
+Account 1 --- N Opportunity
+Lead 1 --- 0..1 Opportunity
 Opportunity 1 --- N Activity
-PipelineStage 1 --- N Opportunity
+Opportunity 1 --- N StageHistory
 ```
 
 ## 3. Constraints
 
-- Customer names should not be empty.
+- Account names should not be empty.
 - Opportunity amount must be zero or greater.
-- Opportunity stage must be one of the configured pipeline stages.
+- Opportunity stage must be one of LEAD, QUALIFIED, PROPOSAL, NEGOTIATION, CLOSED_WON, CLOSED_LOST.
 - Activities should keep due date, owner, status, and related customer or opportunity.
+- Closed Lost stage changes require a lost reason.
+- Forecast amount is recalculated whenever amount or stage changes.
 
 ## 4. Migration Rules
 
@@ -36,6 +41,6 @@ PipelineStage 1 --- N Opportunity
 
 ## 5. Open Questions
 
-- Should contacts be required for every customer?
+- Should contacts be required for every Account?
 - Should opportunity amounts support multiple currencies?
-- What pipeline stages should be default for the first MVP?
+- Should duplicate Lead detection block creation or only warn?

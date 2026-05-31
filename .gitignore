@@ -19,6 +19,7 @@ coverage/
 
 # Python
 .venv/
+.local/
 __pycache__/
 .pytest_cache/
 .mypy_cache/

@@ -22,12 +22,11 @@ jobs:
             --exclude-dir=.venv || exit 1
 
       - name: Dependency audit Node
-        if: hashFiles('package.json') != ''
+        if: hashFiles('frontend/package.json') != ''
         run: |
-          corepack enable
-          pnpm audit --audit-level high || true
+          npm --prefix frontend audit --audit-level high || true
 
       - name: Python dependency audit placeholder
-        if: hashFiles('pyproject.toml') != ''
+        if: hashFiles('backend/pyproject.toml') != ''
         run: |
           echo "Add pip-audit or safety if Python project requires dependency audit."

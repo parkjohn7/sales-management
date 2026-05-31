@@ -4,6 +4,7 @@
 
 SalesMangemetService is an internal sales management system.
 It will help a team manage customer accounts, sales opportunities, follow-up tasks, pipeline status, and performance reporting in one workflow.
+Product-facing documentation must use `영업관리시스템` as the product name.
 
 ## 2. Users
 
@@ -14,11 +15,11 @@ It will help a team manage customer accounts, sales opportunities, follow-up tas
 ## 3. Major Components
 
 ```text
-Client / UI
-  -> API
-    -> Application Service
-      -> Domain Model
-        -> Repository / External Adapter
+React / TypeScript / Tailwind UI
+  -> FastAPI /api/v1
+    -> Application Services
+      -> Domain Services
+        -> SQLAlchemy Models / PostgreSQL
 ```
 
 ## 4. Key Flows
@@ -30,8 +31,9 @@ Client / UI
 ## 5. Architecture Decisions
 
 - Keep domain logic separate from UI and infrastructure.
-- Start with a clear API/data contract before choosing implementation details.
-- Do not add production dependencies until the first approved implementation plan.
+- Use development JWT RBAC for v1 and keep OIDC/SSO as a later integration.
+- Preserve the common response shape across all APIs.
+- Feature agents work on separate branches and merge only after Test Agent verification.
 
 ## 6. Risks
 
@@ -41,6 +43,6 @@ Client / UI
 
 ## 7. Open Questions
 
-- Which platform should be built first: web app, desktop app, or mobile-friendly web?
-- What roles and permissions are required at launch?
+- Web app is first; mobile app is out of MVP scope.
+- Launch roles are Super Admin, Sales Manager, Sales Rep, Executive, and Marketing User.
 - Should the MVP support import/export from Excel or Google Sheets?

@@ -8,6 +8,13 @@ Why is this task needed?
 
 What should be built or changed?
 
+## 2.1 Agent Assignment
+
+- Agent owner:
+- Branch name: `codex/<agent>/<feature>`
+- Dependent task IDs:
+- Merge prerequisites:
+
 ## 3. Non-goals
 
 What is explicitly excluded?
@@ -29,6 +36,10 @@ What is explicitly excluded?
 ### Files to read but not modify
 
 - `path/to/file`
+
+### Shared files requiring coordination
+
+- `path/to/shared-file`
 
 ### Out-of-bound files
 
