@@ -97,7 +97,8 @@ function statusPillClass(value: string) {
 const panelClass = "rounded-md border border-slate-200 bg-white shadow-sm";
 const tableClass = "w-full min-w-[760px] border-separate border-spacing-0 text-left text-sm";
 const compactTableClass = "w-full min-w-[620px] border-separate border-spacing-0 text-left text-sm";
-const thClass = "border-b border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-bold text-slate-600";
+const tableScrollClass = "max-h-[420px] overflow-auto [scrollbar-gutter:stable_both-edges]";
+const thClass = "sticky top-0 z-10 border-b border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-bold text-slate-600";
 const tdClass = "border-b border-slate-100 px-3 py-1.5 align-middle";
 const cherryTextClass = "font-bold text-rose-700";
 const cherryHoverRowClass = "bg-white hover:bg-rose-50";
@@ -526,7 +527,7 @@ function DashboardHome({
             <h3 className="text-lg font-bold">Top Opportunities</h3>
             <span className="text-sm font-semibold text-slate-500">{topOpportunities.length} rows</span>
           </div>
-          <div className="overflow-x-auto">
+          <div className={tableScrollClass}>
             <table className={tableClass}>
               <thead>
                 <tr>
@@ -625,7 +626,7 @@ function LeadSection({
             <h3 className="text-lg font-bold">리드 목록</h3>
             <span className="text-sm font-semibold text-slate-500">{leads.length} rows</span>
           </div>
-          <div className="overflow-x-auto">
+          <div className={tableScrollClass}>
             <table className={tableClass}>
               <thead>
                 <tr>
@@ -1001,7 +1002,7 @@ function AccountSection({
           <h3 className="text-lg font-bold">고객사 CRUD</h3>
             <span className="text-sm font-semibold text-slate-500">{accounts.length} rows</span>
           </div>
-          <div className="overflow-x-auto">
+          <div className={tableScrollClass}>
             <table className={compactTableClass}>
               <thead>
                 <tr>
@@ -1060,7 +1061,7 @@ function AccountSection({
           <h3 className="text-lg font-bold">연락처 CRUD</h3>
             <span className="text-sm font-semibold text-slate-500">{contacts.length} rows</span>
           </div>
-          <div className="overflow-x-auto">
+          <div className={tableScrollClass}>
             <table className={compactTableClass}>
               <thead>
                 <tr>
@@ -1160,7 +1161,7 @@ function OpportunitySection({
         <h3 className="text-lg font-bold">영업기회 상세</h3>
           <span className="text-sm font-semibold text-slate-500">{opportunities.length} rows</span>
         </div>
-        <div className="overflow-x-auto">
+        <div className={tableScrollClass}>
           <table className="w-full min-w-[1080px] border-separate border-spacing-0 text-left text-sm">
             <thead>
               <tr>
@@ -1418,7 +1419,7 @@ function ActivitySection({
         <h3 className="text-lg font-bold">활동 목록</h3>
           <span className="text-sm font-semibold text-slate-500">{activities.length} rows</span>
         </div>
-        <div className="overflow-x-auto">
+        <div className={tableScrollClass}>
           <table className={tableClass}>
             <thead>
               <tr>
