@@ -153,6 +153,14 @@ export interface LeadCreateInput {
   downloaded_material: boolean;
 }
 
+export interface LeadUpdateInput
+  extends Partial<Omit<LeadCreateInput, "employee_count" | "annual_revenue">> {
+  employee_count?: number | null;
+  annual_revenue?: string | null;
+  status?: string;
+  owner_id?: string | null;
+}
+
 export interface LeadConvertInput {
   opportunity_name?: string;
   amount: string;

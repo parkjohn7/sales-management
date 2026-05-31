@@ -25,7 +25,8 @@ import {
   updateAdminSettings,
   updateAccount,
   updateActivity,
-  updateContact
+  updateContact,
+  updateLead
 } from "../api/client";
 import { MetricCard } from "../components/MetricCard";
 import type {
@@ -128,6 +129,11 @@ function stageTone(stage: PipelineStage) {
   return "border-line bg-white";
 }
 
+function parseOptionalCount(value: string) {
+  const trimmed = value.trim();
+  return trimmed === "" ? null : Number(trimmed);
+}
+
 function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCreateLead"] }) {
   const [form, setForm] = useState<LeadCreateInput>({
     company_name: "",
@@ -135,12 +141,12 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
     email: "",
     phone: "",
     title: "",
-    lead_source: "Mobile",
+    lead_source: "Direct",
     rating: "Warm",
     annual_revenue: "",
-    employee_count: 0,
+    employee_count: undefined,
     campaign_name: "",
-    source_channel: "mobile",
+    source_channel: "manual",
     inquiry_content: "",
     budget_confirmed: false,
     authority_confirmed: false,
@@ -161,7 +167,7 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
       await onCreateLead({
         ...form,
         annual_revenue: form.annual_revenue || undefined,
-        employee_count: form.employee_count || undefined
+        employee_count: form.employee_count ?? undefined
       });
       setForm((current) => ({
         ...current,
@@ -170,10 +176,10 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
         email: "",
         phone: "",
         title: "",
-        lead_source: "Mobile",
+        lead_source: "Direct",
         rating: "Warm",
         annual_revenue: "",
-        employee_count: 0,
+        employee_count: undefined,
         campaign_name: "",
         inquiry_content: "",
         budget_confirmed: false,
@@ -188,9 +194,9 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
   }
 
   return (
-    <section className="mt-4 rounded-lg border border-line bg-white p-4 lg:hidden">
+    <section className="mt-4 rounded-lg border border-line bg-white p-4">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-lg font-bold">모바일 리드 입력</h3>
+        <h3 className="text-lg font-bold">리드 등록</h3>
         {status === "saved" && (
           <span className="inline-flex items-center gap-1 rounded-full bg-mint/10 px-2 py-1 text-xs font-bold text-mint">
             <Check className="h-3 w-3" aria-hidden="true" />
@@ -254,7 +260,7 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
               onChange={(event) => update("lead_source", event.target.value)}
               className="mt-1 w-full rounded-md border border-line px-3 py-2.5 text-sm"
             >
-              <option value="Mobile">Mobile</option>
+              <option value="Direct">Direct</option>
               <option value="Web">Web</option>
               <option value="Partner">Partner</option>
               <option value="Event">Event</option>
@@ -277,8 +283,10 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
             <input
               type="number"
               min="0"
-              value={form.employee_count}
-              onChange={(event) => update("employee_count", Number(event.target.value))}
+              value={form.employee_count ?? ""}
+              onChange={(event) =>
+                update("employee_count", parseOptionalCount(event.target.value) ?? undefined)
+              }
               className="mt-1 w-full rounded-md border border-line px-3 py-2.5 text-sm"
             />
           </label>
@@ -617,6 +625,19 @@ function LeadSection({
     }
   }
 
+  async function saveLeadEmployeeCount(lead: LeadSummary, value: string) {
+    const nextEmployeeCount = parseOptionalCount(value);
+    if (nextEmployeeCount === lead.employee_count || Number.isNaN(nextEmployeeCount)) return;
+    setStatus("직원 수 저장 중");
+    try {
+      await updateLead(lead.id, { employee_count: nextEmployeeCount });
+      setStatus("직원 수를 저장했습니다.");
+      await onDataChanged();
+    } catch {
+      setStatus("직원 수 저장 실패");
+    }
+  }
+
   return (
     <section className="space-y-4">
       <MobileSalesEntry onCreateLead={onCreateLead} />
@@ -661,7 +682,18 @@ function LeadSection({
                     <td className={`${tdClass} hidden xl:table-cell`}>{lead.campaign_name || "-"}</td>
                     <td className={`${tdClass} hidden xl:table-cell`}>
                       {lead.annual_revenue ? money(lead.annual_revenue) : "-"}
-                      {lead.employee_count ? ` / ${formatter.format(lead.employee_count)}명` : ""}
+                      <input
+                        key={`${lead.id}-${lead.employee_count ?? "empty"}`}
+                        aria-label={`${lead.company_name} 직원 수`}
+                        defaultValue={lead.employee_count ?? ""}
+                        type="number"
+                        min="0"
+                        onClick={(event) => event.stopPropagation()}
+                        onBlur={(event) => void saveLeadEmployeeCount(lead, event.target.value)}
+                        className="ml-2 w-20 rounded border border-slate-200 bg-white px-2 py-1 text-right text-sm"
+                        placeholder="직원"
+                      />
+                      <span className="ml-1 text-slate-500">명</span>
                     </td>
                     <td className={tdClass}>
                       <span className={`rounded-full px-2 py-1 text-xs font-bold ${gradeClass(lead.lead_grade)}`}>
@@ -709,6 +741,21 @@ function LeadSection({
                   <dt className="text-slate-500">점수/등급</dt>
                   <dd>
                     {selectedLead.lead_score}점 · {selectedLead.lead_grade}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">직원 수</dt>
+                  <dd>
+                    <input
+                      key={selectedLead.id}
+                      aria-label="선택 리드 직원 수"
+                      defaultValue={selectedLead.employee_count ?? ""}
+                      type="number"
+                      min="0"
+                      onBlur={(event) => void saveLeadEmployeeCount(selectedLead, event.target.value)}
+                      className="mt-1 w-full rounded-md border border-line px-3 py-2 text-sm"
+                      placeholder="직원 수 직접 입력"
+                    />
                   </dd>
                 </div>
                 <div>

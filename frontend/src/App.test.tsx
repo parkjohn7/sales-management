@@ -127,6 +127,8 @@ describe("Dashboard", () => {
 
     fireEvent.click(screen.getAllByRole("button", { name: "리드" })[0]);
     expect(screen.getByText("리드 목록")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "리드 등록" })).toBeInTheDocument();
+    expect(screen.getAllByText("직원 수")[0]).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole("button", { name: "고객사" })[0]);
     expect(screen.getByRole("heading", { name: "고객사 등록" })).toBeInTheDocument();

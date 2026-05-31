@@ -12,6 +12,7 @@ import type {
   LeadCreateInput,
   LeadConvertInput,
   LeadSummary,
+  LeadUpdateInput,
   OpportunityStageChangeInput,
   OpportunitySummary,
   PipelineStage,
@@ -332,6 +333,11 @@ export async function createAdminDevToken(): Promise<void> {
 export async function createLead(payload: LeadCreateInput): Promise<LeadSummary> {
   await ensureDevToken();
   return request<LeadSummary>("/leads", { method: "POST", body: payload });
+}
+
+export async function updateLead(leadId: string, payload: LeadUpdateInput): Promise<LeadSummary> {
+  await ensureDevToken();
+  return request<LeadSummary>(`/leads/${leadId}`, { method: "PATCH", body: payload });
 }
 
 export async function ensureDevToken(): Promise<void> {
