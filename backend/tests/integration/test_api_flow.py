@@ -63,6 +63,13 @@ def test_lead_to_opportunity_flow_and_dashboard() -> None:
             "company_name": "체리랩",
             "contact_name": "김매니저",
             "email": "kim@example.com",
+            "phone": "010-1234-5678",
+            "title": "사업기획팀장",
+            "lead_source": "Web",
+            "rating": "Hot",
+            "annual_revenue": "1200000000",
+            "employee_count": 120,
+            "campaign_name": "2026 상반기 캠페인",
             "source_channel": "website",
             "budget_confirmed": True,
             "authority_confirmed": True,
@@ -83,6 +90,18 @@ def test_lead_to_opportunity_flow_and_dashboard() -> None:
     )
     assert convert_response.status_code == 200
     opportunity_id = convert_response.json()["data"]["opportunity_id"]
+    account_id = convert_response.json()["data"]["account_id"]
+    contact_id = convert_response.json()["data"]["contact_id"]
+
+    account_response = client.get(f"/api/v1/accounts/{account_id}", headers=headers)
+    assert account_response.status_code == 200
+    assert account_response.json()["data"]["account_type"] == "Prospect"
+    assert account_response.json()["data"]["employee_count"] == 120
+
+    contact_response = client.get(f"/api/v1/contacts/{contact_id}", headers=headers)
+    assert contact_response.status_code == 200
+    assert contact_response.json()["data"]["title"] == "사업기획팀장"
+    assert contact_response.json()["data"]["mobile_phone"] == "010-1234-5678"
 
     stage_response = client.post(
         f"/api/v1/opportunities/{opportunity_id}/stage",
@@ -94,6 +113,8 @@ def test_lead_to_opportunity_flow_and_dashboard() -> None:
     assert opportunity["stage"] == "PROPOSAL"
     assert opportunity["probability"] == 50
     assert opportunity["forecast_amount"] == "5000000.00"
+    assert opportunity["opportunity_type"] == "New Business"
+    assert opportunity["primary_campaign_source"] == "2026 상반기 캠페인"
 
     activity_response = client.post(
         "/api/v1/activities",
@@ -170,6 +191,8 @@ def test_contact_crud_flow() -> None:
             "account_id": account_id,
             "name": "이의사결정권자",
             "email": "buyer@example.com",
+            "mobile_phone": "010-3333-4444",
+            "department": "구매팀",
             "role_type": "DECISION_MAKER",
         },
     )
@@ -179,6 +202,7 @@ def test_contact_crud_flow() -> None:
     read_response = client.get(f"/api/v1/contacts/{contact_id}", headers=headers)
     assert read_response.status_code == 200
     assert read_response.json()["data"]["name"] == "이의사결정권자"
+    assert read_response.json()["data"]["department"] == "구매팀"
 
     update_response = client.patch(
         f"/api/v1/contacts/{contact_id}",
@@ -201,7 +225,11 @@ def test_activity_crud_flow() -> None:
         headers=headers,
         json={
             "activity_type": "CALL",
+            "subject": "초기 통화",
             "activity_date": datetime(2026, 5, 31, 9, 30, tzinfo=UTC).isoformat(),
+            "due_date": "2026-06-03",
+            "status": "OPEN",
+            "priority": "HIGH",
             "description": "초기 통화",
         },
     )
@@ -211,14 +239,17 @@ def test_activity_crud_flow() -> None:
     read_response = client.get(f"/api/v1/activities/{activity_id}", headers=headers)
     assert read_response.status_code == 200
     assert read_response.json()["data"]["activity_type"] == "CALL"
+    assert read_response.json()["data"]["subject"] == "초기 통화"
+    assert read_response.json()["data"]["priority"] == "HIGH"
 
     update_response = client.patch(
         f"/api/v1/activities/{activity_id}",
         headers=headers,
-        json={"activity_type": "MEETING", "description": "방문 미팅"},
+        json={"activity_type": "MEETING", "description": "방문 미팅", "status": "DONE"},
     )
     assert update_response.status_code == 200
     assert update_response.json()["data"]["activity_type"] == "MEETING"
+    assert update_response.json()["data"]["status"] == "DONE"
 
     delete_response = client.delete(f"/api/v1/activities/{activity_id}", headers=headers)
     assert delete_response.status_code == 200

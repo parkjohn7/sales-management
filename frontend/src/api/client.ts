@@ -43,6 +43,12 @@ const mockLeads: LeadSummary[] = [
     id: "lead-1",
     company_name: "체리랩",
     contact_name: "김매니저",
+    title: "사업기획팀장",
+    lead_source: "Web",
+    rating: "Hot",
+    annual_revenue: "1200000000",
+    employee_count: 120,
+    campaign_name: "체리 세일즈 런칭",
     source_channel: "website",
     lead_score: 100,
     lead_grade: "HOT",
@@ -52,6 +58,12 @@ const mockLeads: LeadSummary[] = [
     id: "lead-2",
     company_name: "데이터스트림즈",
     contact_name: "이책임",
+    title: "IT팀 책임",
+    lead_source: "Chatbot",
+    rating: "Warm",
+    annual_revenue: "850000000",
+    employee_count: 80,
+    campaign_name: "AI 상담 캠페인",
     source_channel: "chatbot",
     lead_score: 65,
     lead_grade: "WARM",
@@ -70,7 +82,11 @@ const mockOpportunities: OpportunitySummary[] = [
     probability: 50,
     forecast_amount: "25000000",
     expected_close_date: "2026-06-28",
-    next_activity: "견적서 검토 회의"
+    next_activity: "견적서 검토 회의",
+    opportunity_type: "New Business",
+    next_step: "계약 검토",
+    primary_campaign_source: "체리 세일즈 런칭",
+    competitor: "Salesforce"
   },
   {
     id: "opp-2",
@@ -82,7 +98,11 @@ const mockOpportunities: OpportunitySummary[] = [
     probability: 75,
     forecast_amount: "75000000",
     expected_close_date: "2026-07-15",
-    next_activity: "계약 조건 협의"
+    next_activity: "계약 조건 협의",
+    opportunity_type: "Expansion",
+    next_step: "보안 검토",
+    primary_campaign_source: "AI 상담 캠페인",
+    competitor: "HubSpot"
   },
   {
     id: "opp-3",
@@ -94,13 +114,36 @@ const mockOpportunities: OpportunitySummary[] = [
     probability: 25,
     forecast_amount: "10500000",
     expected_close_date: "2026-07-31",
-    next_activity: "요구사항 정리"
+    next_activity: "요구사항 정리",
+    opportunity_type: "New Business",
+    next_step: "PoC 범위 확정",
+    primary_campaign_source: "제조 세미나",
+    competitor: null
   }
 ];
 
 const mockAccounts: AccountSummary[] = [
-  { id: "account-1", name: "체리랩", industry: "SaaS", website: "https://cherrylab.example" },
-  { id: "account-2", name: "데이터스트림즈", industry: "데이터" }
+  {
+    id: "account-1",
+    name: "체리랩",
+    industry: "SaaS",
+    website: "https://cherrylab.example",
+    account_type: "Customer",
+    annual_revenue: "1200000000",
+    employee_count: 120,
+    phone: "02-1234-5678",
+    owner_id: "김도현"
+  },
+  {
+    id: "account-2",
+    name: "데이터스트림즈",
+    industry: "데이터",
+    account_type: "Prospect",
+    annual_revenue: "850000000",
+    employee_count: 80,
+    phone: "02-555-0101",
+    owner_id: "박서연"
+  }
 ];
 
 const mockContacts: ContactSummary[] = [
@@ -109,7 +152,9 @@ const mockContacts: ContactSummary[] = [
     account_id: "account-1",
     name: "김매니저",
     email: "kim@example.com",
+    mobile_phone: "010-1234-5678",
     title: "사업기획팀장",
+    department: "사업기획팀",
     role_type: "DECISION_MAKER"
   }
 ];
@@ -118,8 +163,12 @@ const mockActivities: ActivitySummary[] = [
   {
     id: "activity-1",
     opportunity_id: "opp-1",
+    subject: "도입 범위 협의",
     activity_type: "MEETING",
     activity_date: "2026-05-31T09:30:00+09:00",
+    due_date: "2026-06-03",
+    status: "OPEN",
+    priority: "HIGH",
     description: "도입 범위 협의",
     owner_id: "김도현"
   }
@@ -163,7 +212,7 @@ async function request<T>(
   options: { method?: string; body?: unknown } = {}
 ): Promise<T> {
   const token = localStorage.getItem("sales-management-token");
-  const response = await fetch(`${API_BASE}${path}`, {
+  let response = await fetch(`${API_BASE}${path}`, {
     method: options.method ?? "GET",
     headers: {
       ...(options.body ? { "Content-Type": "application/json" } : {}),
@@ -171,6 +220,19 @@ async function request<T>(
     },
     body: options.body ? JSON.stringify(options.body) : undefined
   });
+  if (response.status === 401 && token) {
+    localStorage.removeItem("sales-management-token");
+    await createDevToken();
+    const refreshedToken = localStorage.getItem("sales-management-token");
+    response = await fetch(`${API_BASE}${path}`, {
+      method: options.method ?? "GET",
+      headers: {
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...(refreshedToken ? { Authorization: `Bearer ${refreshedToken}` } : {})
+      },
+      body: options.body ? JSON.stringify(options.body) : undefined
+    });
+  }
   if (!response.ok) {
     throw new Error(`API request failed: ${response.status}`);
   }

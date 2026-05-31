@@ -6,7 +6,6 @@ import { Dashboard } from "./features/Dashboard";
 describe("Dashboard", () => {
   const props = {
     usingMockData: false,
-    onConnectDevToken: () => undefined,
     onCreateLead: async () => undefined,
     onDataChanged: async () => undefined,
     kpis: {

@@ -8,20 +8,22 @@ interface MetricCardProps {
 }
 
 const toneClass = {
-  mint: "border-mint/30 bg-mint/5 text-mint",
-  gold: "border-gold/30 bg-gold/5 text-gold",
-  coral: "border-coral/30 bg-coral/5 text-coral",
-  ink: "border-ink/20 bg-ink/5 text-ink"
+  mint: "from-emerald-50 to-white text-emerald-700 ring-emerald-100",
+  gold: "from-amber-50 to-white text-amber-700 ring-amber-100",
+  coral: "from-rose-50 to-white text-rose-700 ring-rose-100",
+  ink: "from-slate-100 to-white text-slate-700 ring-slate-200"
 };
 
 export function MetricCard({ icon: Icon, label, value, tone }: MetricCardProps) {
   return (
-    <section className={`rounded-lg border p-4 ${toneClass[tone]}`}>
-      <div className="flex items-center gap-2 text-sm font-medium">
-        <Icon className="h-4 w-4" aria-hidden="true" />
-        <span>{label}</span>
+    <section className={`rounded-lg bg-gradient-to-br p-4 shadow-sm ring-1 ${toneClass[tone]}`}>
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm font-semibold text-slate-500">{label}</span>
+        <span className="rounded-md bg-white p-2 shadow-sm ring-1 ring-black/5">
+          <Icon className="h-4 w-4" aria-hidden="true" />
+        </span>
       </div>
-      <strong className="mt-3 block text-2xl text-ink">{value}</strong>
+      <strong className="mt-4 block text-2xl text-slate-950">{value}</strong>
     </section>
   );
 }

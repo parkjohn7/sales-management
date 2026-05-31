@@ -14,7 +14,14 @@ def convert_lead(
     amount: Decimal | int | str = Decimal("0"),
     owner_id: str | None = None,
 ) -> tuple[Account, Contact, Opportunity]:
-    account = Account(name=lead.company_name)
+    account = Account(
+        name=lead.company_name,
+        account_type="Prospect",
+        annual_revenue=lead.annual_revenue,
+        employee_count=lead.employee_count,
+        phone=lead.phone,
+        owner_id=owner_id or lead.owner_id,
+    )
     db.add(account)
     db.flush()
 
@@ -23,6 +30,8 @@ def convert_lead(
         name=lead.contact_name,
         email=lead.email,
         phone=lead.phone,
+        mobile_phone=lead.phone,
+        title=lead.title,
         role_type="UNKNOWN",
     )
     db.add(contact)
@@ -39,6 +48,9 @@ def convert_lead(
         probability=probability,
         forecast_amount=calculate_forecast_amount(amount, probability),
         owner_id=owner_id or lead.owner_id,
+        opportunity_type="New Business",
+        next_step="Discovery",
+        primary_campaign_source=lead.campaign_name,
     )
     db.add(opportunity)
 

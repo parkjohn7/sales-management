@@ -24,6 +24,11 @@ class AccountCreate(BaseModel):
     industry: str | None = None
     website: str | None = None
     address: str | None = None
+    account_type: str | None = None
+    annual_revenue: Decimal | None = Field(default=None, ge=0)
+    employee_count: int | None = Field(default=None, ge=0)
+    phone: str | None = None
+    owner_id: str | None = None
 
 
 class AccountUpdate(BaseModel):
@@ -32,6 +37,11 @@ class AccountUpdate(BaseModel):
     industry: str | None = None
     website: str | None = None
     address: str | None = None
+    account_type: str | None = None
+    annual_revenue: Decimal | None = Field(default=None, ge=0)
+    employee_count: int | None = Field(default=None, ge=0)
+    phone: str | None = None
+    owner_id: str | None = None
 
 
 class AccountRead(AccountCreate):
@@ -49,6 +59,8 @@ class ContactCreate(BaseModel):
     phone: str | None = None
     title: str | None = None
     role_type: str | None = None
+    mobile_phone: str | None = None
+    department: str | None = None
 
 
 class ContactUpdate(BaseModel):
@@ -58,6 +70,8 @@ class ContactUpdate(BaseModel):
     phone: str | None = None
     title: str | None = None
     role_type: str | None = None
+    mobile_phone: str | None = None
+    department: str | None = None
 
 
 class ContactRead(ContactCreate):
@@ -73,6 +87,12 @@ class LeadCreate(BaseModel):
     contact_name: str = Field(min_length=1, max_length=120)
     email: str | None = None
     phone: str | None = None
+    title: str | None = None
+    lead_source: str | None = None
+    rating: str | None = None
+    annual_revenue: Decimal | None = Field(default=None, ge=0)
+    employee_count: int | None = Field(default=None, ge=0)
+    campaign_name: str | None = None
     source_channel: str = "manual"
     inquiry_content: str | None = None
     budget_confirmed: bool = False
@@ -90,6 +110,12 @@ class LeadUpdate(BaseModel):
     contact_name: str | None = Field(default=None, min_length=1, max_length=120)
     email: str | None = None
     phone: str | None = None
+    title: str | None = None
+    lead_source: str | None = None
+    rating: str | None = None
+    annual_revenue: Decimal | None = Field(default=None, ge=0)
+    employee_count: int | None = Field(default=None, ge=0)
+    campaign_name: str | None = None
     source_channel: str | None = None
     inquiry_content: str | None = None
     budget_confirmed: bool | None = None
@@ -130,6 +156,10 @@ class OpportunityCreate(BaseModel):
     amount: Decimal = Field(default=Decimal("0"), ge=0)
     expected_close_date: date | None = None
     owner_id: str | None = None
+    opportunity_type: str | None = None
+    next_step: str | None = None
+    primary_campaign_source: str | None = None
+    competitor: str | None = None
 
 
 class OpportunityUpdate(BaseModel):
@@ -137,6 +167,10 @@ class OpportunityUpdate(BaseModel):
     amount: Decimal | None = Field(default=None, ge=0)
     expected_close_date: date | None = None
     owner_id: str | None = None
+    opportunity_type: str | None = None
+    next_step: str | None = None
+    primary_campaign_source: str | None = None
+    competitor: str | None = None
 
 
 class OpportunityStageChangeRequest(BaseModel):
@@ -161,8 +195,12 @@ class OpportunityRead(OpportunityCreate):
 class ActivityCreate(BaseModel):
     lead_id: str | None = None
     opportunity_id: str | None = None
+    subject: str | None = None
     activity_type: str
     activity_date: datetime
+    due_date: date | None = None
+    status: str | None = None
+    priority: str | None = None
     description: str | None = None
     owner_id: str | None = None
 
@@ -170,8 +208,12 @@ class ActivityCreate(BaseModel):
 class ActivityUpdate(BaseModel):
     lead_id: str | None = None
     opportunity_id: str | None = None
+    subject: str | None = None
     activity_type: str | None = None
     activity_date: datetime | None = None
+    due_date: date | None = None
+    status: str | None = None
+    priority: str | None = None
     description: str | None = None
     owner_id: str | None = None
 

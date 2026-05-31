@@ -28,6 +28,12 @@ export interface LeadSummary {
   contact_name: string;
   email?: string | null;
   phone?: string | null;
+  title?: string | null;
+  lead_source?: string | null;
+  rating?: string | null;
+  annual_revenue?: string | null;
+  employee_count?: number | null;
+  campaign_name?: string | null;
   source_channel: string;
   inquiry_content?: string | null;
   lead_score: number;
@@ -49,6 +55,10 @@ export interface OpportunitySummary {
   owner_name?: string;
   expected_close_date?: string | null;
   next_activity?: string;
+  opportunity_type?: string | null;
+  next_step?: string | null;
+  primary_campaign_source?: string | null;
+  competitor?: string | null;
 }
 
 export interface AccountSummary {
@@ -58,6 +68,11 @@ export interface AccountSummary {
   industry?: string | null;
   website?: string | null;
   address?: string | null;
+  account_type?: string | null;
+  annual_revenue?: string | null;
+  employee_count?: number | null;
+  phone?: string | null;
+  owner_id?: string | null;
 }
 
 export interface ContactSummary {
@@ -68,14 +83,20 @@ export interface ContactSummary {
   phone?: string | null;
   title?: string | null;
   role_type?: string | null;
+  mobile_phone?: string | null;
+  department?: string | null;
 }
 
 export interface ActivitySummary {
   id: string;
   lead_id?: string | null;
   opportunity_id?: string | null;
+  subject?: string | null;
   activity_type: string;
   activity_date: string;
+  due_date?: string | null;
+  status?: string | null;
+  priority?: string | null;
   description?: string | null;
   owner_id?: string | null;
 }
@@ -117,6 +138,12 @@ export interface LeadCreateInput {
   contact_name: string;
   email?: string;
   phone?: string;
+  title?: string;
+  lead_source?: string;
+  rating?: string;
+  annual_revenue?: string;
+  employee_count?: number;
+  campaign_name?: string;
   source_channel: string;
   inquiry_content?: string;
   budget_confirmed: boolean;
@@ -144,6 +171,11 @@ export interface AccountInput {
   industry?: string;
   website?: string;
   address?: string;
+  account_type?: string;
+  annual_revenue?: string;
+  employee_count?: number;
+  phone?: string;
+  owner_id?: string;
 }
 
 export interface ContactInput {
@@ -153,13 +185,19 @@ export interface ContactInput {
   phone?: string;
   title?: string;
   role_type?: string;
+  mobile_phone?: string;
+  department?: string;
 }
 
 export interface ActivityInput {
   lead_id?: string;
   opportunity_id?: string;
+  subject?: string;
   activity_type: string;
   activity_date: string;
+  due_date?: string;
+  status?: string;
+  priority?: string;
   description?: string;
 }
 
