@@ -114,7 +114,7 @@ describe("Dashboard", () => {
   it("renders the Korean product name and KPI labels", () => {
     render(<Dashboard {...props} />);
 
-    expect(screen.getByText("영업관리시스템")).toBeInTheDocument();
+    expect(screen.getAllByText("Cherrysales")[0]).toBeInTheDocument();
     expect(screen.getByText("Hot Lead")).toBeInTheDocument();
     expect(screen.getByText("사업별 스테이지 매핑")).toBeInTheDocument();
   });

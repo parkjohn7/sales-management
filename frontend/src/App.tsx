@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { createDevToken, createLead, loadDashboard } from "./api/client";
+import { createLead, loadDashboard } from "./api/client";
 import type {
   AccountSummary,
   ActivitySummary,
@@ -37,11 +37,6 @@ export function App() {
     void loadDashboard().then(setState);
   }, []);
 
-  async function handleConnectDevToken() {
-    await createDevToken();
-    setState(await loadDashboard());
-  }
-
   async function handleCreateLead(payload: LeadCreateInput) {
     await createLead(payload);
     setState(await loadDashboard());
@@ -64,7 +59,6 @@ export function App() {
   return (
     <Dashboard
       {...state}
-      onConnectDevToken={handleConnectDevToken}
       onCreateLead={handleCreateLead}
       onDataChanged={handleDataChanged}
     />

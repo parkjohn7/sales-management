@@ -49,7 +49,6 @@ interface DashboardProps {
   adminSettings: AdminSettings;
   rolePolicies: RolePolicy[];
   usingMockData: boolean;
-  onConnectDevToken: () => void;
   onCreateLead: (payload: LeadCreateInput) => Promise<void>;
   onDataChanged: () => Promise<void>;
 }
@@ -76,6 +75,18 @@ function gradeClass(grade: LeadSummary["lead_grade"]) {
   if (grade === "WARM") return "bg-gold/10 text-gold";
   return "bg-ink/10 text-ink";
 }
+
+function statusPillClass(value: string) {
+  if (value.includes("WON") || value === "HOT") return "bg-emerald-50 text-emerald-700";
+  if (value.includes("LOST")) return "bg-rose-50 text-rose-700";
+  if (value === "WARM" || value.includes("PROPOSAL")) return "bg-amber-50 text-amber-700";
+  return "bg-slate-100 text-slate-700";
+}
+
+const panelClass = "rounded-md border border-slate-200 bg-white shadow-sm";
+const tableClass = "w-full min-w-[760px] border-separate border-spacing-0 text-left text-sm";
+const thClass = "border-b border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-500";
+const tdClass = "border-b border-slate-100 px-3 py-2 align-middle";
 
 const stageLabels: Record<PipelineStage, string> = {
   LEAD: "Lead",
@@ -370,39 +381,53 @@ function LeadSection({
     <section className="space-y-5">
       <MobileSalesEntry onCreateLead={onCreateLead} />
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="rounded-lg border border-line bg-white p-5">
-        <h3 className="text-base font-bold">리드 목록</h3>
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {leads.map((lead) => (
-            <button
-              key={lead.id}
-              type="button"
-              onClick={() => setSelectedLeadId(lead.id)}
-              className={`rounded-md border p-4 text-left ${
-                selectedLead?.id === lead.id ? "border-mint bg-mint/5" : "border-line bg-white"
-              }`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <strong>{lead.company_name}</strong>
-                <span
-                  className={`rounded-full px-2 py-1 text-xs font-bold ${gradeClass(
-                    lead.lead_grade
-                  )}`}
-                >
-                  {lead.lead_grade}
-                </span>
-              </div>
-              <p className="mt-2 text-sm text-slate-600">
-                {lead.contact_name} · {lead.source_channel}
-              </p>
-              <p className="mt-1 text-sm font-medium">
-                {lead.lead_score}점 · {lead.status}
-              </p>
-            </button>
-          ))}
+        <div className={`${panelClass} overflow-hidden`}>
+          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
+            <h3 className="text-base font-bold">리드 목록</h3>
+            <span className="text-xs font-semibold text-slate-500">{leads.length} rows</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className={tableClass}>
+              <thead>
+                <tr>
+                  <th className={thClass}>고객사</th>
+                  <th className={thClass}>담당자</th>
+                  <th className={thClass}>채널</th>
+                  <th className={thClass}>등급</th>
+                  <th className={thClass}>점수</th>
+                  <th className={thClass}>상태</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leads.map((lead) => (
+                  <tr
+                    key={lead.id}
+                    onClick={() => setSelectedLeadId(lead.id)}
+                    className={`cursor-pointer hover:bg-sky-50 ${
+                      selectedLead?.id === lead.id ? "bg-sky-50" : "bg-white"
+                    }`}
+                  >
+                    <td className={`${tdClass} font-bold text-sky-700`}>{lead.company_name}</td>
+                    <td className={tdClass}>{lead.contact_name}</td>
+                    <td className={tdClass}>{lead.source_channel}</td>
+                    <td className={tdClass}>
+                      <span className={`rounded-full px-2 py-1 text-xs font-bold ${gradeClass(lead.lead_grade)}`}>
+                        {lead.lead_grade}
+                      </span>
+                    </td>
+                    <td className={tdClass}>{lead.lead_score}</td>
+                    <td className={tdClass}>
+                      <span className={`rounded-full px-2 py-1 text-xs font-bold ${statusPillClass(lead.status)}`}>
+                        {lead.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
-        <aside className="rounded-lg border border-line bg-white p-5">
+        <aside className={`${panelClass} p-5`}>
           <h3 className="text-base font-bold">리드 상세/전환</h3>
           {selectedLead ? (
             <>
@@ -611,66 +636,110 @@ function AccountSection({
         </form>
       </div>
       <div className="space-y-5">
-        <section className="rounded-lg border border-line bg-white p-5">
+        <section className={`${panelClass} overflow-hidden`}>
+          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
           <h3 className="text-base font-bold">고객사 CRUD</h3>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {accounts.map((account) => (
-              <article key={account.id} className="rounded-md border border-line p-4">
-                <input
-                  defaultValue={account.name}
-                  onBlur={async (event) => {
-                    if (event.target.value !== account.name) {
-                      await updateAccount(account.id, { name: event.target.value });
-                      await onDataChanged();
-                    }
-                  }}
-                  className="w-full rounded-md border border-line px-3 py-2 font-bold"
-                />
-                <p className="mt-2 text-sm text-slate-600">{account.industry || "산업 미입력"}</p>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await deleteAccount(account.id);
-                    await onDataChanged();
-                  }}
-                  className="mt-3 rounded-md border border-coral px-3 py-2 text-sm font-bold text-coral"
-                >
-                  삭제
-                </button>
-              </article>
-            ))}
+            <span className="text-xs font-semibold text-slate-500">{accounts.length} rows</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className={tableClass}>
+              <thead>
+                <tr>
+                  <th className={thClass}>고객사</th>
+                  <th className={thClass}>산업</th>
+                  <th className={thClass}>웹사이트</th>
+                  <th className={thClass}>주소</th>
+                  <th className={thClass}>작업</th>
+                </tr>
+              </thead>
+              <tbody>
+                {accounts.map((account) => (
+                  <tr key={account.id} className="bg-white hover:bg-sky-50">
+                    <td className={tdClass}>
+                      <input
+                        defaultValue={account.name}
+                        onBlur={async (event) => {
+                          if (event.target.value !== account.name) {
+                            await updateAccount(account.id, { name: event.target.value });
+                            await onDataChanged();
+                          }
+                        }}
+                        className="w-full rounded border border-transparent bg-transparent px-2 py-1 font-bold text-sky-700 hover:border-slate-200"
+                      />
+                    </td>
+                    <td className={tdClass}>{account.industry || "산업 미입력"}</td>
+                    <td className={tdClass}>{account.website || "-"}</td>
+                    <td className={tdClass}>{account.address || "-"}</td>
+                    <td className={tdClass}>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await deleteAccount(account.id);
+                          await onDataChanged();
+                        }}
+                        className="rounded border border-rose-200 px-2 py-1 text-xs font-bold text-rose-600"
+                      >
+                        삭제
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
-        <section className="rounded-lg border border-line bg-white p-5">
+        <section className={`${panelClass} overflow-hidden`}>
+          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
           <h3 className="text-base font-bold">연락처 CRUD</h3>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {contacts.map((contact) => (
-              <article key={contact.id} className="rounded-md border border-line p-4">
-                <input
-                  defaultValue={contact.name}
-                  onBlur={async (event) => {
-                    if (event.target.value !== contact.name) {
-                      await updateContact(contact.id, { name: event.target.value });
-                      await onDataChanged();
-                    }
-                  }}
-                  className="w-full rounded-md border border-line px-3 py-2 font-bold"
-                />
-                <p className="mt-2 text-sm text-slate-600">
-                  {contact.title || "직책 미입력"} · {contact.email || "이메일 없음"}
-                </p>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await deleteContact(contact.id);
-                    await onDataChanged();
-                  }}
-                  className="mt-3 rounded-md border border-coral px-3 py-2 text-sm font-bold text-coral"
-                >
-                  삭제
-                </button>
-              </article>
-            ))}
+            <span className="text-xs font-semibold text-slate-500">{contacts.length} rows</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className={tableClass}>
+              <thead>
+                <tr>
+                  <th className={thClass}>이름</th>
+                  <th className={thClass}>고객사 ID</th>
+                  <th className={thClass}>직책</th>
+                  <th className={thClass}>이메일</th>
+                  <th className={thClass}>전화</th>
+                  <th className={thClass}>작업</th>
+                </tr>
+              </thead>
+              <tbody>
+                {contacts.map((contact) => (
+                  <tr key={contact.id} className="bg-white hover:bg-sky-50">
+                    <td className={tdClass}>
+                      <input
+                        defaultValue={contact.name}
+                        onBlur={async (event) => {
+                          if (event.target.value !== contact.name) {
+                            await updateContact(contact.id, { name: event.target.value });
+                            await onDataChanged();
+                          }
+                        }}
+                        className="w-full rounded border border-transparent bg-transparent px-2 py-1 font-bold text-sky-700 hover:border-slate-200"
+                      />
+                    </td>
+                    <td className={tdClass}>{contact.account_id}</td>
+                    <td className={tdClass}>{contact.title || "직책 미입력"}</td>
+                    <td className={tdClass}>{contact.email || "-"}</td>
+                    <td className={tdClass}>{contact.phone || "-"}</td>
+                    <td className={tdClass}>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await deleteContact(contact.id);
+                          await onDataChanged();
+                        }}
+                        className="rounded border border-rose-200 px-2 py-1 text-xs font-bold text-rose-600"
+                      >
+                        삭제
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
         {status && <p className="text-sm font-medium text-slate-700">{status}</p>}
@@ -695,8 +764,7 @@ function OpportunitySection({
     return stageForms[opportunity.id] ?? { stage: opportunity.stage, reason: "" };
   }
 
-  async function handleStageChange(event: FormEvent, opportunity: OpportunitySummary) {
-    event.preventDefault();
+  async function saveStageChange(opportunity: OpportunitySummary) {
     const form = formFor(opportunity);
     setStatus("단계 변경 중");
     try {
@@ -708,78 +776,99 @@ function OpportunitySection({
     }
   }
 
+  async function handleStageChange(event: FormEvent, opportunity: OpportunitySummary) {
+    event.preventDefault();
+    await saveStageChange(opportunity);
+  }
+
   return (
     <section className="space-y-5">
       <StageMatrix opportunities={opportunities} leads={leads} />
-      <div className="rounded-lg border border-line bg-white p-5">
+      <div className={`${panelClass} overflow-hidden`}>
+        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
         <h3 className="text-base font-bold">영업기회 상세</h3>
-        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {opportunities.map((opportunity) => {
-            const form = formFor(opportunity);
-            return (
-            <article key={opportunity.id} className="rounded-md border border-line p-4">
-              <div className="text-xs font-bold text-mint">{stageLabels[opportunity.stage]}</div>
-              <strong className="mt-1 block">{opportunity.name}</strong>
-              <p className="mt-2 text-sm text-slate-600">
-                {opportunity.account_name ?? "고객사 미정"} · {opportunity.owner_name ?? "담당자 미정"}
-              </p>
-              <p className="mt-2 text-sm">
-                {money(opportunity.amount)} · Forecast {money(opportunity.forecast_amount)}
-              </p>
-              <form className="mt-4 space-y-2" onSubmit={(event) => handleStageChange(event, opportunity)}>
-                <label className="block text-sm font-medium">
-                  단계 변경
-                  <select
-                    value={form.stage}
-                    onChange={(event) =>
-                      setStageForms((current) => ({
-                        ...current,
-                        [opportunity.id]: {
-                          ...form,
-                          stage: event.target.value as PipelineStage
+          <span className="text-xs font-semibold text-slate-500">{opportunities.length} rows</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1080px] border-separate border-spacing-0 text-left text-sm">
+            <thead>
+              <tr>
+                <th className={thClass}>영업기회</th>
+                <th className={thClass}>고객사</th>
+                <th className={thClass}>현재 단계</th>
+                <th className={thClass}>예상 금액</th>
+                <th className={thClass}>Forecast</th>
+                <th className={thClass}>단계 변경</th>
+                <th className={thClass}>사유</th>
+                <th className={thClass}>작업</th>
+              </tr>
+            </thead>
+            <tbody>
+              {opportunities.map((opportunity) => {
+                const form = formFor(opportunity);
+                return (
+                  <tr key={opportunity.id} className="bg-white hover:bg-sky-50">
+                    <td className={`${tdClass} font-bold text-sky-700`}>{opportunity.name}</td>
+                    <td className={tdClass}>{opportunity.account_name ?? "고객사 미정"}</td>
+                    <td className={tdClass}>
+                      <span className={`rounded-full px-2 py-1 text-xs font-bold ${statusPillClass(opportunity.stage)}`}>
+                        {stageLabels[opportunity.stage]}
+                      </span>
+                    </td>
+                    <td className={tdClass}>{money(opportunity.amount)}</td>
+                    <td className={tdClass}>{money(opportunity.forecast_amount)}</td>
+                    <td className={tdClass}>
+                      <select
+                        aria-label="단계 변경"
+                        value={form.stage}
+                        onChange={(event) =>
+                          setStageForms((current) => ({
+                            ...current,
+                            [opportunity.id]: {
+                              ...form,
+                              stage: event.target.value as PipelineStage
+                            }
+                          }))
                         }
-                      }))
-                    }
-                    className="mt-1 w-full rounded-md border border-line px-3 py-2"
-                  >
-                    {stages.map((stage) => (
-                      <option key={stage} value={stage}>
-                        {stageLabels[stage]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <input
-                  value={form.reason ?? ""}
-                  onChange={(event) =>
-                    setStageForms((current) => ({
-                      ...current,
-                      [opportunity.id]: { ...form, reason: event.target.value }
-                    }))
-                  }
-                  className="w-full rounded-md border border-line px-3 py-2 text-sm"
-                  placeholder="변경 사유"
-                />
-                {form.stage === "CLOSED_LOST" && (
-                  <input
-                    value={form.lost_reason ?? ""}
-                    onChange={(event) =>
-                      setStageForms((current) => ({
-                        ...current,
-                        [opportunity.id]: { ...form, lost_reason: event.target.value }
-                      }))
-                    }
-                    className="w-full rounded-md border border-line px-3 py-2 text-sm"
-                    placeholder="Lost 사유"
-                    required
-                  />
-                )}
-                <button className="w-full rounded-md border border-mint px-3 py-2 text-sm font-bold text-mint">
-                  단계 저장
-                </button>
-              </form>
-            </article>
-          )})}
+                        className="w-full rounded border border-slate-200 px-2 py-1"
+                      >
+                        {stages.map((stage) => (
+                          <option key={stage} value={stage}>
+                            {stageLabels[stage]}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className={tdClass}>
+                      <input
+                        value={form.stage === "CLOSED_LOST" ? form.lost_reason ?? "" : form.reason ?? ""}
+                        onChange={(event) =>
+                          setStageForms((current) => ({
+                            ...current,
+                            [opportunity.id]:
+                              form.stage === "CLOSED_LOST"
+                                ? { ...form, lost_reason: event.target.value }
+                                : { ...form, reason: event.target.value }
+                          }))
+                        }
+                        className="w-full rounded border border-slate-200 px-2 py-1"
+                        placeholder={form.stage === "CLOSED_LOST" ? "Lost 사유" : "변경 사유"}
+                      />
+                    </td>
+                    <td className={tdClass}>
+                      <button
+                        type="button"
+                        onClick={() => void saveStageChange(opportunity)}
+                        className="rounded border border-sky-200 px-2 py-1 text-xs font-bold text-sky-700"
+                      >
+                        단계 저장
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
         {status && <p className="mt-3 text-sm font-medium text-slate-700">{status}</p>}
       </div>
@@ -902,40 +991,57 @@ function ActivitySection({
           {status && <p className="text-sm font-medium text-slate-700">{status}</p>}
         </div>
       </form>
-      <div className="rounded-lg border border-line bg-white p-5">
+      <div className={`${panelClass} overflow-hidden`}>
+        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
         <h3 className="text-base font-bold">활동 목록</h3>
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {activities.map((activity) => (
-            <article key={activity.id} className="rounded-md border border-line p-4">
-              <strong>{activity.activity_type}</strong>
-              <p className="mt-2 text-sm text-slate-600">{activity.description || "내용 없음"}</p>
-              <p className="mt-1 text-xs font-bold text-mint">
-                {new Date(activity.activity_date).toLocaleString("ko-KR")}
-              </p>
-              <div className="mt-3 flex gap-2">
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await updateActivity(activity.id, { description: "후속 조치 필요" });
-                    await onDataChanged();
-                  }}
-                  className="rounded-md border border-line px-3 py-2 text-sm font-bold"
-                >
-                  후속 표시
-                </button>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await deleteActivity(activity.id);
-                    await onDataChanged();
-                  }}
-                  className="rounded-md border border-coral px-3 py-2 text-sm font-bold text-coral"
-                >
-                  삭제
-                </button>
-              </div>
-            </article>
-          ))}
+          <span className="text-xs font-semibold text-slate-500">{activities.length} rows</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className={tableClass}>
+            <thead>
+              <tr>
+                <th className={thClass}>유형</th>
+                <th className={thClass}>일시</th>
+                <th className={thClass}>내용</th>
+                <th className={thClass}>담당</th>
+                <th className={thClass}>작업</th>
+              </tr>
+            </thead>
+            <tbody>
+              {activities.map((activity) => (
+                <tr key={activity.id} className="bg-white hover:bg-sky-50">
+                  <td className={`${tdClass} font-bold text-sky-700`}>{activity.activity_type}</td>
+                  <td className={tdClass}>{new Date(activity.activity_date).toLocaleString("ko-KR")}</td>
+                  <td className={tdClass}>{activity.description || "내용 없음"}</td>
+                  <td className={tdClass}>{activity.owner_id || "-"}</td>
+                  <td className={tdClass}>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await updateActivity(activity.id, { description: "후속 조치 필요" });
+                          await onDataChanged();
+                        }}
+                        className="rounded border border-slate-200 px-2 py-1 text-xs font-bold"
+                      >
+                        후속
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await deleteActivity(activity.id);
+                          await onDataChanged();
+                        }}
+                        className="rounded border border-rose-200 px-2 py-1 text-xs font-bold text-rose-600"
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
@@ -1189,7 +1295,6 @@ export function Dashboard({
   adminSettings,
   rolePolicies,
   usingMockData,
-  onConnectDevToken,
   onCreateLead,
   onDataChanged
 }: DashboardProps) {
@@ -1202,16 +1307,23 @@ export function Dashboard({
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f7f8] text-ink">
-      <div className="mx-auto flex max-w-7xl gap-6 px-6 py-6">
-        <aside className="hidden w-60 shrink-0 border-r border-line pr-5 lg:block">
-          <h1 className="text-xl font-bold">영업관리시스템</h1>
+    <main className="min-h-screen bg-slate-100 text-ink">
+      <div className="mx-auto flex max-w-[1440px] gap-0 px-4 py-4 sm:px-6">
+        <aside className="hidden w-64 shrink-0 rounded-l-md border border-slate-200 bg-[#0f172a] p-4 text-white shadow-sm lg:block">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-300">Cherrylab</p>
+            <h1 className="mt-1 text-2xl font-bold">Cherrysales</h1>
+          </div>
           <nav className="mt-8 space-y-1 text-sm">
             {menuItems.map((item) => (
               <button
                 key={item}
                 onClick={() => setActiveView(item)}
-                className={`flex w-full items-center rounded-md px-3 py-2 text-left ${menuClass(item)}`}
+                className={`flex w-full items-center rounded-md px-3 py-2 text-left ${
+                  item === activeView
+                    ? "bg-sky-500 text-white"
+                    : "bg-transparent text-slate-200 hover:bg-white/10"
+                }`}
               >
                 {item}
               </button>
@@ -1219,18 +1331,15 @@ export function Dashboard({
           </nav>
         </aside>
 
-        <section className="min-w-0 flex-1">
-          <header className="flex flex-wrap items-center justify-between gap-3">
+        <section className="min-w-0 flex-1 rounded-r-md border border-l-0 border-slate-200 bg-slate-50 p-5 shadow-sm">
+          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
             <div>
-              <p className="text-sm font-medium text-mint">Pipeline, Forecast, Follow-up</p>
-              <h2 className="text-2xl font-bold">영업 현황</h2>
+              <p className="text-sm font-bold text-sky-600">Cherrylab Sales Cloud</p>
+              <h2 className="text-2xl font-bold">Cherrysales</h2>
             </div>
-            <button
-              onClick={onConnectDevToken}
-              className="rounded-md border border-line bg-white px-4 py-2 text-sm font-medium hover:border-mint"
-            >
-              개발 토큰 연결
-            </button>
+            <div className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-bold text-slate-600">
+              MVP Workspace
+            </div>
           </header>
 
           {usingMockData && (

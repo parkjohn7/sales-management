@@ -192,6 +192,7 @@ export async function loadDashboard(): Promise<{
   usingMockData: boolean;
 }> {
   try {
+    await ensureDevToken();
     const overview = await request<{ kpis: DashboardKpis; pipeline: PipelineSummary[] }>(
       "/dashboard/overview"
     );
