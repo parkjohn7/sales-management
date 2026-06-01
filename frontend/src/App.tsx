@@ -109,6 +109,10 @@ export function App() {
     const result = await changeLoginUserPassword(currentUser.email, currentPassword, nextPassword);
     setPasswordStatus(result.message);
     if (result.success) {
+      setCurrentUser((previous) =>
+        previous ? { ...previous, must_change_password: false } : previous
+      );
+      setShowPasswordModal(false);
       setCurrentPassword("");
       setNextPassword("");
       const nextUsers = await loadLoginUsers();
@@ -117,7 +121,6 @@ export function App() {
         (user) => user.email.toLowerCase() === currentUser.email.toLowerCase()
       );
       if (nextCurrent) setCurrentUser(nextCurrent);
-      setTimeout(() => setShowPasswordModal(false), 800);
     }
   }
 
