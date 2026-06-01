@@ -332,7 +332,10 @@ function MobileSalesEntry({
         </div>
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm font-medium">
-            리드처리상태
+            <EnumLabel
+              label="리드처리상태"
+              hint="NEW: 신규 등록, WORKING: 접촉/검토 중, CONVERTED: 고객사·영업기회 전환 완료"
+            />
             <input
               value={isEdit ? (selectedLead?.status ?? "-") : "NEW (생성 시 자동 설정)"}
               readOnly
@@ -340,7 +343,10 @@ function MobileSalesEntry({
             />
           </label>
           <label className="block text-sm font-medium">
-            리드품질
+            <EnumLabel
+              label="리드품질"
+              hint="HOT/WARM/COLD는 점수 기준으로 자동 계산됩니다. 점수는 예산·의사결정권·도입시기 등으로 산정됩니다."
+            />
             <input
               value={
                 isEdit
@@ -395,11 +401,11 @@ function MobileSalesEntry({
         </label>
         <div className="grid grid-cols-2 gap-2 text-sm">
           {[
-            ["budget_confirmed", "예산 확인"],
-            ["authority_confirmed", "의사결정권"],
-            ["timeline_within_3_months", "3개월 내"],
-            ["downloaded_material", "자료 요청"]
-          ].map(([key, label]) => (
+            ["budget_confirmed", "예산 확인", "구매 예산이 실제로 확보되었는지 여부입니다."],
+            ["authority_confirmed", "의사결정권", "담당자가 의사결정권자이거나 의사결정 라인에 연결되어 있는지 여부입니다."],
+            ["timeline_within_3_months", "3개월 내", "도입 예정 시점이 3개월 내인지 여부입니다."],
+            ["downloaded_material", "자료 요청", "제품 소개서/제안서 등 자료를 요청했는지 여부입니다."]
+          ].map(([key, label, hint]) => (
             <label key={key} className="flex items-center gap-2 rounded-md border border-line p-3">
               <input
                 type="checkbox"
@@ -408,7 +414,7 @@ function MobileSalesEntry({
                   update(key as keyof LeadCreateInput, event.target.checked as never)
                 }
               />
-              {label}
+              <span title={hint}>{label}</span>
             </label>
           ))}
         </div>
@@ -989,7 +995,10 @@ function AccountSection({
           <h3 className="text-lg font-bold">{selectedContact ? "연락처 수정" : "연락처 등록"}</h3>
           <div className="mt-4 space-y-3">
             <label className="block text-sm font-medium">
-              고객사
+              <EnumLabel
+                label="고객사"
+                hint="연락처가 소속된 고객사를 선택합니다. 저장 후 고객사-연락처가 연결됩니다."
+              />
               <select
                 required
                 value={contactForm.account_id}
@@ -1283,11 +1292,11 @@ function OpportunitySection({
       <form className="rounded-lg border border-line bg-white p-4" onSubmit={handleSave}>
         <h3 className="text-lg font-bold">{selectedOpportunity ? "영업기회 수정" : "영업기회 등록"}</h3>
         <div className="mt-4 space-y-3">
-          <label className="block text-sm font-medium">
-            고객사
-            <select
-              value={form.account_id}
-              onChange={(event) => setForm((current) => ({ ...current, account_id: event.target.value }))}
+            <label className="block text-sm font-medium">
+              <EnumLabel label="고객사" hint="이 영업기회가 연결될 고객사를 선택합니다." />
+              <select
+                value={form.account_id}
+                onChange={(event) => setForm((current) => ({ ...current, account_id: event.target.value }))}
               className="mt-1 w-full rounded-md border border-line px-3 py-2"
             >
               <option value="">고객사 선택</option>
@@ -1615,7 +1624,7 @@ function ActivitySection({
             </label>
           </div>
           <label className="block text-sm font-medium">
-            영업기회
+            <EnumLabel label="영업기회" hint="활동이 특정 영업기회와 연관된 경우 선택합니다." />
             <select
               value={form.opportunity_id}
               onChange={(event) =>
@@ -1636,7 +1645,7 @@ function ActivitySection({
             </select>
           </label>
           <label className="block text-sm font-medium">
-            리드
+            <EnumLabel label="리드" hint="영업기회가 없고 리드 단계 활동이면 리드를 선택합니다." />
             <select
               value={form.lead_id}
               onChange={(event) =>
@@ -1965,7 +1974,10 @@ function AdminSection({
               key={stage}
               className="block rounded-md border border-line p-4 text-sm font-medium"
             >
-              {stageLabels[stage]} 확률
+              <EnumLabel
+                label={`${stageLabels[stage]} 확률`}
+                hint="해당 단계의 기본 Forecast 반영 비율(%)입니다. 영업기회 Forecast 계산에 사용됩니다."
+              />
               <input
                 type="number"
                 min="0"
