@@ -178,6 +178,38 @@ def test_closed_lost_api_requires_lost_reason() -> None:
     assert response.json()["error"]["code"] == "INVALID_STAGE_CHANGE"
 
 
+def test_opportunity_patch_updates_stage_with_reason() -> None:
+    headers = auth_headers(user_id="sales-stage-patch")
+    account_response = client.post("/api/v1/accounts", headers=headers, json={"name": "단계변경고객"})
+    assert account_response.status_code == 200
+    account_id = account_response.json()["data"]["id"]
+
+    opportunity_response = client.post(
+        "/api/v1/opportunities",
+        headers=headers,
+        json={"account_id": account_id, "name": "단계수정테스트", "amount": "1500000"},
+    )
+    assert opportunity_response.status_code == 200
+    opportunity_id = opportunity_response.json()["data"]["id"]
+
+    lost_update_response = client.patch(
+        f"/api/v1/opportunities/{opportunity_id}",
+        headers=headers,
+        json={"stage": "CLOSED_LOST", "reason": "예산 축소", "lost_reason": "예산 축소"},
+    )
+    assert lost_update_response.status_code == 200
+    assert lost_update_response.json()["data"]["stage"] == "CLOSED_LOST"
+    assert lost_update_response.json()["data"]["lost_reason"] == "예산 축소"
+
+    won_update_response = client.patch(
+        f"/api/v1/opportunities/{opportunity_id}",
+        headers=headers,
+        json={"stage": "CLOSED_WON", "reason": "최종 계약 완료"},
+    )
+    assert won_update_response.status_code == 200
+    assert won_update_response.json()["data"]["stage"] == "CLOSED_WON"
+
+
 def test_contact_crud_flow() -> None:
     headers = auth_headers(user_id="contact-admin", role="ADMIN")
     account_response = client.post("/api/v1/accounts", headers=headers, json={"name": "연락처고객"})

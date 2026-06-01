@@ -164,6 +164,7 @@ class OpportunityCreate(BaseModel):
 
 class OpportunityUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=255)
+    stage: str | None = None
     amount: Decimal | None = Field(default=None, ge=0)
     expected_close_date: date | None = None
     owner_id: str | None = None
@@ -171,6 +172,9 @@ class OpportunityUpdate(BaseModel):
     next_step: str | None = None
     primary_campaign_source: str | None = None
     competitor: str | None = None
+    reason: str | None = None
+    closed_date: date | None = None
+    lost_reason: str | None = None
 
 
 class OpportunityStageChangeRequest(BaseModel):

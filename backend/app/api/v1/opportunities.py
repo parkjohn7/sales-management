@@ -123,10 +123,32 @@ def update_opportunity(
     if not actor.can_access_owner(opportunity.owner_id):
         raise fail(403, "FORBIDDEN", "영업기회 수정 권한이 없습니다.")
     before = OpportunityRead.model_validate(opportunity).model_dump(mode="json")
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    update_fields = payload.model_dump(exclude_unset=True)
+    requested_stage = update_fields.pop("stage", None)
+    stage_reason = update_fields.pop("reason", None)
+    stage_closed_date = update_fields.pop("closed_date", None)
+    stage_lost_reason = update_fields.pop("lost_reason", None)
+
+    for field, value in update_fields.items():
         setattr(opportunity, field, value)
     if payload.amount is not None:
         refresh_forecast(opportunity)
+    if requested_stage is not None:
+        try:
+            history = apply_stage_change(
+                opportunity,
+                new_stage=requested_stage,
+                changed_by=actor.user_id,
+                reason=stage_reason,
+                closed_date=stage_closed_date,
+                lost_reason=stage_lost_reason,
+            )
+        except ValueError as exc:
+            raise fail(422, "INVALID_STAGE_CHANGE", str(exc)) from exc
+        db.add(history)
+    elif stage_lost_reason is not None and opportunity.stage == "CLOSED_LOST":
+        opportunity.lost_reason = stage_lost_reason
+
     record_audit_log(
         db,
         actor_id=actor.user_id,

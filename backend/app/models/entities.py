@@ -148,7 +148,7 @@ class Opportunity(TimestampMixin, Base):
     primary_campaign_source: Mapped[str | None] = mapped_column(String(255), index=True)
     competitor: Mapped[str | None] = mapped_column(String(255))
     closed_date: Mapped[date | None] = mapped_column(Date)
-    lost_reason: Mapped[str | None] = mapped_column(String(255))
+    lost_reason: Mapped[str | None] = mapped_column(Text)
     owner_id: Mapped[str | None] = mapped_column(String(36), index=True)
 
     account: Mapped[Account] = relationship(back_populates="opportunities")

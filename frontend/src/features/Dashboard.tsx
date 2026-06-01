@@ -18,7 +18,6 @@ import {
   createActivity,
   createContact,
   createIntegrationLead,
-  changeOpportunityStage,
   deleteLoginUser,
   createOpportunity,
   deleteAccount,
@@ -1361,18 +1360,15 @@ function OpportunitySection({
         amount: digitsOnly(form.amount ?? "0") || "0"
       };
       if (selectedOpportunity) {
-        const { stage, ...updatePayload } = payload;
+        const updatePayload: Partial<OpportunityInput> = { ...payload, stage: form.stage };
         if (!updatePayload.owner_id) {
           delete updatePayload.owner_id;
         }
-        await updateOpportunity(selectedOpportunity.id, updatePayload);
-        if (form.stage !== selectedOpportunity.stage) {
-          await changeOpportunityStage(selectedOpportunity.id, {
-            stage: form.stage ?? "LEAD",
-            reason: closeReason || undefined,
-            lost_reason: form.stage === "CLOSED_LOST" ? closeReason : undefined
-          });
+        if (form.stage === "CLOSED_WON" || form.stage === "CLOSED_LOST") {
+          updatePayload.reason = closeReason;
+          updatePayload.lost_reason = form.stage === "CLOSED_LOST" ? closeReason : undefined;
         }
+        await updateOpportunity(selectedOpportunity.id, updatePayload);
         setStatus("영업기회를 수정했습니다.");
       } else {
         await createOpportunity(payload);
@@ -1382,7 +1378,7 @@ function OpportunitySection({
       }
       await onDataChanged();
     } catch {
-      setStatus("영업기회 저장 실패");
+      setStatus("영업기회 저장 실패: 고객사/단계/종료사유를 확인해주세요.");
     }
   }
 
@@ -1529,6 +1525,7 @@ function OpportunitySection({
                     key={opportunity.id}
                     onClick={() => {
                       setSelectedOpportunityId(opportunity.id);
+                      setCloseReason(opportunity.lost_reason ?? "");
                       setForm({
                         account_id: opportunity.account_id ?? "",
                         name: opportunity.name,

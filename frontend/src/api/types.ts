@@ -191,6 +191,9 @@ export interface OpportunityInput {
   next_step?: string;
   primary_campaign_source?: string;
   competitor?: string;
+  reason?: string;
+  closed_date?: string;
+  lost_reason?: string;
 }
 
 export interface AccountInput {
