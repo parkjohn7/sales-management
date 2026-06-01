@@ -55,9 +55,7 @@ export interface OpportunitySummary {
   account_name?: string;
   owner_name?: string;
   expected_close_date?: string | null;
-  next_activity?: string;
   opportunity_type?: string | null;
-  next_step?: string | null;
   primary_campaign_source?: string | null;
   competitor?: string | null;
   lost_reason?: string | null;
@@ -188,7 +186,6 @@ export interface OpportunityInput {
   expected_close_date?: string;
   owner_id?: string;
   opportunity_type?: string;
-  next_step?: string;
   primary_campaign_source?: string;
   competitor?: string;
   reason?: string;

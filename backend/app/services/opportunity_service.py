@@ -31,6 +31,10 @@ def apply_stage_change(
 
     if normalized_stage in {"CLOSED_WON", "CLOSED_LOST"}:
         opportunity.closed_date = closed_date or date.today()
+        opportunity.lost_reason = lost_reason
+    else:
+        opportunity.closed_date = None
+        opportunity.lost_reason = None
     if normalized_stage == "CLOSED_LOST":
         opportunity.lost_reason = lost_reason
 

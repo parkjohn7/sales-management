@@ -85,9 +85,7 @@ const mockOpportunities: OpportunitySummary[] = [
     probability: 50,
     forecast_amount: "25000000",
     expected_close_date: "2026-06-28",
-    next_activity: "견적서 검토 회의",
     opportunity_type: "New Business",
-    next_step: "계약 검토",
     primary_campaign_source: "체리 세일즈 런칭",
     competitor: "Salesforce"
   },
@@ -101,9 +99,7 @@ const mockOpportunities: OpportunitySummary[] = [
     probability: 75,
     forecast_amount: "75000000",
     expected_close_date: "2026-07-15",
-    next_activity: "계약 조건 협의",
     opportunity_type: "Expansion",
-    next_step: "보안 검토",
     primary_campaign_source: "AI 상담 캠페인",
     competitor: "HubSpot"
   },
@@ -117,9 +113,7 @@ const mockOpportunities: OpportunitySummary[] = [
     probability: 25,
     forecast_amount: "10500000",
     expected_close_date: "2026-07-31",
-    next_activity: "요구사항 정리",
     opportunity_type: "New Business",
-    next_step: "PoC 범위 확정",
     primary_campaign_source: "제조 세미나",
     competitor: null
   }

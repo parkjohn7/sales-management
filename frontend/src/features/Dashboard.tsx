@@ -1342,7 +1342,6 @@ function OpportunitySection({
     expected_close_date: selectedOpportunity?.expected_close_date ?? "",
     owner_id: "",
     opportunity_type: selectedOpportunity?.opportunity_type ?? "New Business",
-    next_step: selectedOpportunity?.next_step ?? "",
     primary_campaign_source: selectedOpportunity?.primary_campaign_source ?? "",
     competitor: selectedOpportunity?.competitor ?? ""
   });
@@ -1368,9 +1367,6 @@ function OpportunitySection({
       if (!payload.expected_close_date) {
         delete payload.expected_close_date;
       }
-      if (!payload.next_step) {
-        delete payload.next_step;
-      }
       if (!payload.primary_campaign_source) {
         delete payload.primary_campaign_source;
       }
@@ -1384,7 +1380,7 @@ function OpportunitySection({
         }
         if (form.stage === "CLOSED_WON" || form.stage === "CLOSED_LOST") {
           updatePayload.reason = closeReason;
-          updatePayload.lost_reason = form.stage === "CLOSED_LOST" ? closeReason : undefined;
+          updatePayload.lost_reason = closeReason;
         }
         await updateOpportunity(selectedOpportunity.id, updatePayload);
         await onDataChanged();
@@ -1393,7 +1389,7 @@ function OpportunitySection({
         await createOpportunity(payload);
         await onDataChanged();
         setStatus("영업기회를 저장했습니다.");
-        setForm((current) => ({ ...current, name: "", amount: "0", next_step: "", competitor: "" }));
+        setForm((current) => ({ ...current, name: "", amount: "0", competitor: "" }));
         setCloseReason("");
       }
     } catch {
@@ -1494,15 +1490,6 @@ function OpportunitySection({
               </select>
             </label>
           </div>
-          <label className="block text-sm font-medium">
-            다음 단계
-            <input
-              value={form.next_step}
-              onChange={(event) => updateForm((current) => ({ ...current, next_step: event.target.value }))}
-              className="mt-1 w-full rounded-md border border-line px-3 py-2"
-              placeholder="다음 단계"
-            />
-          </label>
           {(form.stage === "CLOSED_WON" || form.stage === "CLOSED_LOST") && (
             <label className="block text-sm font-medium">
               종료 사유
@@ -1539,7 +1526,6 @@ function OpportunitySection({
                 <th className={thClass}>예상 금액</th>
                 <th className={thClass}>Forecast</th>
                 <th className={`${thClass} hidden xl:table-cell`}>종료사유</th>
-                <th className={`${thClass} hidden lg:table-cell`}>다음 단계</th>
                 <th className={`${thClass} hidden xl:table-cell`}>캠페인/경쟁사</th>
               </tr>
             </thead>
@@ -1556,10 +1542,9 @@ function OpportunitySection({
                         name: opportunity.name,
                         stage: opportunity.stage,
                         amount: opportunity.amount,
-                      expected_close_date: opportunity.expected_close_date ?? "",
+                        expected_close_date: opportunity.expected_close_date ?? "",
                         owner_id: "",
                         opportunity_type: opportunity.opportunity_type ?? "New Business",
-                        next_step: opportunity.next_step ?? "",
                         primary_campaign_source: opportunity.primary_campaign_source ?? "",
                         competitor: opportunity.competitor ?? ""
                       });
@@ -1581,7 +1566,6 @@ function OpportunitySection({
                     <td className={tdClass}>{money(opportunity.amount)}</td>
                     <td className={tdClass}>{money(opportunity.forecast_amount)}</td>
                     <td className={`${tdClass} hidden xl:table-cell`}>{opportunity.lost_reason || "-"}</td>
-                    <td className={`${tdClass} hidden lg:table-cell`}>{opportunity.next_step || "-"}</td>
                     <td className={`${tdClass} hidden xl:table-cell`}>
                       {opportunity.primary_campaign_source || "-"}
                       {opportunity.competitor ? ` / ${opportunity.competitor}` : ""}

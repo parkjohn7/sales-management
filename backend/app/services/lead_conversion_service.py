@@ -49,7 +49,6 @@ def convert_lead(
         forecast_amount=calculate_forecast_amount(amount, probability),
         owner_id=owner_id or lead.owner_id,
         opportunity_type="New Business",
-        next_step="Discovery",
         primary_campaign_source=lead.campaign_name,
     )
     db.add(opportunity)

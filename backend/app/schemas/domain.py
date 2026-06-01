@@ -157,7 +157,6 @@ class OpportunityCreate(BaseModel):
     expected_close_date: date | None = None
     owner_id: str | None = None
     opportunity_type: str | None = None
-    next_step: str | None = None
     primary_campaign_source: str | None = None
     competitor: str | None = None
 
@@ -169,7 +168,6 @@ class OpportunityUpdate(BaseModel):
     expected_close_date: date | None = None
     owner_id: str | None = None
     opportunity_type: str | None = None
-    next_step: str | None = None
     primary_campaign_source: str | None = None
     competitor: str | None = None
     reason: str | None = None

@@ -144,7 +144,6 @@ class Opportunity(TimestampMixin, Base):
         Numeric(14, 2), default=Decimal("0"), nullable=False
     )
     expected_close_date: Mapped[date | None] = mapped_column(Date, index=True)
-    next_step: Mapped[str | None] = mapped_column(String(255))
     primary_campaign_source: Mapped[str | None] = mapped_column(String(255), index=True)
     competitor: Mapped[str | None] = mapped_column(String(255))
     closed_date: Mapped[date | None] = mapped_column(Date)

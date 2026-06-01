@@ -146,7 +146,7 @@ def update_opportunity(
         except ValueError as exc:
             raise fail(422, "INVALID_STAGE_CHANGE", str(exc)) from exc
         db.add(history)
-    elif stage_lost_reason is not None and opportunity.stage == "CLOSED_LOST":
+    elif stage_lost_reason is not None and opportunity.stage in {"CLOSED_LOST", "CLOSED_WON"}:
         opportunity.lost_reason = stage_lost_reason
 
     record_audit_log(
