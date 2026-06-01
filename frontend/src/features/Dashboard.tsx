@@ -332,17 +332,21 @@ function MobileSalesEntry({
         </div>
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm font-medium">
-            상태
+            리드처리상태
             <input
-              value="NEW (생성 시 자동 설정)"
+              value={isEdit ? (selectedLead?.status ?? "-") : "NEW (생성 시 자동 설정)"}
               readOnly
               className="mt-1 w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-600"
             />
           </label>
           <label className="block text-sm font-medium">
-            등급
+            리드품질
             <input
-              value="점수 기반 자동 계산 (HOT/WARM/COLD)"
+              value={
+                isEdit
+                  ? `${selectedLead?.lead_grade ?? "-"} (${selectedLead?.lead_score ?? "-"}점)`
+                  : "점수 기반 자동 계산 (HOT/WARM/COLD)"
+              }
               readOnly
               className="mt-1 w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-600"
             />
@@ -732,9 +736,9 @@ function LeadSection({
                   <th className={thClass}>담당자</th>
                   <th className={`${thClass} hidden sm:table-cell`}>직책</th>
                   <th className={`${thClass} hidden md:table-cell`}>직원 수</th>
-                  <th className={thClass}>등급</th>
+                  <th className={thClass}>리드품질</th>
                   <th className={thClass}>점수</th>
-                  <th className={thClass}>상태</th>
+                  <th className={thClass}>리드처리상태</th>
                   <th className={thClass}>작업</th>
                 </tr>
               </thead>
