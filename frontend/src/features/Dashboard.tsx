@@ -122,7 +122,7 @@ const panelClass = "rounded-md border border-slate-200 bg-white shadow-sm";
 const tableClass = "w-full min-w-[760px] border-separate border-spacing-0 text-left text-sm";
 const compactTableClass = "w-full min-w-[620px] border-separate border-spacing-0 text-left text-sm";
 const tableScrollClass = "max-h-[420px] overflow-auto [scrollbar-gutter:stable_both-edges]";
-const thClass = "sticky top-0 z-10 border-b border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-bold text-slate-600";
+const thClass = "sticky top-0 z-10 border-b border-slate-200 bg-slate-50 px-3 py-1.5 text-center text-sm font-bold text-slate-600";
 const tdClass = "border-b border-slate-100 px-3 py-1.5 align-middle";
 const cherryTextClass = "font-bold text-rose-700";
 const cherryHoverRowClass = "bg-white hover:bg-rose-50";
@@ -144,6 +144,14 @@ const stages: PipelineStage[] = [
   "CLOSED_WON",
   "CLOSED_LOST"
 ];
+
+const activityTypeLabels: Record<string, string> = {
+  CALL: "휴대폰",
+  MEETING: "미팅",
+  EMAIL: "이메일",
+  PROPOSAL_SENT: "제안서 송부",
+  FOLLOW_UP: "후속 연락"
+};
 
 function stageTone(stage: PipelineStage) {
   if (stage === "CLOSED_WON") return "border-mint bg-mint/10";
@@ -1245,10 +1253,12 @@ function AccountSection({
                     </td>
                     <td className={`${tdClass} ${cherryTextClass}`}>{contact.name}</td>
                     <td className={tdClass}>{contact.title || "직책 미입력"}</td>
-                    <td className={`${tdClass} hidden sm:table-cell`}>{contact.department || "-"}</td>
+                    <td className={`${tdClass} hidden whitespace-nowrap sm:table-cell`}>
+                      {contact.department || "-"}
+                    </td>
                     <td className={`${tdClass} hidden md:table-cell`}>{contact.email || "-"}</td>
-                    <td className={`${tdClass} hidden lg:table-cell`}>
-                      {contact.phone || "-"} / {contact.mobile_phone || "-"}
+                    <td className={`${tdClass} hidden whitespace-nowrap lg:table-cell`}>
+                      {contact.mobile_phone || "-"}
                     </td>
                     <td className={`${tdClass} hidden lg:table-cell`}>{contact.role_type || "-"}</td>
                     <td className={tdClass}>
@@ -1664,6 +1674,7 @@ function ActivitySection({
             <EnumLabel label="영업기회" hint="활동이 특정 영업기회와 연관된 경우 선택합니다." />
             <select
               value={form.opportunity_id}
+              disabled={Boolean(form.lead_id)}
               onChange={(event) =>
                 setForm((current) => ({
                   ...current,
@@ -1685,6 +1696,7 @@ function ActivitySection({
             <EnumLabel label="리드" hint="영업기회가 없고 리드 단계 활동이면 리드를 선택합니다." />
             <select
               value={form.lead_id}
+              disabled={Boolean(form.opportunity_id)}
               onChange={(event) =>
                 setForm((current) => ({
                   ...current,
@@ -1731,7 +1743,7 @@ function ActivitySection({
                 <th className={thClass}>유형</th>
                 <th className={thClass}>제목</th>
                 <th className={thClass}>일시</th>
-                <th className={`${thClass} hidden md:table-cell`}>기한</th>
+                <th className={`${thClass} hidden whitespace-nowrap md:table-cell`}>기한</th>
                 <th className={`${thClass} hidden lg:table-cell`}>상태/우선순위</th>
                 <th className={`${thClass} hidden xl:table-cell`}>내용</th>
                 <th className={`${thClass} hidden lg:table-cell`}>담당</th>
@@ -1760,10 +1772,14 @@ function ActivitySection({
                     selectedActivityId === activity.id ? "bg-rose-50" : ""
                   }`}
                 >
-                  <td className={`${tdClass} ${cherryTextClass}`}>{activity.activity_type}</td>
+                  <td className={`${tdClass} ${cherryTextClass}`}>
+                    {activityTypeLabels[activity.activity_type] || activity.activity_type}
+                  </td>
                   <td className={tdClass}>{activity.subject || "제목 없음"}</td>
                   <td className={tdClass}>{new Date(activity.activity_date).toLocaleString("ko-KR")}</td>
-                  <td className={`${tdClass} hidden md:table-cell`}>{activity.due_date || "-"}</td>
+                  <td className={`${tdClass} hidden whitespace-nowrap md:table-cell`}>
+                    {activity.due_date || "-"}
+                  </td>
                   <td className={`${tdClass} hidden lg:table-cell`}>
                     {activity.status || "OPEN"} / {activity.priority || "MEDIUM"}
                   </td>
