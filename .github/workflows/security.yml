@@ -16,10 +16,18 @@ jobs:
 
       - name: Secret scan basic
         run: |
-          ! grep -R "OPENAI_API_KEY=\|AWS_SECRET_ACCESS_KEY=\|PRIVATE_KEY" . \
-            --exclude-dir=.git \
-            --exclude-dir=node_modules \
-            --exclude-dir=.venv || exit 1
+          if rg -n --hidden \
+            --glob '!.git' \
+            --glob '!node_modules' \
+            --glob '!.venv' \
+            --glob '!.github/workflows/security.yml' \
+            -e 'OPENAI_API_KEY=' \
+            -e 'AWS_SECRET_ACCESS_KEY=' \
+            -e '-----BEGIN (RSA|EC|OPENSSH) PRIVATE KEY-----' \
+            .; then
+            echo "Potential secret detected"
+            exit 1
+          fi
 
       - name: Dependency audit Node
         if: hashFiles('frontend/package.json') != ''
