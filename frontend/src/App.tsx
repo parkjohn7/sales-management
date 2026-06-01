@@ -1,6 +1,12 @@
 import { FormEvent, useEffect, useState } from "react";
 
-import { authenticateLoginUser, createLead, loadDashboard, loadLoginUsers } from "./api/client";
+import {
+  authenticateLoginUser,
+  changeLoginUserPassword,
+  createLead,
+  loadDashboard,
+  loadLoginUsers
+} from "./api/client";
 import type {
   AccountSummary,
   ActivitySummary,
@@ -38,6 +44,10 @@ export function App() {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [nextPassword, setNextPassword] = useState("");
+  const [passwordStatus, setPasswordStatus] = useState("");
 
   useEffect(() => {
     void (async () => {
@@ -80,6 +90,19 @@ export function App() {
     localStorage.removeItem("sales-management-current-user-id");
     setCurrentUser(null);
     setLoginPassword("");
+  }
+
+  async function handleChangePassword(event: FormEvent) {
+    event.preventDefault();
+    if (!currentUser) return;
+    const result = await changeLoginUserPassword(currentUser.id, currentPassword, nextPassword);
+    setPasswordStatus(result.message);
+    if (result.success) {
+      setCurrentPassword("");
+      setNextPassword("");
+      setLoginUsers(await loadLoginUsers());
+      setTimeout(() => setShowPasswordModal(false), 800);
+    }
   }
 
   if (state === null) {
@@ -130,13 +153,61 @@ export function App() {
   }
 
   return (
-    <Dashboard
-      {...state}
-      loginUsers={loginUsers}
-      currentUser={currentUser}
-      onCreateLead={handleCreateLead}
-      onDataChanged={handleDataChanged}
-      onLogout={handleLogout}
-    />
+    <>
+      <Dashboard
+        {...state}
+        loginUsers={loginUsers}
+        currentUser={currentUser}
+        onCreateLead={handleCreateLead}
+        onDataChanged={handleDataChanged}
+        onLogout={handleLogout}
+        onOpenPasswordChange={() => {
+          setPasswordStatus("");
+          setCurrentPassword("");
+          setNextPassword("");
+          setShowPasswordModal(true);
+        }}
+      />
+      {showPasswordModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
+          <form onSubmit={handleChangePassword} className="w-full max-w-md rounded-lg bg-white p-5 shadow-lg">
+            <h3 className="text-lg font-bold text-ink">비밀번호 변경</h3>
+            <div className="mt-4 space-y-3">
+              <label className="block text-sm font-medium">
+                현재 비밀번호
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(event) => setCurrentPassword(event.target.value)}
+                  className="mt-1 w-full rounded-md border border-line px-3 py-2"
+                />
+              </label>
+              <label className="block text-sm font-medium">
+                새 비밀번호 (6자 이상)
+                <input
+                  type="password"
+                  value={nextPassword}
+                  onChange={(event) => setNextPassword(event.target.value)}
+                  className="mt-1 w-full rounded-md border border-line px-3 py-2"
+                />
+              </label>
+              {passwordStatus ? <p className="text-sm font-medium text-slate-700">{passwordStatus}</p> : null}
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordModal(false)}
+                  className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold"
+                >
+                  취소
+                </button>
+                <button className="rounded-md bg-rose-600 px-3 py-2 text-sm font-semibold text-white">
+                  변경
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      ) : null}
+    </>
   );
 }

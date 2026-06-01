@@ -534,3 +534,23 @@ export async function authenticateLoginUser(email: string, password: string): Pr
   );
   return user ?? null;
 }
+
+export async function changeLoginUserPassword(
+  userId: string,
+  currentPassword: string,
+  nextPassword: string
+): Promise<{ success: boolean; message: string }> {
+  const users = getLoginUsersLocal();
+  const target = users.find((user) => user.id === userId);
+  if (!target) {
+    return { success: false, message: "사용자를 찾을 수 없습니다." };
+  }
+  if (target.password !== currentPassword) {
+    return { success: false, message: "현재 비밀번호가 일치하지 않습니다." };
+  }
+  if (!nextPassword || nextPassword.length < 6) {
+    return { success: false, message: "새 비밀번호는 6자 이상이어야 합니다." };
+  }
+  setLoginUsersLocal(users.map((user) => (user.id === userId ? { ...user, password: nextPassword } : user)));
+  return { success: true, message: "비밀번호가 변경되었습니다." };
+}

@@ -71,6 +71,7 @@ interface DashboardProps {
   onCreateLead: (payload: LeadCreateInput) => Promise<void>;
   onDataChanged: () => Promise<void>;
   onLogout: () => void;
+  onOpenPasswordChange: () => void;
 }
 
 const formatter = new Intl.NumberFormat("ko-KR");
@@ -2282,7 +2283,8 @@ export function Dashboard({
   usingMockData,
   onCreateLead,
   onDataChanged,
-  onLogout
+  onLogout,
+  onOpenPasswordChange
 }: DashboardProps) {
   const [activeView, setActiveView] = useState<MenuItem>("대시보드");
 
@@ -2327,6 +2329,13 @@ export function Dashboard({
               <div className="rounded-full border border-rose-100 bg-rose-50 px-3 py-1 text-xs font-bold text-rose-700">
                 {currentUser.organization} · {currentUser.name}
               </div>
+              <button
+                type="button"
+                onClick={onOpenPasswordChange}
+                className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700"
+              >
+                비밀번호 변경
+              </button>
               <button
                 type="button"
                 onClick={onLogout}

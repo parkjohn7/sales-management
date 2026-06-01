@@ -126,7 +126,8 @@ describe("Dashboard", () => {
       organization: "본사",
       password: "admin1234"
     },
-    onLogout: () => undefined
+    onLogout: () => undefined,
+    onOpenPasswordChange: () => undefined
   };
 
   it("renders the Korean product name and KPI labels", () => {
