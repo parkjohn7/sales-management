@@ -14,6 +14,8 @@ React + FastAPI 기반의 영업관리시스템입니다.
 
 ```bash
 make setup
+make local-postgres-up
+make migrate-sqlite-to-postgres
 make dev-backend
 make dev-frontend
 ```

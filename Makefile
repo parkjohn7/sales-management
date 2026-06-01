@@ -1,4 +1,4 @@
-.PHONY: setup lint lint-backend lint-frontend typecheck typecheck-backend typecheck-frontend test test-unit test-integration test-frontend test-e2e verify dev-backend dev-frontend harness-impact harness-review harness-log
+.PHONY: setup lint lint-backend lint-frontend typecheck typecheck-backend typecheck-frontend test test-unit test-integration test-frontend test-e2e verify dev-backend dev-frontend local-postgres-up local-postgres-down migrate-sqlite-to-postgres harness-impact harness-review harness-log
 
 TASK_ID ?= manual-$(shell date +%Y%m%d-%H%M%S)
 
@@ -76,6 +76,15 @@ dev-backend:
 
 dev-frontend:
 	@if command -v pnpm >/dev/null 2>&1; then pnpm --dir frontend dev; else npm --prefix frontend run dev; fi
+
+local-postgres-up:
+	docker compose up -d postgres
+
+local-postgres-down:
+	docker compose stop postgres
+
+migrate-sqlite-to-postgres:
+	bash scripts/dev/migrate-sqlite-to-postgres.sh
 
 harness-impact:
 	bash scripts/harness/generate-impact-map.sh $(TASK_ID)
