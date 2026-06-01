@@ -103,6 +103,18 @@ function numberText(value: string | number | null | undefined) {
   return formatter.format(num);
 }
 
+function nowLocalDateTime() {
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
+function toLocalDateTimeInput(value: string) {
+  const date = new Date(value);
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
 function EnumLabel({ label, hint }: { label: string; hint: string }) {
   return (
     <span className="inline-flex items-center gap-1">
@@ -1577,10 +1589,10 @@ function ActivitySection({
   const selectedActivity = activities.find((activity) => activity.id === selectedActivityId);
   const [form, setForm] = useState<ActivityInput>({
     subject: selectedActivity?.subject ?? "",
-    activity_type: selectedActivity?.activity_type ?? "CALL",
+    activity_type: selectedActivity?.activity_type ?? "",
     activity_date: selectedActivity
-      ? new Date(selectedActivity.activity_date).toISOString().slice(0, 16)
-      : new Date().toISOString().slice(0, 16),
+      ? toLocalDateTimeInput(selectedActivity.activity_date)
+      : nowLocalDateTime(),
     due_date: selectedActivity?.due_date ?? "",
     status: selectedActivity?.status ?? "OPEN",
     priority: selectedActivity?.priority ?? "MEDIUM",
@@ -1639,6 +1651,7 @@ function ActivitySection({
               }
               className="mt-1 w-full rounded-md border border-line px-3 py-2"
             >
+              <option value="">활동유형 선택</option>
               <option value="CALL">휴대폰</option>
               <option value="MEETING">미팅</option>
               <option value="EMAIL">이메일</option>
@@ -1780,11 +1793,12 @@ function ActivitySection({
                 <tr
                   key={activity.id}
                   onClick={() => {
+                    setPlanOpportunityId("");
                     setSelectedActivityId(activity.id);
                     setForm({
                       subject: activity.subject ?? "",
                       activity_type: activity.activity_type,
-                      activity_date: new Date(activity.activity_date).toISOString().slice(0, 16),
+                      activity_date: toLocalDateTimeInput(activity.activity_date),
                       due_date: activity.due_date ?? "",
                       status: activity.status ?? "OPEN",
                       priority: activity.priority ?? "MEDIUM",
@@ -1825,7 +1839,7 @@ function ActivitySection({
                           setForm({
                             subject: "활동계획",
                             activity_type: "FOLLOW_UP",
-                            activity_date: new Date().toISOString().slice(0, 16),
+                            activity_date: nowLocalDateTime(),
                             due_date: "",
                             status: "",
                             priority: "",
