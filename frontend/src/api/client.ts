@@ -169,10 +169,10 @@ const mockActivities: ActivitySummary[] = [
     activity_type: "MEETING",
     activity_date: "2026-05-31T09:30:00+09:00",
     description: "도입 범위 협의",
-    next_activity: "견적서 검토 미팅",
     next_activity_type: "FOLLOW_UP",
     next_activity_due_date: "2026-06-03",
     next_activity_priority: "HIGH",
+    next_activity_memo: "견적서 검토 미팅 준비",
     owner_id: "김도현"
   }
 ];

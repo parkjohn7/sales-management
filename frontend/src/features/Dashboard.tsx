@@ -1595,10 +1595,10 @@ function ActivitySection({
       ? toLocalDateTimeInput(selectedActivity.activity_date)
       : nowLocalDateTime(),
     description: selectedActivity?.description ?? "",
-    next_activity: selectedActivity?.next_activity ?? "",
     next_activity_type: selectedActivity?.next_activity_type ?? "",
     next_activity_due_date: selectedActivity?.next_activity_due_date ?? "",
     next_activity_priority: selectedActivity?.next_activity_priority ?? "",
+    next_activity_memo: selectedActivity?.next_activity_memo ?? "",
     opportunity_id: selectedActivity?.opportunity_id ?? opportunities[0]?.id ?? "",
     lead_id: selectedActivity?.lead_id ?? ""
   });
@@ -1612,10 +1612,10 @@ function ActivitySection({
         activity_type: form.activity_type,
         activity_date: new Date(form.activity_date).toISOString(),
         description: form.description,
-        next_activity: form.next_activity || undefined,
         next_activity_type: form.next_activity_type || undefined,
         next_activity_due_date: form.next_activity_due_date || undefined,
         next_activity_priority: form.next_activity_priority || undefined,
+        next_activity_memo: form.next_activity_memo || undefined,
         opportunity_id: form.opportunity_id || undefined,
         lead_id: form.lead_id || undefined
       };
@@ -1715,20 +1715,20 @@ function ActivitySection({
               ))}
             </select>
           </label>
+          <label className="block text-sm font-medium">
+            메모
+            <textarea
+              value={form.description}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, description: event.target.value }))
+              }
+              className="mt-1 min-h-24 w-full rounded-md border border-line px-3 py-2"
+              placeholder="활동 메모"
+            />
+          </label>
           <div className="rounded-md border border-line bg-slate-50 p-3">
             <p className="text-sm font-semibold">다음활동</p>
             <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className="block text-sm font-medium sm:col-span-2">
-                다음활동
-                <input
-                  value={form.next_activity ?? ""}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, next_activity: event.target.value }))
-                  }
-                  className="mt-1 w-full rounded-md border border-line px-3 py-2"
-                  placeholder="다음활동"
-                />
-              </label>
               <label className="block text-sm font-medium">
                 활동유형
                 <select
@@ -1772,19 +1772,19 @@ function ActivitySection({
                   <option value="LOW">Low</option>
                 </select>
               </label>
+              <label className="block text-sm font-medium sm:col-span-2">
+                메모
+                <textarea
+                  value={form.next_activity_memo ?? ""}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, next_activity_memo: event.target.value }))
+                  }
+                  className="mt-1 min-h-20 w-full rounded-md border border-line px-3 py-2"
+                  placeholder="다음활동 메모"
+                />
+              </label>
             </div>
           </div>
-          <label className="block text-sm font-medium">
-            메모
-            <textarea
-              value={form.description}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, description: event.target.value }))
-              }
-              className="mt-1 min-h-24 w-full rounded-md border border-line px-3 py-2"
-              placeholder="활동 메모"
-            />
-          </label>
           <button className="w-full rounded-md bg-rose-600 px-4 py-2 font-bold text-white">
             {selectedActivity ? "활동 수정" : "활동 저장"}
           </button>
@@ -1797,16 +1797,16 @@ function ActivitySection({
           <span className="text-sm font-semibold text-slate-500">{activities.length} rows</span>
         </div>
         <div className={tableScrollClass}>
-          <table className="w-full min-w-[1400px] border-separate border-spacing-0 text-left text-sm">
+          <table className="w-full min-w-[1460px] border-separate border-spacing-0 text-left text-sm">
             <thead>
               <tr>
                 <th className={`${thClass} whitespace-nowrap`}>유형</th>
                 <th className={`${thClass} whitespace-nowrap`}>일시</th>
                 <th className={`${thClass} min-w-[320px]`}>메모</th>
-                <th className={`${thClass} min-w-[240px]`}>다음활동</th>
                 <th className={`${thClass} whitespace-nowrap`}>다음활동유형</th>
                 <th className={`${thClass} whitespace-nowrap`}>다음활동기한</th>
                 <th className={`${thClass} whitespace-nowrap`}>다음활동우선순위</th>
+                <th className={`${thClass} min-w-[280px]`}>다음활동메모</th>
                 <th className={`${thClass} hidden whitespace-nowrap lg:table-cell`}>영업담당자</th>
               </tr>
             </thead>
@@ -1820,10 +1820,10 @@ function ActivitySection({
                       activity_type: activity.activity_type,
                       activity_date: toLocalDateTimeInput(activity.activity_date),
                       description: activity.description ?? "",
-                      next_activity: activity.next_activity ?? "",
                       next_activity_type: activity.next_activity_type ?? "",
                       next_activity_due_date: activity.next_activity_due_date ?? "",
                       next_activity_priority: activity.next_activity_priority ?? "",
+                      next_activity_memo: activity.next_activity_memo ?? "",
                       opportunity_id: activity.opportunity_id ?? "",
                       lead_id: activity.lead_id ?? ""
                     });
@@ -1841,9 +1841,6 @@ function ActivitySection({
                   <td className={`${tdClass} max-w-[460px] truncate`} title={activity.description || "메모 없음"}>
                     {activity.description || "메모 없음"}
                   </td>
-                  <td className={`${tdClass} max-w-[300px] truncate`} title={activity.next_activity || "-"}>
-                    {activity.next_activity || "-"}
-                  </td>
                   <td className={`${tdClass} whitespace-nowrap`}>
                     {activity.next_activity_type
                       ? activityTypeLabels[activity.next_activity_type] || activity.next_activity_type
@@ -1851,6 +1848,9 @@ function ActivitySection({
                   </td>
                   <td className={`${tdClass} whitespace-nowrap`}>{activity.next_activity_due_date || "-"}</td>
                   <td className={`${tdClass} whitespace-nowrap`}>{activity.next_activity_priority || "-"}</td>
+                  <td className={`${tdClass} max-w-[340px] truncate`} title={activity.next_activity_memo || "-"}>
+                    {activity.next_activity_memo || "-"}
+                  </td>
                   <td className={`${tdClass} hidden whitespace-nowrap lg:table-cell`}>
                     {loginUsers.find((user) => user.email === activity.owner_id)?.name || activity.owner_id || "-"}
                   </td>

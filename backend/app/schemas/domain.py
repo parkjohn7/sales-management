@@ -201,10 +201,10 @@ class ActivityCreate(BaseModel):
     status: str | None = None
     priority: str | None = None
     description: str | None = None
-    next_activity: str | None = None
     next_activity_type: str | None = None
     next_activity_due_date: date | None = None
     next_activity_priority: str | None = None
+    next_activity_memo: str | None = None
     owner_id: str | None = None
 
 
@@ -217,10 +217,10 @@ class ActivityUpdate(BaseModel):
     status: str | None = None
     priority: str | None = None
     description: str | None = None
-    next_activity: str | None = None
     next_activity_type: str | None = None
     next_activity_due_date: date | None = None
     next_activity_priority: str | None = None
+    next_activity_memo: str | None = None
     owner_id: str | None = None
 
 
