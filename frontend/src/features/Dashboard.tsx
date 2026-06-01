@@ -1347,6 +1347,11 @@ function OpportunitySection({
     competitor: selectedOpportunity?.competitor ?? ""
   });
 
+  function updateForm(updater: (current: OpportunityInput) => OpportunityInput) {
+    setStatus("");
+    setForm(updater);
+  }
+
   async function handleSave(event: FormEvent) {
     event.preventDefault();
     setStatus("");
@@ -1382,14 +1387,15 @@ function OpportunitySection({
           updatePayload.lost_reason = form.stage === "CLOSED_LOST" ? closeReason : undefined;
         }
         await updateOpportunity(selectedOpportunity.id, updatePayload);
+        await onDataChanged();
         setStatus("영업기회를 수정했습니다.");
       } else {
         await createOpportunity(payload);
+        await onDataChanged();
         setStatus("영업기회를 저장했습니다.");
         setForm((current) => ({ ...current, name: "", amount: "0", next_step: "", competitor: "" }));
         setCloseReason("");
       }
-      await onDataChanged();
     } catch {
       setStatus("영업기회 저장 실패: 입력값을 다시 확인해주세요.");
     }
@@ -1404,7 +1410,9 @@ function OpportunitySection({
               <EnumLabel label="고객사" hint="이 영업기회가 연결될 고객사를 선택합니다." />
               <select
                 value={form.account_id}
-                onChange={(event) => setForm((current) => ({ ...current, account_id: event.target.value }))}
+                onChange={(event) =>
+                  updateForm((current) => ({ ...current, account_id: event.target.value }))
+                }
               className="mt-1 w-full rounded-md border border-line px-3 py-2"
             >
               <option value="">고객사 선택</option>
@@ -1419,7 +1427,7 @@ function OpportunitySection({
             영업기회
             <input
               value={form.name}
-              onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+              onChange={(event) => updateForm((current) => ({ ...current, name: event.target.value }))}
               className="mt-1 w-full rounded-md border border-line px-3 py-2"
               placeholder="영업기회명"
             />
@@ -1433,7 +1441,7 @@ function OpportunitySection({
               <select
                 value={form.stage}
                 onChange={(event) =>
-                  setForm((current) => ({ ...current, stage: event.target.value as PipelineStage }))
+                  updateForm((current) => ({ ...current, stage: event.target.value as PipelineStage }))
                 }
                 className="mt-1 w-full rounded-md border border-line px-3 py-2"
               >
@@ -1449,7 +1457,7 @@ function OpportunitySection({
               <input
                 value={numberText(form.amount)}
                 onChange={(event) =>
-                  setForm((current) => ({ ...current, amount: digitsOnly(event.target.value) }))
+                  updateForm((current) => ({ ...current, amount: digitsOnly(event.target.value) }))
                 }
                 className="mt-1 w-full rounded-md border border-line px-3 py-2 text-right"
                 placeholder="예상 금액"
@@ -1463,7 +1471,7 @@ function OpportunitySection({
                 type="date"
                 value={form.expected_close_date}
                 onChange={(event) =>
-                  setForm((current) => ({ ...current, expected_close_date: event.target.value }))
+                  updateForm((current) => ({ ...current, expected_close_date: event.target.value }))
                 }
                 className="mt-1 w-full rounded-md border border-line px-3 py-2"
               />
@@ -1476,7 +1484,7 @@ function OpportunitySection({
               <select
                 value={form.opportunity_type}
                 onChange={(event) =>
-                  setForm((current) => ({ ...current, opportunity_type: event.target.value }))
+                  updateForm((current) => ({ ...current, opportunity_type: event.target.value }))
                 }
                 className="mt-1 w-full rounded-md border border-line px-3 py-2"
               >
@@ -1490,7 +1498,7 @@ function OpportunitySection({
             다음 단계
             <input
               value={form.next_step}
-              onChange={(event) => setForm((current) => ({ ...current, next_step: event.target.value }))}
+              onChange={(event) => updateForm((current) => ({ ...current, next_step: event.target.value }))}
               className="mt-1 w-full rounded-md border border-line px-3 py-2"
               placeholder="다음 단계"
             />
@@ -1500,7 +1508,10 @@ function OpportunitySection({
               종료 사유
               <textarea
                 value={closeReason}
-                onChange={(event) => setCloseReason(event.target.value)}
+                onChange={(event) => {
+                  setStatus("");
+                  setCloseReason(event.target.value);
+                }}
                 className="mt-1 min-h-24 w-full rounded-md border border-line px-3 py-2"
                 placeholder="Won/Lost 종료 사유를 입력하세요."
               />
@@ -1537,6 +1548,7 @@ function OpportunitySection({
                   <tr
                     key={opportunity.id}
                     onClick={() => {
+                      setStatus("");
                       setSelectedOpportunityId(opportunity.id);
                       setCloseReason(opportunity.lost_reason ?? "");
                       setForm({
