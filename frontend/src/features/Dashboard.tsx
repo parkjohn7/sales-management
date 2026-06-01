@@ -166,7 +166,7 @@ const stages: PipelineStage[] = [
 ];
 
 const activityTypeLabels: Record<string, string> = {
-  CALL: "휴대폰",
+  CALL: "통화",
   MEETING: "미팅",
   EMAIL: "이메일",
   PROPOSAL_SENT: "제안서 송부",
@@ -1655,7 +1655,7 @@ function ActivitySection({
           <label className="block text-sm font-medium">
             <EnumLabel
               label="유형"
-              hint="휴대폰, 미팅, 이메일, 제안서 송부, 후속 연락 중에서 활동 유형을 선택합니다."
+              hint="통화, 미팅, 이메일, 제안서 송부, 후속 연락 중에서 활동 유형을 선택합니다. 후속 연락은 이전 활동 이후 진행상황 확인/리마인드/추가 요청 대응을 의미합니다."
             />
             <select
               value={form.activity_type}
@@ -1665,7 +1665,7 @@ function ActivitySection({
               className="mt-1 w-full rounded-md border border-line px-3 py-2"
             >
               <option value="">활동유형 선택</option>
-              <option value="CALL">휴대폰</option>
+              <option value="CALL">통화</option>
               <option value="MEETING">미팅</option>
               <option value="EMAIL">이메일</option>
               <option value="PROPOSAL_SENT">제안서 송부</option>
@@ -1751,7 +1751,7 @@ function ActivitySection({
                   className="mt-1 w-full rounded-md border border-line px-3 py-2"
                 >
                   <option value="">활동유형 선택</option>
-                  <option value="CALL">휴대폰</option>
+                  <option value="CALL">통화</option>
                   <option value="MEETING">미팅</option>
                   <option value="EMAIL">이메일</option>
                   <option value="PROPOSAL_SENT">제안서 송부</option>
