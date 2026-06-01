@@ -238,7 +238,7 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
             />
           </label>
           <label className="block text-sm font-medium">
-            전화
+            휴대폰
             <input
               value={form.phone}
               onChange={(event) => update("phone", event.target.value)}
@@ -912,7 +912,7 @@ function AccountSection({
                   setAccountForm((current) => ({ ...current, phone: event.target.value }))
                 }
                 className="w-full min-w-0 rounded-md border border-line px-3 py-2"
-                placeholder="대표 전화"
+                placeholder="대표 휴대폰"
               />
             </div>
             <input
@@ -1050,7 +1050,7 @@ function AccountSection({
                   <th className={thClass}>유형</th>
                   <th className={`${thClass} hidden sm:table-cell`}>산업</th>
                   <th className={`${thClass} hidden md:table-cell`}>매출/직원</th>
-                  <th className={`${thClass} hidden lg:table-cell`}>전화</th>
+                  <th className={`${thClass} hidden lg:table-cell`}>휴대폰</th>
                   <th className={`${thClass} hidden lg:table-cell`}>담당</th>
                   <th className={thClass}>작업</th>
                 </tr>
@@ -1109,7 +1109,7 @@ function AccountSection({
                   <th className={thClass}>직책</th>
                   <th className={`${thClass} hidden sm:table-cell`}>부서</th>
                   <th className={`${thClass} hidden md:table-cell`}>이메일</th>
-                  <th className={`${thClass} hidden lg:table-cell`}>전화/휴대폰</th>
+                  <th className={`${thClass} hidden lg:table-cell`}>휴대폰</th>
                   <th className={`${thClass} hidden lg:table-cell`}>역할</th>
                   <th className={thClass}>작업</th>
                 </tr>
@@ -1364,7 +1364,7 @@ function ActivitySection({
             }
             className="w-full rounded-md border border-line px-3 py-2"
           >
-            <option value="CALL">전화</option>
+            <option value="CALL">휴대폰</option>
             <option value="MEETING">미팅</option>
             <option value="EMAIL">이메일</option>
             <option value="PROPOSAL_SENT">제안서 송부</option>
