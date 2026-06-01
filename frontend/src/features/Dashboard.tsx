@@ -166,6 +166,12 @@ function MobileSalesEntry({
   selectedLead?: LeadSummary;
   onDataChanged: DashboardProps["onDataChanged"];
 }) {
+  const leadSourceHelp: Record<string, string> = {
+    Direct: "직접 발굴한 리드입니다. (아웃바운드/소개 포함)",
+    Web: "웹사이트, 랜딩페이지, 폼 등 온라인 유입 리드입니다.",
+    Partner: "파트너사/리셀러를 통해 소개된 리드입니다.",
+    Event: "세미나, 전시회, 오프라인 행사에서 유입된 리드입니다."
+  };
   const [form, setForm] = useState<LeadCreateInput>({
     company_name: selectedLead?.company_name ?? "",
     contact_name: selectedLead?.contact_name ?? "",
@@ -306,11 +312,40 @@ function MobileSalesEntry({
               onChange={(event) => update("lead_source", event.target.value)}
               className="mt-1 w-full rounded-md border border-line px-3 py-2.5 text-sm"
             >
-              <option value="Direct">Direct</option>
-              <option value="Web">Web</option>
-              <option value="Partner">Partner</option>
-              <option value="Event">Event</option>
+              <option value="Direct" title={leadSourceHelp.Direct}>
+                Direct
+              </option>
+              <option value="Web" title={leadSourceHelp.Web}>
+                Web
+              </option>
+              <option value="Partner" title={leadSourceHelp.Partner}>
+                Partner
+              </option>
+              <option value="Event" title={leadSourceHelp.Event}>
+                Event
+              </option>
             </select>
+            <p className="mt-1 text-xs text-slate-500">
+              {leadSourceHelp[String(form.lead_source ?? "")] || ""}
+            </p>
+          </label>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block text-sm font-medium">
+            상태
+            <input
+              value="NEW (생성 시 자동 설정)"
+              readOnly
+              className="mt-1 w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-600"
+            />
+          </label>
+          <label className="block text-sm font-medium">
+            등급
+            <input
+              value="점수 기반 자동 계산 (HOT/WARM/COLD)"
+              readOnly
+              className="mt-1 w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-600"
+            />
           </label>
         </div>
         <div className="grid grid-cols-2 gap-3">
