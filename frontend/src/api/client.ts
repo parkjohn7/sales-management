@@ -14,6 +14,7 @@ import type {
   LeadSummary,
   LeadUpdateInput,
   OpportunityStageChangeInput,
+  OpportunityInput,
   OpportunitySummary,
   PipelineStage,
   PipelineSummary,
@@ -361,6 +362,19 @@ export async function changeOpportunityStage(
   await ensureDevToken();
   return request<OpportunitySummary>(`/opportunities/${opportunityId}/stage`, {
     method: "POST",
+    body: payload
+  });
+}
+
+export async function createOpportunity(payload: OpportunityInput) {
+  await ensureDevToken();
+  return request<OpportunitySummary>("/opportunities", { method: "POST", body: payload });
+}
+
+export async function updateOpportunity(opportunityId: string, payload: Partial<OpportunityInput>) {
+  await ensureDevToken();
+  return request<OpportunitySummary>(`/opportunities/${opportunityId}`, {
+    method: "PATCH",
     body: payload
   });
 }

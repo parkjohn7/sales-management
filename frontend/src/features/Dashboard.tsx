@@ -13,12 +13,12 @@ import {
 } from "recharts";
 
 import {
-  changeOpportunityStage,
   convertLead,
   createAccount,
   createActivity,
   createContact,
   createIntegrationLead,
+  createOpportunity,
   deleteAccount,
   deleteActivity,
   deleteContact,
@@ -26,7 +26,8 @@ import {
   updateAccount,
   updateActivity,
   updateContact,
-  updateLead
+  updateLead,
+  updateOpportunity
 } from "../api/client";
 import { MetricCard } from "../components/MetricCard";
 import type {
@@ -42,7 +43,7 @@ import type {
   IntegrationLeadInput,
   LeadCreateInput,
   LeadSummary,
-  OpportunityStageChangeInput,
+  OpportunityInput,
   OpportunitySummary,
   PipelineStage,
   PipelineSummary,
@@ -80,6 +81,17 @@ type MenuItem = (typeof menuItems)[number];
 
 function money(value: string) {
   return `${formatter.format(Number(value))}원`;
+}
+
+function digitsOnly(value: string) {
+  return value.replace(/[^0-9]/g, "");
+}
+
+function numberText(value: string | number | null | undefined) {
+  if (value === null || value === undefined || value === "") return "";
+  const num = Number(String(value).replace(/,/g, ""));
+  if (Number.isNaN(num)) return "";
+  return formatter.format(num);
 }
 
 function gradeClass(grade: LeadSummary["lead_grade"]) {
@@ -134,20 +146,28 @@ function parseOptionalCount(value: string) {
   return trimmed === "" ? null : Number(trimmed);
 }
 
-function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCreateLead"] }) {
+function MobileSalesEntry({
+  onCreateLead,
+  selectedLead,
+  onDataChanged
+}: {
+  onCreateLead: DashboardProps["onCreateLead"];
+  selectedLead?: LeadSummary;
+  onDataChanged: DashboardProps["onDataChanged"];
+}) {
   const [form, setForm] = useState<LeadCreateInput>({
-    company_name: "",
-    contact_name: "",
-    email: "",
-    phone: "",
-    title: "",
-    lead_source: "Direct",
-    rating: "Warm",
-    annual_revenue: "",
-    employee_count: undefined,
-    campaign_name: "",
-    source_channel: "manual",
-    inquiry_content: "",
+    company_name: selectedLead?.company_name ?? "",
+    contact_name: selectedLead?.contact_name ?? "",
+    email: selectedLead?.email ?? "",
+    phone: selectedLead?.phone ?? "",
+    title: selectedLead?.title ?? "",
+    lead_source: selectedLead?.lead_source ?? "Direct",
+    rating: selectedLead?.rating ?? "Warm",
+    annual_revenue: selectedLead?.annual_revenue ?? "",
+    employee_count: selectedLead?.employee_count ?? undefined,
+    campaign_name: selectedLead?.campaign_name ?? "",
+    source_channel: selectedLead?.source_channel ?? "manual",
+    inquiry_content: selectedLead?.inquiry_content ?? "",
     budget_confirmed: false,
     authority_confirmed: false,
     timeline_within_3_months: false,
@@ -155,6 +175,7 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
     downloaded_material: false
   });
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const isEdit = Boolean(selectedLead);
 
   function update<K extends keyof LeadCreateInput>(key: K, value: LeadCreateInput[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -164,29 +185,38 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
     event.preventDefault();
     setStatus("saving");
     try {
-      await onCreateLead({
-        ...form,
-        annual_revenue: form.annual_revenue || undefined,
-        employee_count: form.employee_count ?? undefined
-      });
-      setForm((current) => ({
-        ...current,
-        company_name: "",
-        contact_name: "",
-        email: "",
-        phone: "",
-        title: "",
-        lead_source: "Direct",
-        rating: "Warm",
-        annual_revenue: "",
-        employee_count: undefined,
-        campaign_name: "",
-        inquiry_content: "",
-        budget_confirmed: false,
-        authority_confirmed: false,
-        timeline_within_3_months: false,
-        downloaded_material: false
-      }));
+      if (selectedLead) {
+        await updateLead(selectedLead.id, {
+          ...form,
+          annual_revenue: form.annual_revenue || undefined,
+          employee_count: form.employee_count ?? undefined
+        });
+        await onDataChanged();
+      } else {
+        await onCreateLead({
+          ...form,
+          annual_revenue: form.annual_revenue || undefined,
+          employee_count: form.employee_count ?? undefined
+        });
+        setForm((current) => ({
+          ...current,
+          company_name: "",
+          contact_name: "",
+          email: "",
+          phone: "",
+          title: "",
+          lead_source: "Direct",
+          rating: "Warm",
+          annual_revenue: "",
+          employee_count: undefined,
+          campaign_name: "",
+          inquiry_content: "",
+          budget_confirmed: false,
+          authority_confirmed: false,
+          timeline_within_3_months: false,
+          downloaded_material: false
+        }));
+      }
       setStatus("saved");
     } catch {
       setStatus("error");
@@ -196,7 +226,7 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
   return (
     <section className="mt-4 rounded-lg border border-line bg-white p-4">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-lg font-bold">리드 등록</h3>
+        <h3 className="text-lg font-bold">{isEdit ? "리드 수정" : "리드 등록"}</h3>
         {status === "saved" && (
           <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-1 text-xs font-bold text-rose-700">
             <Check className="h-3 w-3" aria-hidden="true" />
@@ -273,11 +303,12 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
           <label className="block text-sm font-medium">
             예상 매출
             <input
-              type="number"
-              min="0"
-              value={form.annual_revenue}
-              onChange={(event) => update("annual_revenue", event.target.value)}
-              className="mt-1 w-full rounded-md border border-line px-3 py-2.5 text-sm"
+              value={numberText(form.annual_revenue)}
+              onChange={(event) => {
+                const only = digitsOnly(event.target.value);
+                update("annual_revenue", only ? String(Number(only)) : "");
+              }}
+              className="mt-1 w-full rounded-md border border-line px-3 py-2.5 text-right text-sm"
             />
           </label>
           <label className="block text-sm font-medium">
@@ -333,7 +364,7 @@ function MobileSalesEntry({ onCreateLead }: { onCreateLead: DashboardProps["onCr
           disabled={status === "saving"}
           className="w-full rounded-md bg-rose-600 px-4 py-2.5 text-base font-bold text-white disabled:opacity-60"
         >
-          {status === "saving" ? "저장 중" : "리드 저장"}
+          {status === "saving" ? "저장 중" : isEdit ? "리드 수정" : "리드 저장"}
         </button>
         {status === "error" && (
           <p className="text-sm font-medium text-coral">API 연결을 확인한 뒤 다시 저장해주세요.</p>
@@ -609,17 +640,17 @@ function LeadSection({
   onCreateLead: DashboardProps["onCreateLead"];
   onDataChanged: DashboardProps["onDataChanged"];
 }) {
-  const [selectedLeadId, setSelectedLeadId] = useState(leads[0]?.id ?? "");
-  const [convertForm, setConvertForm] = useState({ opportunity_name: "", amount: "0" });
+  const [selectedLeadId, setSelectedLeadId] = useState("");
   const [status, setStatus] = useState("");
-  const selectedLead = leads.find((lead) => lead.id === selectedLeadId) ?? leads[0];
+  const selectedLead = leads.find((lead) => lead.id === selectedLeadId);
 
-  async function handleConvert(event: FormEvent) {
-    event.preventDefault();
-    if (!selectedLead) return;
+  async function handleQuickConvert(lead: LeadSummary) {
     setStatus("전환 중");
     try {
-      await convertLead(selectedLead.id, convertForm);
+      await convertLead(lead.id, {
+        opportunity_name: `${lead.company_name} 영업기회`,
+        amount: "0"
+      });
       setStatus("고객사/연락처/영업기회로 전환되었습니다.");
       await onDataChanged();
     } catch {
@@ -644,94 +675,13 @@ function LeadSection({
     <section className="space-y-4">
       <div className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
         <div className="space-y-4">
-          <MobileSalesEntry onCreateLead={onCreateLead} />
-          <aside className={`${panelClass} p-4`}>
-            <h3 className="text-lg font-bold">리드 상세/전환</h3>
-            {selectedLead ? (
-              <>
-                <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <dt className="text-slate-500">고객사</dt>
-                    <dd className="font-bold">{selectedLead.company_name}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-slate-500">담당자</dt>
-                    <dd>{selectedLead.contact_name}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-slate-500">직책</dt>
-                    <dd>{selectedLead.title || "직책 없음"}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-slate-500">직원 수</dt>
-                    <dd>
-                      <input
-                        key={selectedLead.id}
-                        aria-label="선택 리드 직원 수"
-                        defaultValue={selectedLead.employee_count ?? ""}
-                        type="number"
-                        min="0"
-                        onBlur={(event) => void saveLeadEmployeeCount(selectedLead, event.target.value)}
-                        className="mt-1 w-full rounded-md border border-line px-3 py-2 text-sm"
-                        placeholder="직원 수 직접 입력"
-                      />
-                    </dd>
-                  </div>
-                  <div className="col-span-2">
-                    <dt className="text-slate-500">소스/캠페인</dt>
-                    <dd>
-                      {selectedLead.lead_source || selectedLead.source_channel} ·{" "}
-                      {selectedLead.campaign_name || "캠페인 없음"}
-                    </dd>
-                  </div>
-                  <div className="col-span-2">
-                    <dt className="text-slate-500">점수/등급</dt>
-                    <dd>
-                      {selectedLead.lead_score}점 · {selectedLead.lead_grade}
-                    </dd>
-                  </div>
-                  <div className="col-span-2">
-                    <dt className="text-slate-500">문의</dt>
-                    <dd>{selectedLead.inquiry_content || "문의 내용 없음"}</dd>
-                  </div>
-                </dl>
-                <form className="mt-3 space-y-2.5" onSubmit={handleConvert}>
-                  <label className="block text-sm font-medium">
-                    영업기회명
-                    <input
-                      value={convertForm.opportunity_name}
-                      onChange={(event) =>
-                        setConvertForm((current) => ({
-                          ...current,
-                          opportunity_name: event.target.value
-                        }))
-                      }
-                      className="mt-1 w-full rounded-md border border-line px-3 py-2"
-                      placeholder={`${selectedLead.company_name} 도입`}
-                    />
-                  </label>
-                  <label className="block text-sm font-medium">
-                    예상 금액
-                    <input
-                      type="number"
-                      min="0"
-                      value={convertForm.amount}
-                      onChange={(event) =>
-                        setConvertForm((current) => ({ ...current, amount: event.target.value }))
-                      }
-                      className="mt-1 w-full rounded-md border border-line px-3 py-2"
-                    />
-                  </label>
-                  <button className="w-full rounded-md bg-rose-600 px-4 py-2 font-bold text-white">
-                    고객사/영업기회 전환
-                  </button>
-                  {status && <p className="text-sm font-medium text-slate-700">{status}</p>}
-                </form>
-              </>
-            ) : (
-              <p className="mt-3 text-sm text-slate-600">전환할 리드가 없습니다.</p>
-            )}
-          </aside>
+          <MobileSalesEntry
+            key={selectedLead?.id ?? "new"}
+            onCreateLead={onCreateLead}
+            selectedLead={selectedLead}
+            onDataChanged={onDataChanged}
+          />
+          {status && <p className="text-sm font-medium text-slate-700">{status}</p>}
         </div>
         <div className={`${panelClass} overflow-hidden`}>
           <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2.5">
@@ -749,6 +699,7 @@ function LeadSection({
                   <th className={thClass}>등급</th>
                   <th className={thClass}>점수</th>
                   <th className={thClass}>상태</th>
+                  <th className={thClass}>작업</th>
                 </tr>
               </thead>
               <tbody>
@@ -787,6 +738,18 @@ function LeadSection({
                         {lead.status}
                       </span>
                     </td>
+                    <td className={tdClass}>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          void handleQuickConvert(lead);
+                        }}
+                        className="rounded border border-rose-200 px-2 py-1 text-xs font-bold text-rose-700"
+                      >
+                        영업기회 전환
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -807,26 +770,30 @@ function AccountSection({
   contacts: ContactSummary[];
   onDataChanged: DashboardProps["onDataChanged"];
 }) {
+  const [selectedAccountId, setSelectedAccountId] = useState("");
+  const [selectedContactId, setSelectedContactId] = useState("");
+  const selectedAccount = accounts.find((account) => account.id === selectedAccountId);
+  const selectedContact = contacts.find((contact) => contact.id === selectedContactId);
   const [accountForm, setAccountForm] = useState<AccountInput>({
-    name: "",
-    account_type: "Prospect",
-    industry: "",
-    annual_revenue: "",
-    employee_count: 0,
-    phone: "",
-    website: "",
-    address: "",
-    owner_id: ""
+    name: selectedAccount?.name ?? "",
+    account_type: selectedAccount?.account_type ?? "Prospect",
+    industry: selectedAccount?.industry ?? "",
+    annual_revenue: selectedAccount?.annual_revenue ?? "",
+    employee_count: selectedAccount?.employee_count ?? 0,
+    phone: selectedAccount?.phone ?? "",
+    website: selectedAccount?.website ?? "",
+    address: selectedAccount?.address ?? "",
+    owner_id: selectedAccount?.owner_id ?? ""
   });
   const [contactForm, setContactForm] = useState<ContactInput>({
-    account_id: accounts[0]?.id ?? "",
-    name: "",
-    email: "",
-    phone: "",
-    mobile_phone: "",
-    title: "",
-    department: "",
-    role_type: "PRACTITIONER"
+    account_id: selectedContact?.account_id ?? accounts[0]?.id ?? "",
+    name: selectedContact?.name ?? "",
+    email: selectedContact?.email ?? "",
+    phone: selectedContact?.phone ?? "",
+    mobile_phone: selectedContact?.mobile_phone ?? "",
+    title: selectedContact?.title ?? "",
+    department: selectedContact?.department ?? "",
+    role_type: selectedContact?.role_type ?? "PRACTITIONER"
   });
   const [status, setStatus] = useState("");
 
@@ -834,23 +801,18 @@ function AccountSection({
     event.preventDefault();
     setStatus("고객사 저장 중");
     try {
-      await createAccount({
+      const payload = {
         ...accountForm,
         annual_revenue: accountForm.annual_revenue || undefined,
         employee_count: accountForm.employee_count || undefined
-      });
-      setAccountForm({
-        name: "",
-        account_type: "Prospect",
-        industry: "",
-        annual_revenue: "",
-        employee_count: 0,
-        phone: "",
-        website: "",
-        address: "",
-        owner_id: ""
-      });
-      setStatus("고객사를 저장했습니다.");
+      };
+      if (selectedAccount) {
+        await updateAccount(selectedAccount.id, payload);
+        setStatus("고객사를 수정했습니다.");
+      } else {
+        await createAccount(payload);
+        setStatus("고객사를 저장했습니다.");
+      }
       await onDataChanged();
     } catch {
       setStatus("고객사 저장 실패");
@@ -861,17 +823,13 @@ function AccountSection({
     event.preventDefault();
     setStatus("연락처 저장 중");
     try {
-      await createContact(contactForm);
-      setContactForm((current) => ({
-        ...current,
-        name: "",
-        email: "",
-        phone: "",
-        mobile_phone: "",
-        title: "",
-        department: ""
-      }));
-      setStatus("연락처를 저장했습니다.");
+      if (selectedContact) {
+        await updateContact(selectedContact.id, contactForm);
+        setStatus("연락처를 수정했습니다.");
+      } else {
+        await createContact(contactForm);
+        setStatus("연락처를 저장했습니다.");
+      }
       await onDataChanged();
     } catch {
       setStatus("연락처 저장 실패: 고객사를 선택해주세요.");
@@ -882,7 +840,7 @@ function AccountSection({
     <section className="grid min-w-0 gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
       <div className="space-y-4">
         <form className="rounded-lg border border-line bg-white p-4" onSubmit={handleCreateAccount}>
-          <h3 className="text-lg font-bold">고객사 등록</h3>
+          <h3 className="text-lg font-bold">{selectedAccount ? "고객사 수정" : "고객사 등록"}</h3>
           <div className="mt-4 space-y-3">
             <input
               required
@@ -925,13 +883,14 @@ function AccountSection({
             />
             <div className="grid grid-cols-2 gap-3">
               <input
-                type="number"
-                min="0"
-                value={accountForm.annual_revenue}
+                value={numberText(accountForm.annual_revenue)}
                 onChange={(event) =>
-                  setAccountForm((current) => ({ ...current, annual_revenue: event.target.value }))
+                  setAccountForm((current) => ({
+                    ...current,
+                    annual_revenue: digitsOnly(event.target.value)
+                  }))
                 }
-                className="w-full min-w-0 rounded-md border border-line px-3 py-2"
+                className="w-full min-w-0 rounded-md border border-line px-3 py-2 text-right"
                 placeholder="연 매출"
               />
               <input
@@ -965,12 +924,12 @@ function AccountSection({
               placeholder="웹사이트"
             />
             <button className="w-full rounded-md bg-rose-600 px-4 py-2 font-bold text-white">
-              고객사 저장
+              {selectedAccount ? "고객사 수정" : "고객사 저장"}
             </button>
           </div>
         </form>
         <form className="rounded-lg border border-line bg-white p-4" onSubmit={handleCreateContact}>
-          <h3 className="text-lg font-bold">연락처 등록</h3>
+          <h3 className="text-lg font-bold">{selectedContact ? "연락처 수정" : "연락처 등록"}</h3>
           <div className="mt-4 space-y-3">
             <select
               required
@@ -1030,8 +989,8 @@ function AccountSection({
                 placeholder="휴대폰"
               />
             </div>
-            <button className="w-full rounded-md bg-ink px-4 py-2 font-bold text-white">
-              연락처 저장
+            <button className="w-full rounded-md bg-rose-600 px-4 py-2 font-bold text-white">
+              {selectedContact ? "연락처 수정" : "연락처 저장"}
             </button>
           </div>
         </form>
@@ -1057,19 +1016,27 @@ function AccountSection({
               </thead>
               <tbody>
                 {accounts.map((account) => (
-                  <tr key={account.id} className={cherryHoverRowClass}>
-                    <td className={tdClass}>
-                      <input
-                        defaultValue={account.name}
-                        onBlur={async (event) => {
-                          if (event.target.value !== account.name) {
-                            await updateAccount(account.id, { name: event.target.value });
-                            await onDataChanged();
-                          }
-                        }}
-                        className={`w-full rounded border border-transparent bg-transparent px-2 py-1 hover:border-slate-200 ${cherryTextClass}`}
-                      />
-                    </td>
+                  <tr
+                    key={account.id}
+                    onClick={() => {
+                      setSelectedAccountId(account.id);
+                      setAccountForm({
+                        name: account.name,
+                        account_type: account.account_type ?? "Prospect",
+                        industry: account.industry ?? "",
+                        annual_revenue: account.annual_revenue ?? "",
+                        employee_count: account.employee_count ?? 0,
+                        phone: account.phone ?? "",
+                        website: account.website ?? "",
+                        address: account.address ?? "",
+                        owner_id: account.owner_id ?? ""
+                      });
+                    }}
+                    className={`${cherryHoverRowClass} cursor-pointer ${
+                      selectedAccountId === account.id ? "bg-rose-50" : ""
+                    }`}
+                  >
+                    <td className={`${tdClass} ${cherryTextClass}`}>{account.name}</td>
                     <td className={tdClass}>{account.account_type || "Prospect"}</td>
                     <td className={`${tdClass} hidden sm:table-cell`}>{account.industry || "-"}</td>
                     <td className={`${tdClass} hidden md:table-cell`}>
@@ -1116,19 +1083,26 @@ function AccountSection({
               </thead>
               <tbody>
                 {contacts.map((contact) => (
-                  <tr key={contact.id} className={cherryHoverRowClass}>
-                    <td className={tdClass}>
-                      <input
-                        defaultValue={contact.name}
-                        onBlur={async (event) => {
-                          if (event.target.value !== contact.name) {
-                            await updateContact(contact.id, { name: event.target.value });
-                            await onDataChanged();
-                          }
-                        }}
-                        className={`w-full rounded border border-transparent bg-transparent px-2 py-1 hover:border-slate-200 ${cherryTextClass}`}
-                      />
-                    </td>
+                  <tr
+                    key={contact.id}
+                    onClick={() => {
+                      setSelectedContactId(contact.id);
+                      setContactForm({
+                        account_id: contact.account_id,
+                        name: contact.name,
+                        email: contact.email ?? "",
+                        phone: contact.phone ?? "",
+                        mobile_phone: contact.mobile_phone ?? "",
+                        title: contact.title ?? "",
+                        department: contact.department ?? "",
+                        role_type: contact.role_type ?? "PRACTITIONER"
+                      });
+                    }}
+                    className={`${cherryHoverRowClass} cursor-pointer ${
+                      selectedContactId === contact.id ? "bg-rose-50" : ""
+                    }`}
+                  >
+                    <td className={`${tdClass} ${cherryTextClass}`}>{contact.name}</td>
                     <td className={tdClass}>{contact.title || "직책 미입력"}</td>
                     <td className={`${tdClass} hidden sm:table-cell`}>{contact.department || "-"}</td>
                     <td className={`${tdClass} hidden md:table-cell`}>{contact.email || "-"}</td>
@@ -1162,43 +1136,132 @@ function AccountSection({
 
 function OpportunitySection({
   opportunities,
-  leads,
+  accounts,
   onDataChanged
 }: {
   opportunities: OpportunitySummary[];
-  leads: LeadSummary[];
+  accounts: AccountSummary[];
   onDataChanged: DashboardProps["onDataChanged"];
 }) {
-  const [stageForms, setStageForms] = useState<Record<string, OpportunityStageChangeInput>>({});
+  const [selectedOpportunityId, setSelectedOpportunityId] = useState("");
   const [status, setStatus] = useState("");
+  const selectedOpportunity = opportunities.find(
+    (opportunity) => opportunity.id === selectedOpportunityId
+  );
+  const [form, setForm] = useState<OpportunityInput>({
+    account_id: selectedOpportunity?.account_id ?? accounts[0]?.id ?? "",
+    name: selectedOpportunity?.name ?? "",
+    stage: selectedOpportunity?.stage ?? "LEAD",
+    amount: selectedOpportunity?.amount ?? "0",
+    expected_close_date: selectedOpportunity?.expected_close_date ?? "",
+    owner_id: selectedOpportunity?.owner_name ?? "",
+    opportunity_type: selectedOpportunity?.opportunity_type ?? "New Business",
+    next_step: selectedOpportunity?.next_step ?? "",
+    primary_campaign_source: selectedOpportunity?.primary_campaign_source ?? "",
+    competitor: selectedOpportunity?.competitor ?? ""
+  });
 
-  function formFor(opportunity: OpportunitySummary): OpportunityStageChangeInput {
-    return stageForms[opportunity.id] ?? { stage: opportunity.stage, reason: "" };
-  }
-
-  async function saveStageChange(opportunity: OpportunitySummary) {
-    const form = formFor(opportunity);
-    setStatus("단계 변경 중");
+  async function handleSave(event: FormEvent) {
+    event.preventDefault();
+    setStatus(selectedOpportunity ? "영업기회 수정 중" : "영업기회 저장 중");
     try {
-      await changeOpportunityStage(opportunity.id, form);
-      setStatus("영업기회 단계가 변경되었습니다.");
+      const payload: OpportunityInput = {
+        ...form,
+        amount: digitsOnly(form.amount ?? "0") || "0"
+      };
+      if (selectedOpportunity) {
+        await updateOpportunity(selectedOpportunity.id, payload);
+        setStatus("영업기회를 수정했습니다.");
+      } else {
+        await createOpportunity(payload);
+        setStatus("영업기회를 저장했습니다.");
+        setForm((current) => ({ ...current, name: "", amount: "0", next_step: "", competitor: "" }));
+      }
       await onDataChanged();
     } catch {
-      setStatus("단계 변경 실패: Lost 단계는 사유가 필요합니다.");
+      setStatus("영업기회 저장 실패");
     }
   }
 
-  async function handleStageChange(event: FormEvent, opportunity: OpportunitySummary) {
-    event.preventDefault();
-    await saveStageChange(opportunity);
-  }
-
   return (
-    <section className="space-y-4">
-      <StageMatrix opportunities={opportunities} leads={leads} />
+    <section className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
+      <form className="rounded-lg border border-line bg-white p-4" onSubmit={handleSave}>
+        <h3 className="text-lg font-bold">{selectedOpportunity ? "영업기회 수정" : "영업기회 등록"}</h3>
+        <div className="mt-4 space-y-3">
+          <select
+            value={form.account_id}
+            onChange={(event) => setForm((current) => ({ ...current, account_id: event.target.value }))}
+            className="w-full rounded-md border border-line px-3 py-2"
+          >
+            <option value="">고객사 선택</option>
+            {accounts.map((account) => (
+              <option key={account.id} value={account.id}>
+                {account.name}
+              </option>
+            ))}
+          </select>
+          <input
+            value={form.name}
+            onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+            className="w-full rounded-md border border-line px-3 py-2"
+            placeholder="영업기회명"
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <select
+              value={form.stage}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, stage: event.target.value as PipelineStage }))
+              }
+              className="w-full rounded-md border border-line px-3 py-2"
+            >
+              {stages.map((stage) => (
+                <option key={stage} value={stage}>
+                  {stageLabels[stage]}
+                </option>
+              ))}
+            </select>
+            <input
+              value={numberText(form.amount)}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, amount: digitsOnly(event.target.value) }))
+              }
+              className="w-full rounded-md border border-line px-3 py-2 text-right"
+              placeholder="예상 금액"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <input
+              type="date"
+              value={form.expected_close_date}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, expected_close_date: event.target.value }))
+              }
+              className="w-full rounded-md border border-line px-3 py-2"
+            />
+            <input
+              value={form.opportunity_type}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, opportunity_type: event.target.value }))
+              }
+              className="w-full rounded-md border border-line px-3 py-2"
+              placeholder="유형"
+            />
+          </div>
+          <input
+            value={form.next_step}
+            onChange={(event) => setForm((current) => ({ ...current, next_step: event.target.value }))}
+            className="w-full rounded-md border border-line px-3 py-2"
+            placeholder="다음 단계"
+          />
+          <button className="w-full rounded-md bg-rose-600 px-4 py-2 font-bold text-white">
+            {selectedOpportunity ? "영업기회 수정" : "영업기회 저장"}
+          </button>
+          {status && <p className="text-sm font-medium text-slate-700">{status}</p>}
+        </div>
+      </form>
       <div className={`${panelClass} overflow-hidden`}>
         <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2.5">
-        <h3 className="text-lg font-bold">영업기회 상세</h3>
+        <h3 className="text-lg font-bold">영업기회 목록</h3>
           <span className="text-sm font-semibold text-slate-500">{opportunities.length} rows</span>
         </div>
         <div className={tableScrollClass}>
@@ -1213,16 +1276,32 @@ function OpportunitySection({
                 <th className={thClass}>Forecast</th>
                 <th className={`${thClass} hidden lg:table-cell`}>다음 단계</th>
                 <th className={`${thClass} hidden xl:table-cell`}>캠페인/경쟁사</th>
-                <th className={thClass}>단계 변경</th>
-                <th className={thClass}>사유</th>
                 <th className={thClass}>작업</th>
               </tr>
             </thead>
             <tbody>
-              {opportunities.map((opportunity) => {
-                const form = formFor(opportunity);
-                return (
-                  <tr key={opportunity.id} className={cherryHoverRowClass}>
+              {opportunities.map((opportunity) => (
+                  <tr
+                    key={opportunity.id}
+                    onClick={() => {
+                      setSelectedOpportunityId(opportunity.id);
+                      setForm({
+                        account_id: opportunity.account_id ?? "",
+                        name: opportunity.name,
+                        stage: opportunity.stage,
+                        amount: opportunity.amount,
+                        expected_close_date: opportunity.expected_close_date ?? "",
+                        owner_id: opportunity.owner_name ?? "",
+                        opportunity_type: opportunity.opportunity_type ?? "New Business",
+                        next_step: opportunity.next_step ?? "",
+                        primary_campaign_source: opportunity.primary_campaign_source ?? "",
+                        competitor: opportunity.competitor ?? ""
+                      });
+                    }}
+                    className={`${cherryHoverRowClass} cursor-pointer ${
+                      selectedOpportunity?.id === opportunity.id ? "bg-rose-50" : ""
+                    }`}
+                  >
                     <td className={`${tdClass} ${cherryTextClass}`}>{opportunity.name}</td>
                     <td className={`${tdClass} hidden md:table-cell`}>
                       {opportunity.opportunity_type || "New Business"}
@@ -1241,59 +1320,34 @@ function OpportunitySection({
                       {opportunity.competitor ? ` / ${opportunity.competitor}` : ""}
                     </td>
                     <td className={tdClass}>
-                      <select
-                        aria-label="단계 변경"
-                        value={form.stage}
-                        onChange={(event) =>
-                          setStageForms((current) => ({
-                            ...current,
-                            [opportunity.id]: {
-                              ...form,
-                              stage: event.target.value as PipelineStage
-                            }
-                          }))
-                        }
-                        className="w-full rounded border border-slate-200 px-2 py-1"
-                      >
-                        {stages.map((stage) => (
-                          <option key={stage} value={stage}>
-                            {stageLabels[stage]}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className={tdClass}>
-                      <input
-                        value={form.stage === "CLOSED_LOST" ? form.lost_reason ?? "" : form.reason ?? ""}
-                        onChange={(event) =>
-                          setStageForms((current) => ({
-                            ...current,
-                            [opportunity.id]:
-                              form.stage === "CLOSED_LOST"
-                                ? { ...form, lost_reason: event.target.value }
-                                : { ...form, reason: event.target.value }
-                          }))
-                        }
-                        className="w-full rounded border border-slate-200 px-2 py-1"
-                        placeholder={form.stage === "CLOSED_LOST" ? "Lost 사유" : "변경 사유"}
-                      />
-                    </td>
-                    <td className={tdClass}>
                       <button
                         type="button"
-                        onClick={() => void saveStageChange(opportunity)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setSelectedOpportunityId(opportunity.id);
+                          setForm({
+                            account_id: opportunity.account_id ?? "",
+                            name: opportunity.name,
+                            stage: opportunity.stage,
+                            amount: opportunity.amount,
+                            expected_close_date: opportunity.expected_close_date ?? "",
+                            owner_id: opportunity.owner_name ?? "",
+                            opportunity_type: opportunity.opportunity_type ?? "New Business",
+                            next_step: opportunity.next_step ?? "",
+                            primary_campaign_source: opportunity.primary_campaign_source ?? "",
+                            competitor: opportunity.competitor ?? ""
+                          });
+                        }}
                         className="rounded border border-rose-200 px-2 py-1 text-xs font-bold text-rose-700"
                       >
-                        단계 저장
+                        선택
                       </button>
                     </td>
                   </tr>
-                );
-              })}
+              ))}
             </tbody>
           </table>
         </div>
-        {status && <p className="mt-3 text-sm font-medium text-slate-700">{status}</p>}
       </div>
     </section>
   );
@@ -1310,16 +1364,20 @@ function ActivitySection({
   leads: LeadSummary[];
   onDataChanged: DashboardProps["onDataChanged"];
 }) {
+  const [selectedActivityId, setSelectedActivityId] = useState("");
+  const selectedActivity = activities.find((activity) => activity.id === selectedActivityId);
   const [form, setForm] = useState<ActivityInput>({
-    subject: "",
-    activity_type: "CALL",
-    activity_date: new Date().toISOString().slice(0, 16),
-    due_date: "",
-    status: "OPEN",
-    priority: "MEDIUM",
-    description: "",
-    opportunity_id: opportunities[0]?.id ?? "",
-    lead_id: ""
+    subject: selectedActivity?.subject ?? "",
+    activity_type: selectedActivity?.activity_type ?? "CALL",
+    activity_date: selectedActivity
+      ? new Date(selectedActivity.activity_date).toISOString().slice(0, 16)
+      : new Date().toISOString().slice(0, 16),
+    due_date: selectedActivity?.due_date ?? "",
+    status: selectedActivity?.status ?? "OPEN",
+    priority: selectedActivity?.priority ?? "MEDIUM",
+    description: selectedActivity?.description ?? "",
+    opportunity_id: selectedActivity?.opportunity_id ?? opportunities[0]?.id ?? "",
+    lead_id: selectedActivity?.lead_id ?? ""
   });
   const [status, setStatus] = useState("");
 
@@ -1327,7 +1385,7 @@ function ActivitySection({
     event.preventDefault();
     setStatus("활동 저장 중");
     try {
-      await createActivity({
+      const payload = {
         activity_type: form.activity_type,
         subject: form.subject,
         activity_date: new Date(form.activity_date).toISOString(),
@@ -1337,9 +1395,15 @@ function ActivitySection({
         description: form.description,
         opportunity_id: form.opportunity_id || undefined,
         lead_id: form.lead_id || undefined
-      });
-      setForm((current) => ({ ...current, subject: "", description: "" }));
-      setStatus("활동을 저장했습니다.");
+      };
+      if (selectedActivity) {
+        await updateActivity(selectedActivity.id, payload);
+        setStatus("활동을 수정했습니다.");
+      } else {
+        await createActivity(payload);
+        setForm((current) => ({ ...current, subject: "", description: "" }));
+        setStatus("활동을 저장했습니다.");
+      }
       await onDataChanged();
     } catch {
       setStatus("활동 저장 실패");
@@ -1349,7 +1413,7 @@ function ActivitySection({
   return (
     <section className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
       <form className="rounded-lg border border-line bg-white p-4" onSubmit={handleCreateActivity}>
-        <h3 className="text-lg font-bold">활동 등록</h3>
+        <h3 className="text-lg font-bold">{selectedActivity ? "활동 수정" : "활동 등록"}</h3>
         <div className="mt-4 space-y-3">
           <input
             value={form.subject}
@@ -1449,7 +1513,7 @@ function ActivitySection({
             placeholder="활동 내용"
           />
           <button className="w-full rounded-md bg-rose-600 px-4 py-2 font-bold text-white">
-            활동 저장
+            {selectedActivity ? "활동 수정" : "활동 저장"}
           </button>
           {status && <p className="text-sm font-medium text-slate-700">{status}</p>}
         </div>
@@ -1475,7 +1539,26 @@ function ActivitySection({
             </thead>
             <tbody>
               {activities.map((activity) => (
-                <tr key={activity.id} className={cherryHoverRowClass}>
+                <tr
+                  key={activity.id}
+                  onClick={() => {
+                    setSelectedActivityId(activity.id);
+                    setForm({
+                      subject: activity.subject ?? "",
+                      activity_type: activity.activity_type,
+                      activity_date: new Date(activity.activity_date).toISOString().slice(0, 16),
+                      due_date: activity.due_date ?? "",
+                      status: activity.status ?? "OPEN",
+                      priority: activity.priority ?? "MEDIUM",
+                      description: activity.description ?? "",
+                      opportunity_id: activity.opportunity_id ?? "",
+                      lead_id: activity.lead_id ?? ""
+                    });
+                  }}
+                  className={`${cherryHoverRowClass} cursor-pointer ${
+                    selectedActivityId === activity.id ? "bg-rose-50" : ""
+                  }`}
+                >
                   <td className={`${tdClass} ${cherryTextClass}`}>{activity.activity_type}</td>
                   <td className={tdClass}>{activity.subject || "제목 없음"}</td>
                   <td className={tdClass}>{new Date(activity.activity_date).toLocaleString("ko-KR")}</td>
@@ -1858,7 +1941,7 @@ export function Dashboard({
             {activeView === "영업기회" && (
               <OpportunitySection
                 opportunities={opportunities}
-                leads={leads}
+                accounts={accounts}
                 onDataChanged={onDataChanged}
               />
             )}

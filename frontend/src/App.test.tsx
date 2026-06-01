@@ -145,11 +145,11 @@ describe("Dashboard", () => {
     );
 
     fireEvent.click(screen.getAllByRole("button", { name: "리드" })[0]);
-    expect(screen.getByRole("heading", { name: "리드 상세/전환" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "고객사/영업기회 전환" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "리드 등록" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "영업기회 전환" })).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole("button", { name: "영업기회" })[0]);
-    expect(screen.getByText("단계 변경")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "영업기회 등록" })).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole("button", { name: "활동" })[0]);
     expect(screen.getByRole("heading", { name: "활동 등록" })).toBeInTheDocument();

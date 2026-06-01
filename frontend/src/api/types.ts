@@ -173,6 +173,21 @@ export interface OpportunityStageChangeInput {
   lost_reason?: string;
 }
 
+export interface OpportunityInput {
+  account_id: string;
+  contact_id?: string;
+  lead_id?: string;
+  name: string;
+  stage?: PipelineStage;
+  amount?: string;
+  expected_close_date?: string;
+  owner_id?: string;
+  opportunity_type?: string;
+  next_step?: string;
+  primary_campaign_source?: string;
+  competitor?: string;
+}
+
 export interface AccountInput {
   name: string;
   business_number?: string;
