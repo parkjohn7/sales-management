@@ -4,7 +4,7 @@
 
 - Backend unit tests: lead score, lead grade, forecast, stage changes, validation rules.
 - Backend integration tests: `/api/v1` endpoints, error format, authentication and RBAC.
-- Frontend tests: Korean labels, dashboard rendering, API fallback state.
+- Frontend tests: Korean labels, dashboard rendering, API integration state.
 - Migration checks: Alembic upgrade/downgrade for database schema changes.
 - E2E smoke test: 리드 등록 -> 전환 -> 단계 변경 -> 활동 등록.
 

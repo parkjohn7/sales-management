@@ -41,7 +41,7 @@
 | POST | /contacts | Create contact |
 | GET | /opportunities | List opportunities |
 | POST | /opportunities | Create opportunity |
-| PATCH | /opportunities/{opportunityId} | Update amount, owner, or expected close date |
+| PATCH | /opportunities/{opportunityId} | Update name/stage/amount/owner/expected close date and close reason |
 | POST | /opportunities/{opportunityId}/stage | Change pipeline stage |
 | POST | /opportunities/{opportunityId}/close-won | Close as won |
 | POST | /opportunities/{opportunityId}/close-lost | Close as lost |
@@ -54,6 +54,9 @@
 | GET | /dashboard/activity-performance | Activity performance |
 | POST | /integrations/web/leads | Create lead from website |
 | POST | /integrations/chatbot/leads | Create lead from chatbot |
+
+Account deletion rule:
+`DELETE /accounts/{accountId}` fails with `409 ACCOUNT_HAS_RELATIONS` when related contacts or opportunities exist.
 
 ## 4. Versioning
 

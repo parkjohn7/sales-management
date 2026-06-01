@@ -21,6 +21,22 @@ GCP에서 다음 리소스를 준비합니다.
 
 권장 리전은 한국 테스트 기준 `asia-northeast3`입니다.
 
+## 배포 전 요청 정보
+
+아래 값이 확정되면 바로 배포를 진행할 수 있습니다.
+
+- GCP 프로젝트 ID
+- 배포 리전(예: `asia-northeast3`)
+- Cloud Run 서비스명(backend/frontend)
+- Artifact Registry 저장소명
+- Cloud SQL 인스턴스 연결 여부
+- Cloud SQL 사용 시 DB 이름/사용자/비밀번호
+- GitHub Actions OIDC(Workload Identity Provider) 설정 여부
+- 배포 후 사용할 최종 도메인(있으면)
+- 운영용 시크릿 값
+  - `DEV_TOKEN_SECRET`
+  - `INTEGRATION_API_KEY`
+
 ## Cloud SQL DATABASE_URL
 
 Cloud Run에서 Cloud SQL 연결을 사용할 때는 백엔드 서비스에 Cloud SQL instance를 연결하고,
