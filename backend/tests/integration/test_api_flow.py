@@ -225,12 +225,13 @@ def test_activity_crud_flow() -> None:
         headers=headers,
         json={
             "activity_type": "CALL",
-            "subject": "초기 통화",
             "activity_date": datetime(2026, 5, 31, 9, 30, tzinfo=UTC).isoformat(),
             "due_date": "2026-06-03",
             "status": "OPEN",
             "priority": "HIGH",
             "description": "초기 통화",
+            "next_activity": "제안 미팅",
+            "next_activity_type": "MEETING",
         },
     )
     assert create_response.status_code == 200
@@ -239,7 +240,7 @@ def test_activity_crud_flow() -> None:
     read_response = client.get(f"/api/v1/activities/{activity_id}", headers=headers)
     assert read_response.status_code == 200
     assert read_response.json()["data"]["activity_type"] == "CALL"
-    assert read_response.json()["data"]["subject"] == "초기 통화"
+    assert read_response.json()["data"]["next_activity"] == "제안 미팅"
     assert read_response.json()["data"]["priority"] == "HIGH"
 
     update_response = client.patch(

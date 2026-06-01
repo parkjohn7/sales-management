@@ -93,14 +93,13 @@ export interface ActivitySummary {
   id: string;
   lead_id?: string | null;
   opportunity_id?: string | null;
-  subject?: string | null;
   activity_type: string;
   activity_date: string;
   due_date?: string | null;
   status?: string | null;
   priority?: string | null;
   description?: string | null;
-  next_activity_subject?: string | null;
+  next_activity?: string | null;
   next_activity_type?: string | null;
   next_activity_due_date?: string | null;
   next_activity_priority?: string | null;
@@ -221,14 +220,13 @@ export interface ContactInput {
 export interface ActivityInput {
   lead_id?: string;
   opportunity_id?: string;
-  subject?: string;
   activity_type: string;
   activity_date: string;
   due_date?: string;
   status?: string;
   priority?: string;
   description?: string;
-  next_activity_subject?: string;
+  next_activity?: string;
   next_activity_type?: string;
   next_activity_due_date?: string;
   next_activity_priority?: string;

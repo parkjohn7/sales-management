@@ -195,14 +195,13 @@ class OpportunityRead(OpportunityCreate):
 class ActivityCreate(BaseModel):
     lead_id: str | None = None
     opportunity_id: str | None = None
-    subject: str | None = None
     activity_type: str
     activity_date: datetime
     due_date: date | None = None
     status: str | None = None
     priority: str | None = None
     description: str | None = None
-    next_activity_subject: str | None = None
+    next_activity: str | None = None
     next_activity_type: str | None = None
     next_activity_due_date: date | None = None
     next_activity_priority: str | None = None
@@ -212,14 +211,13 @@ class ActivityCreate(BaseModel):
 class ActivityUpdate(BaseModel):
     lead_id: str | None = None
     opportunity_id: str | None = None
-    subject: str | None = None
     activity_type: str | None = None
     activity_date: datetime | None = None
     due_date: date | None = None
     status: str | None = None
     priority: str | None = None
     description: str | None = None
-    next_activity_subject: str | None = None
+    next_activity: str | None = None
     next_activity_type: str | None = None
     next_activity_due_date: date | None = None
     next_activity_priority: str | None = None

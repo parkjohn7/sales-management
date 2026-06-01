@@ -166,11 +166,10 @@ const mockActivities: ActivitySummary[] = [
   {
     id: "activity-1",
     opportunity_id: "opp-1",
-    subject: "도입 범위 협의",
     activity_type: "MEETING",
     activity_date: "2026-05-31T09:30:00+09:00",
     description: "도입 범위 협의",
-    next_activity_subject: "견적서 검토 미팅",
+    next_activity: "견적서 검토 미팅",
     next_activity_type: "FOLLOW_UP",
     next_activity_due_date: "2026-06-03",
     next_activity_priority: "HIGH",
