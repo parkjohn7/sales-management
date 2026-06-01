@@ -29,7 +29,7 @@ Opportunity 1 --- N StageHistory
 - Account names should not be empty.
 - Opportunity amount must be zero or greater.
 - Opportunity stage must be one of LEAD, QUALIFIED, PROPOSAL, NEGOTIATION, CLOSED_WON, CLOSED_LOST.
-- Activities should keep due date, owner, status, and related customer or opportunity.
+- Activities keep owner and related customer or opportunity, and support optional next-activity plan fields (subject/type/due date/priority).
 - Closed Lost stage changes require a lost reason.
 - Forecast amount is recalculated whenever amount or stage changes.
 

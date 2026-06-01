@@ -100,6 +100,10 @@ export interface ActivitySummary {
   status?: string | null;
   priority?: string | null;
   description?: string | null;
+  next_activity_subject?: string | null;
+  next_activity_type?: string | null;
+  next_activity_due_date?: string | null;
+  next_activity_priority?: string | null;
   owner_id?: string | null;
 }
 
@@ -224,6 +228,10 @@ export interface ActivityInput {
   status?: string;
   priority?: string;
   description?: string;
+  next_activity_subject?: string;
+  next_activity_type?: string;
+  next_activity_due_date?: string;
+  next_activity_priority?: string;
 }
 
 export interface IntegrationLeadInput extends LeadCreateInput {

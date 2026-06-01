@@ -1336,12 +1336,12 @@ function OpportunitySection({
     (opportunity) => opportunity.id === selectedOpportunityId
   );
   const [form, setForm] = useState<OpportunityInput>({
-    account_id: selectedOpportunity?.account_id ?? accounts[0]?.id ?? "",
+    account_id: selectedOpportunity?.account_id ?? "",
     name: selectedOpportunity?.name ?? "",
     stage: selectedOpportunity?.stage ?? "LEAD",
     amount: selectedOpportunity?.amount ?? "0",
     expected_close_date: selectedOpportunity?.expected_close_date ?? "",
-    owner_id: selectedOpportunity?.owner_name ?? "",
+    owner_id: "",
     opportunity_type: selectedOpportunity?.opportunity_type ?? "New Business",
     next_step: selectedOpportunity?.next_step ?? "",
     primary_campaign_source: selectedOpportunity?.primary_campaign_source ?? "",
@@ -1362,6 +1362,9 @@ function OpportunitySection({
       };
       if (selectedOpportunity) {
         const { stage, ...updatePayload } = payload;
+        if (!updatePayload.owner_id) {
+          delete updatePayload.owner_id;
+        }
         await updateOpportunity(selectedOpportunity.id, updatePayload);
         if (form.stage !== selectedOpportunity.stage) {
           await changeOpportunityStage(selectedOpportunity.id, {
@@ -1531,8 +1534,8 @@ function OpportunitySection({
                         name: opportunity.name,
                         stage: opportunity.stage,
                         amount: opportunity.amount,
-                        expected_close_date: opportunity.expected_close_date ?? "",
-                        owner_id: opportunity.owner_name ?? "",
+                      expected_close_date: opportunity.expected_close_date ?? "",
+                        owner_id: "",
                         opportunity_type: opportunity.opportunity_type ?? "New Business",
                         next_step: opportunity.next_step ?? "",
                         primary_campaign_source: opportunity.primary_campaign_source ?? "",
@@ -1585,7 +1588,6 @@ function ActivitySection({
   onDataChanged: DashboardProps["onDataChanged"];
 }) {
   const [selectedActivityId, setSelectedActivityId] = useState("");
-  const [planOpportunityId, setPlanOpportunityId] = useState("");
   const selectedActivity = activities.find((activity) => activity.id === selectedActivityId);
   const [form, setForm] = useState<ActivityInput>({
     subject: selectedActivity?.subject ?? "",
@@ -1593,10 +1595,11 @@ function ActivitySection({
     activity_date: selectedActivity
       ? toLocalDateTimeInput(selectedActivity.activity_date)
       : nowLocalDateTime(),
-    due_date: selectedActivity?.due_date ?? "",
-    status: selectedActivity?.status ?? "OPEN",
-    priority: selectedActivity?.priority ?? "MEDIUM",
     description: selectedActivity?.description ?? "",
+    next_activity_subject: selectedActivity?.next_activity_subject ?? "",
+    next_activity_type: selectedActivity?.next_activity_type ?? "",
+    next_activity_due_date: selectedActivity?.next_activity_due_date ?? "",
+    next_activity_priority: selectedActivity?.next_activity_priority ?? "",
     opportunity_id: selectedActivity?.opportunity_id ?? opportunities[0]?.id ?? "",
     lead_id: selectedActivity?.lead_id ?? ""
   });
@@ -1610,10 +1613,11 @@ function ActivitySection({
         activity_type: form.activity_type,
         subject: form.subject,
         activity_date: new Date(form.activity_date).toISOString(),
-        due_date: form.due_date || undefined,
-        status: form.status,
-        priority: form.priority,
         description: form.description,
+        next_activity_subject: form.next_activity_subject || undefined,
+        next_activity_type: form.next_activity_type || undefined,
+        next_activity_due_date: form.next_activity_due_date || undefined,
+        next_activity_priority: form.next_activity_priority || undefined,
         opportunity_id: form.opportunity_id || undefined,
         lead_id: form.lead_id || undefined
       };
@@ -1623,7 +1627,6 @@ function ActivitySection({
       } else {
         await createActivity(payload);
         setForm((current) => ({ ...current, description: "", lead_id: "", opportunity_id: "" }));
-        setPlanOpportunityId("");
         setStatus("활동을 저장했습니다.");
       }
       await onDataChanged();
@@ -1636,7 +1639,7 @@ function ActivitySection({
     <section className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
       <form className="rounded-lg border border-line bg-white p-4" onSubmit={handleCreateActivity}>
         <h3 className="text-lg font-bold">
-          {planOpportunityId ? "활동계획등록" : selectedActivity ? "활동 수정" : "활동 등록"}
+          {selectedActivity ? "활동 수정" : "활동 등록"}
         </h3>
         <div className="mt-4 space-y-3">
           <label className="block text-sm font-medium">
@@ -1670,48 +1673,11 @@ function ActivitySection({
               className="mt-1 w-full rounded-md border border-line px-3 py-2"
             />
           </label>
-          <div className="grid grid-cols-3 gap-3">
-            <label className="block text-sm font-medium">
-              기한
-              <input
-                type="date"
-                value={form.due_date}
-                onChange={(event) => setForm((current) => ({ ...current, due_date: event.target.value }))}
-                className="mt-1 w-full min-w-0 rounded-md border border-line px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm font-medium">
-              <EnumLabel label="상태" hint="Open: 시작 전, In Progress: 진행 중, Done: 완료" />
-              <select
-                value={form.status}
-                onChange={(event) => setForm((current) => ({ ...current, status: event.target.value }))}
-                className="mt-1 w-full min-w-0 rounded-md border border-line px-3 py-2"
-              >
-                <option value="">선택</option>
-                <option value="OPEN">Open</option>
-                <option value="IN_PROGRESS">In Progress</option>
-                <option value="DONE">Done</option>
-              </select>
-            </label>
-            <label className="block text-sm font-medium">
-              <EnumLabel label="우선순위" hint="High, Medium, Low 우선순위로 활동 중요도를 설정합니다." />
-              <select
-                value={form.priority}
-                onChange={(event) => setForm((current) => ({ ...current, priority: event.target.value }))}
-                className="mt-1 w-full min-w-0 rounded-md border border-line px-3 py-2"
-              >
-                <option value="">선택</option>
-                <option value="HIGH">High</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="LOW">Low</option>
-              </select>
-            </label>
-          </div>
           <label className="block text-sm font-medium">
             <EnumLabel label="영업기회" hint="활동이 특정 영업기회와 연관된 경우 선택합니다." />
             <select
               value={form.opportunity_id}
-              disabled={Boolean(form.lead_id) || Boolean(planOpportunityId)}
+              disabled={Boolean(form.lead_id)}
               onChange={(event) =>
                 setForm((current) => ({
                   ...current,
@@ -1733,7 +1699,7 @@ function ActivitySection({
             <EnumLabel label="리드" hint="영업기회가 없고 리드 단계 활동이면 리드를 선택합니다." />
             <select
               value={form.lead_id}
-              disabled={Boolean(form.opportunity_id) || Boolean(planOpportunityId)}
+              disabled={Boolean(form.opportunity_id)}
               onChange={(event) =>
                 setForm((current) => ({
                   ...current,
@@ -1752,19 +1718,77 @@ function ActivitySection({
             </select>
           </label>
           <label className="block text-sm font-medium">
-            내용
+            메모
             <textarea
               value={form.description}
               onChange={(event) =>
                 setForm((current) => ({ ...current, description: event.target.value }))
               }
               className="mt-1 min-h-24 w-full rounded-md border border-line px-3 py-2"
-              placeholder="활동 내용"
+              placeholder="활동 메모"
             />
-            <p className="mt-1 text-xs text-slate-500">템플릿: [계획] 작성..., [결과] 작성...</p>
           </label>
+          <div className="rounded-md border border-line bg-slate-50 p-3">
+            <p className="text-sm font-semibold">다음활동제목</p>
+            <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="block text-sm font-medium sm:col-span-2">
+                제목
+                <input
+                  value={form.next_activity_subject ?? ""}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, next_activity_subject: event.target.value }))
+                  }
+                  className="mt-1 w-full rounded-md border border-line px-3 py-2"
+                  placeholder="다음활동 제목"
+                />
+              </label>
+              <label className="block text-sm font-medium">
+                활동유형
+                <select
+                  value={form.next_activity_type ?? ""}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, next_activity_type: event.target.value }))
+                  }
+                  className="mt-1 w-full rounded-md border border-line px-3 py-2"
+                >
+                  <option value="">활동유형 선택</option>
+                  <option value="CALL">휴대폰</option>
+                  <option value="MEETING">미팅</option>
+                  <option value="EMAIL">이메일</option>
+                  <option value="PROPOSAL_SENT">제안서 송부</option>
+                  <option value="FOLLOW_UP">후속 연락</option>
+                </select>
+              </label>
+              <label className="block text-sm font-medium">
+                기한
+                <input
+                  type="date"
+                  value={form.next_activity_due_date ?? ""}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, next_activity_due_date: event.target.value }))
+                  }
+                  className="mt-1 w-full rounded-md border border-line px-3 py-2"
+                />
+              </label>
+              <label className="block text-sm font-medium sm:col-span-2">
+                우선순위
+                <select
+                  value={form.next_activity_priority ?? ""}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, next_activity_priority: event.target.value }))
+                  }
+                  className="mt-1 w-full rounded-md border border-line px-3 py-2"
+                >
+                  <option value="">선택</option>
+                  <option value="HIGH">High</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="LOW">Low</option>
+                </select>
+              </label>
+            </div>
+          </div>
           <button className="w-full rounded-md bg-rose-600 px-4 py-2 font-bold text-white">
-            {planOpportunityId ? "활동계획저장" : selectedActivity ? "활동 수정" : "활동 저장"}
+            {selectedActivity ? "활동 수정" : "활동 저장"}
           </button>
           {status && <p className="text-sm font-medium text-slate-700">{status}</p>}
         </div>
@@ -1775,17 +1799,17 @@ function ActivitySection({
           <span className="text-sm font-semibold text-slate-500">{activities.length} rows</span>
         </div>
         <div className={tableScrollClass}>
-          <table className="w-full min-w-[1320px] border-separate border-spacing-0 text-left text-sm">
+          <table className="w-full min-w-[1400px] border-separate border-spacing-0 text-left text-sm">
             <thead>
               <tr>
                 <th className={`${thClass} whitespace-nowrap`}>유형</th>
                 <th className={`${thClass} whitespace-nowrap`}>일시</th>
-                <th className={`${thClass} whitespace-nowrap`}>상태</th>
-                <th className={`${thClass} whitespace-nowrap`}>우선순위</th>
-                <th className={`${thClass} min-w-[360px]`}>내용</th>
+                <th className={`${thClass} min-w-[320px]`}>메모</th>
+                <th className={`${thClass} min-w-[240px]`}>다음활동제목</th>
+                <th className={`${thClass} whitespace-nowrap`}>다음활동유형</th>
+                <th className={`${thClass} whitespace-nowrap`}>다음활동기한</th>
+                <th className={`${thClass} whitespace-nowrap`}>다음활동우선순위</th>
                 <th className={`${thClass} hidden whitespace-nowrap lg:table-cell`}>영업담당자</th>
-                <th className={`${thClass} hidden whitespace-nowrap lg:table-cell`}>기한</th>
-                <th className={thClass}>작업</th>
               </tr>
             </thead>
             <tbody>
@@ -1793,16 +1817,16 @@ function ActivitySection({
                 <tr
                   key={activity.id}
                   onClick={() => {
-                    setPlanOpportunityId("");
                     setSelectedActivityId(activity.id);
                     setForm({
                       subject: activity.subject ?? "",
                       activity_type: activity.activity_type,
                       activity_date: toLocalDateTimeInput(activity.activity_date),
-                      due_date: activity.due_date ?? "",
-                      status: activity.status ?? "OPEN",
-                      priority: activity.priority ?? "MEDIUM",
                       description: activity.description ?? "",
+                      next_activity_subject: activity.next_activity_subject ?? "",
+                      next_activity_type: activity.next_activity_type ?? "",
+                      next_activity_due_date: activity.next_activity_due_date ?? "",
+                      next_activity_priority: activity.next_activity_priority ?? "",
                       opportunity_id: activity.opportunity_id ?? "",
                       lead_id: activity.lead_id ?? ""
                     });
@@ -1817,46 +1841,21 @@ function ActivitySection({
                   <td className={`${tdClass} whitespace-nowrap`}>
                     {new Date(activity.activity_date).toLocaleString("ko-KR")}
                   </td>
-                  <td className={`${tdClass} whitespace-nowrap`}>{activity.status || "OPEN"}</td>
-                  <td className={`${tdClass} whitespace-nowrap`}>{activity.priority || "MEDIUM"}</td>
-                  <td className={`${tdClass} max-w-[520px] truncate`} title={activity.description || "내용 없음"}>
-                    {activity.description || "내용 없음"}
+                  <td className={`${tdClass} max-w-[460px] truncate`} title={activity.description || "메모 없음"}>
+                    {activity.description || "메모 없음"}
                   </td>
+                  <td className={`${tdClass} max-w-[300px] truncate`} title={activity.next_activity_subject || "-"}>
+                    {activity.next_activity_subject || "-"}
+                  </td>
+                  <td className={`${tdClass} whitespace-nowrap`}>
+                    {activity.next_activity_type
+                      ? activityTypeLabels[activity.next_activity_type] || activity.next_activity_type
+                      : "-"}
+                  </td>
+                  <td className={`${tdClass} whitespace-nowrap`}>{activity.next_activity_due_date || "-"}</td>
+                  <td className={`${tdClass} whitespace-nowrap`}>{activity.next_activity_priority || "-"}</td>
                   <td className={`${tdClass} hidden whitespace-nowrap lg:table-cell`}>
                     {loginUsers.find((user) => user.email === activity.owner_id)?.name || activity.owner_id || "-"}
-                  </td>
-                  <td className={`${tdClass} hidden whitespace-nowrap lg:table-cell`}>
-                    {activity.due_date || "-"}
-                  </td>
-                  <td className={tdClass}>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const oppId = activity.opportunity_id ?? "";
-                          setPlanOpportunityId(oppId);
-                          setSelectedActivityId("");
-                          setForm({
-                            subject: "활동계획",
-                            activity_type: "FOLLOW_UP",
-                            activity_date: nowLocalDateTime(),
-                            due_date: "",
-                            status: "",
-                            priority: "",
-                            description: "[계획] \n[결과] ",
-                            opportunity_id: oppId,
-                            lead_id: ""
-                          });
-                          setStatus(oppId ? "활동계획 작성 모드입니다. 영업기회는 고정됩니다." : "영업기회가 없는 활동입니다.");
-                          if (typeof window !== "undefined") {
-                            window.scrollTo({ top: 0, behavior: "smooth" });
-                          }
-                        }}
-                        className="rounded border border-rose-200 bg-rose-600 px-2 py-1 text-xs font-bold text-white"
-                      >
-                        활동계획
-                      </button>
-                    </div>
                   </td>
                 </tr>
               ))}

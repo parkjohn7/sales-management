@@ -171,6 +171,10 @@ class Activity(Base):
     status: Mapped[str | None] = mapped_column(String(32), index=True)
     priority: Mapped[str | None] = mapped_column(String(32), index=True)
     description: Mapped[str | None] = mapped_column(Text)
+    next_activity_subject: Mapped[str | None] = mapped_column(String(255))
+    next_activity_type: Mapped[str | None] = mapped_column(String(32), index=True)
+    next_activity_due_date: Mapped[date | None] = mapped_column(Date, index=True)
+    next_activity_priority: Mapped[str | None] = mapped_column(String(32), index=True)
     owner_id: Mapped[str | None] = mapped_column(String(36), index=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

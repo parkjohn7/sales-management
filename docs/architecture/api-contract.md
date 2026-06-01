@@ -46,7 +46,7 @@
 | POST | /opportunities/{opportunityId}/close-won | Close as won |
 | POST | /opportunities/{opportunityId}/close-lost | Close as lost |
 | GET | /activities | List activities |
-| POST | /activities | Create follow-up activity |
+| POST | /activities | Create follow-up activity (includes optional next activity fields) |
 | GET | /dashboard/overview | Dashboard KPI and pipeline summary |
 | GET | /dashboard/funnel | Funnel summary |
 | GET | /dashboard/forecast | Forecast summary |
