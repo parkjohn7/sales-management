@@ -876,56 +876,71 @@ function AccountSection({
                 />
               </label>
             </div>
-            <input
-              value={accountForm.industry}
-              onChange={(event) =>
-                setAccountForm((current) => ({ ...current, industry: event.target.value }))
-              }
-              className="w-full rounded-md border border-line px-3 py-2"
-              placeholder="산업"
-            />
+            <label className="block text-sm font-medium">
+              산업
+              <input
+                value={accountForm.industry}
+                onChange={(event) =>
+                  setAccountForm((current) => ({ ...current, industry: event.target.value }))
+                }
+                className="mt-1 w-full rounded-md border border-line px-3 py-2"
+                placeholder="산업"
+              />
+            </label>
             <div className="grid grid-cols-2 gap-3">
-              <input
-                value={numberText(accountForm.annual_revenue)}
-                onChange={(event) =>
-                  setAccountForm((current) => ({
-                    ...current,
-                    annual_revenue: digitsOnly(event.target.value)
-                  }))
-                }
-                className="w-full min-w-0 rounded-md border border-line px-3 py-2 text-right"
-                placeholder="연 매출"
-              />
-              <input
-                type="number"
-                min="0"
-                value={accountForm.employee_count}
-                onChange={(event) =>
-                  setAccountForm((current) => ({
-                    ...current,
-                    employee_count: Number(event.target.value)
-                  }))
-                }
-                className="w-full min-w-0 rounded-md border border-line px-3 py-2"
-                placeholder="직원 수"
-              />
+              <label className="block text-sm font-medium">
+                연 매출
+                <input
+                  value={numberText(accountForm.annual_revenue)}
+                  onChange={(event) =>
+                    setAccountForm((current) => ({
+                      ...current,
+                      annual_revenue: digitsOnly(event.target.value)
+                    }))
+                  }
+                  className="mt-1 w-full min-w-0 rounded-md border border-line px-3 py-2 text-right"
+                  placeholder="연 매출"
+                />
+              </label>
+              <label className="block text-sm font-medium">
+                직원 수
+                <input
+                  type="number"
+                  min="0"
+                  value={accountForm.employee_count}
+                  onChange={(event) =>
+                    setAccountForm((current) => ({
+                      ...current,
+                      employee_count: Number(event.target.value)
+                    }))
+                  }
+                  className="mt-1 w-full min-w-0 rounded-md border border-line px-3 py-2"
+                  placeholder="직원 수"
+                />
+              </label>
             </div>
-            <input
-              value={accountForm.owner_id}
-              onChange={(event) =>
-                setAccountForm((current) => ({ ...current, owner_id: event.target.value }))
-              }
-              className="w-full rounded-md border border-line px-3 py-2"
-              placeholder="담당자"
-            />
-            <input
-              value={accountForm.website}
-              onChange={(event) =>
-                setAccountForm((current) => ({ ...current, website: event.target.value }))
-              }
-              className="w-full rounded-md border border-line px-3 py-2"
-              placeholder="웹사이트"
-            />
+            <label className="block text-sm font-medium">
+              담당자
+              <input
+                value={accountForm.owner_id}
+                onChange={(event) =>
+                  setAccountForm((current) => ({ ...current, owner_id: event.target.value }))
+                }
+                className="mt-1 w-full rounded-md border border-line px-3 py-2"
+                placeholder="담당자"
+              />
+            </label>
+            <label className="block text-sm font-medium">
+              웹사이트
+              <input
+                value={accountForm.website}
+                onChange={(event) =>
+                  setAccountForm((current) => ({ ...current, website: event.target.value }))
+                }
+                className="mt-1 w-full rounded-md border border-line px-3 py-2"
+                placeholder="웹사이트"
+              />
+            </label>
             <button className="w-full rounded-md bg-rose-600 px-4 py-2 font-bold text-white">
               {selectedAccount ? "고객사 수정" : "고객사 저장"}
             </button>
@@ -952,31 +967,40 @@ function AccountSection({
                 ))}
               </select>
             </label>
-            <input
-              required
-              value={contactForm.name}
-              onChange={(event) =>
-                setContactForm((current) => ({ ...current, name: event.target.value }))
-              }
-              className="w-full rounded-md border border-line px-3 py-2"
-              placeholder="이름"
-            />
-            <input
-              value={contactForm.email}
-              onChange={(event) =>
-                setContactForm((current) => ({ ...current, email: event.target.value }))
-              }
-              className="w-full rounded-md border border-line px-3 py-2"
-              placeholder="이메일"
-            />
-            <input
-              value={contactForm.title}
-              onChange={(event) =>
-                setContactForm((current) => ({ ...current, title: event.target.value }))
-              }
-              className="w-full rounded-md border border-line px-3 py-2"
-              placeholder="직책"
-            />
+            <label className="block text-sm font-medium">
+              이름
+              <input
+                required
+                value={contactForm.name}
+                onChange={(event) =>
+                  setContactForm((current) => ({ ...current, name: event.target.value }))
+                }
+                className="mt-1 w-full rounded-md border border-line px-3 py-2"
+                placeholder="이름"
+              />
+            </label>
+            <label className="block text-sm font-medium">
+              이메일
+              <input
+                value={contactForm.email}
+                onChange={(event) =>
+                  setContactForm((current) => ({ ...current, email: event.target.value }))
+                }
+                className="mt-1 w-full rounded-md border border-line px-3 py-2"
+                placeholder="이메일"
+              />
+            </label>
+            <label className="block text-sm font-medium">
+              직책
+              <input
+                value={contactForm.title}
+                onChange={(event) =>
+                  setContactForm((current) => ({ ...current, title: event.target.value }))
+                }
+                className="mt-1 w-full rounded-md border border-line px-3 py-2"
+                placeholder="직책"
+              />
+            </label>
             <div className="grid grid-cols-2 gap-3">
               <input
                 value={contactForm.department}
@@ -1031,9 +1055,11 @@ function AccountSection({
                   <th className={thClass}>고객사</th>
                   <th className={thClass}>유형</th>
                   <th className={`${thClass} hidden sm:table-cell`}>산업</th>
-                  <th className={`${thClass} hidden md:table-cell`}>매출/직원</th>
+                  <th className={`${thClass} hidden md:table-cell`}>연 매출</th>
+                  <th className={`${thClass} hidden md:table-cell`}>직원 수</th>
                   <th className={`${thClass} hidden lg:table-cell`}>휴대폰</th>
-                  <th className={`${thClass} hidden lg:table-cell`}>담당</th>
+                  <th className={`${thClass} hidden lg:table-cell`}>담당자</th>
+                  <th className={`${thClass} hidden lg:table-cell`}>웹사이트</th>
                   <th className={thClass}>작업</th>
                 </tr>
               </thead>
@@ -1064,10 +1090,13 @@ function AccountSection({
                     <td className={`${tdClass} hidden sm:table-cell`}>{account.industry || "-"}</td>
                     <td className={`${tdClass} hidden md:table-cell`}>
                       {account.annual_revenue ? money(account.annual_revenue) : "-"}
-                      {account.employee_count ? ` / ${formatter.format(account.employee_count)}명` : ""}
+                    </td>
+                    <td className={`${tdClass} hidden md:table-cell`}>
+                      {account.employee_count ? `${formatter.format(account.employee_count)}명` : "-"}
                     </td>
                     <td className={`${tdClass} hidden lg:table-cell`}>{account.phone || "-"}</td>
                     <td className={`${tdClass} hidden lg:table-cell`}>{account.owner_id || "-"}</td>
+                    <td className={`${tdClass} hidden lg:table-cell`}>{account.website || "-"}</td>
                     <td className={tdClass}>
                       <button
                         type="button"
@@ -1095,6 +1124,7 @@ function AccountSection({
             <table className={compactTableClass}>
               <thead>
                 <tr>
+                  <th className={thClass}>고객사</th>
                   <th className={thClass}>이름</th>
                   <th className={thClass}>직책</th>
                   <th className={`${thClass} hidden sm:table-cell`}>부서</th>
@@ -1125,6 +1155,9 @@ function AccountSection({
                       selectedContactId === contact.id ? "bg-rose-50" : ""
                     }`}
                   >
+                    <td className={tdClass}>
+                      {accounts.find((account) => account.id === contact.account_id)?.name || "-"}
+                    </td>
                     <td className={`${tdClass} ${cherryTextClass}`}>{contact.name}</td>
                     <td className={tdClass}>{contact.title || "직책 미입력"}</td>
                     <td className={`${tdClass} hidden sm:table-cell`}>{contact.department || "-"}</td>
@@ -1268,22 +1301,34 @@ function OpportunitySection({
             </label>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <input
-              type="date"
-              value={form.expected_close_date}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, expected_close_date: event.target.value }))
-              }
-              className="w-full rounded-md border border-line px-3 py-2"
-            />
-            <input
-              value={form.opportunity_type}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, opportunity_type: event.target.value }))
-              }
-              className="w-full rounded-md border border-line px-3 py-2"
-              placeholder="유형"
-            />
+            <label className="block text-sm font-medium">
+              예상 마감일
+              <input
+                type="date"
+                value={form.expected_close_date}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, expected_close_date: event.target.value }))
+                }
+                className="mt-1 w-full rounded-md border border-line px-3 py-2"
+              />
+            </label>
+            <label className="block text-sm font-medium">
+              <EnumLabel
+                label="유형"
+                hint="New Business: 신규 매출, Existing Business: 기존 고객 확장, Renewal: 재계약"
+              />
+              <select
+                value={form.opportunity_type}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, opportunity_type: event.target.value }))
+                }
+                className="mt-1 w-full rounded-md border border-line px-3 py-2"
+              >
+                <option value="New Business">New Business</option>
+                <option value="Existing Business">Existing Business</option>
+                <option value="Renewal">Renewal</option>
+              </select>
+            </label>
           </div>
           <label className="block text-sm font-medium">
             다음 단계
@@ -1484,21 +1529,27 @@ function ActivitySection({
               <option value="FOLLOW_UP">후속 연락</option>
             </select>
           </label>
-          <input
-            type="datetime-local"
-            value={form.activity_date}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, activity_date: event.target.value }))
-            }
-            className="w-full rounded-md border border-line px-3 py-2"
-          />
-          <div className="grid grid-cols-3 gap-3">
+          <label className="block text-sm font-medium">
+            일시
             <input
-              type="date"
-              value={form.due_date}
-              onChange={(event) => setForm((current) => ({ ...current, due_date: event.target.value }))}
-              className="w-full min-w-0 rounded-md border border-line px-3 py-2"
+              type="datetime-local"
+              value={form.activity_date}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, activity_date: event.target.value }))
+              }
+              className="mt-1 w-full rounded-md border border-line px-3 py-2"
             />
+          </label>
+          <div className="grid grid-cols-3 gap-3">
+            <label className="block text-sm font-medium">
+              기한
+              <input
+                type="date"
+                value={form.due_date}
+                onChange={(event) => setForm((current) => ({ ...current, due_date: event.target.value }))}
+                className="mt-1 w-full min-w-0 rounded-md border border-line px-3 py-2"
+              />
+            </label>
             <label className="block text-sm font-medium">
               <EnumLabel label="상태" hint="Open: 시작 전, In Progress: 진행 중, Done: 완료" />
               <select
@@ -1524,50 +1575,59 @@ function ActivitySection({
               </select>
             </label>
           </div>
-          <select
-            value={form.opportunity_id}
-            onChange={(event) =>
-              setForm((current) => ({
-                ...current,
-                opportunity_id: event.target.value,
-                lead_id: ""
-              }))
-            }
-            className="w-full rounded-md border border-line px-3 py-2"
-          >
-            <option value="">영업기회 선택 없음</option>
-            {opportunities.map((opportunity) => (
-              <option key={opportunity.id} value={opportunity.id}>
-                {opportunity.name}
-              </option>
-            ))}
-          </select>
-          <select
-            value={form.lead_id}
-            onChange={(event) =>
-              setForm((current) => ({
-                ...current,
-                lead_id: event.target.value,
-                opportunity_id: ""
-              }))
-            }
-            className="w-full rounded-md border border-line px-3 py-2"
-          >
-            <option value="">리드 선택 없음</option>
-            {leads.map((lead) => (
-              <option key={lead.id} value={lead.id}>
-                {lead.company_name}
-              </option>
-            ))}
-          </select>
-          <textarea
-            value={form.description}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, description: event.target.value }))
-            }
-            className="min-h-24 w-full rounded-md border border-line px-3 py-2"
-            placeholder="활동 내용"
-          />
+          <label className="block text-sm font-medium">
+            영업기회
+            <select
+              value={form.opportunity_id}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  opportunity_id: event.target.value,
+                  lead_id: ""
+                }))
+              }
+              className="mt-1 w-full rounded-md border border-line px-3 py-2"
+            >
+              <option value="">영업기회 선택 없음</option>
+              {opportunities.map((opportunity) => (
+                <option key={opportunity.id} value={opportunity.id}>
+                  {opportunity.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block text-sm font-medium">
+            리드
+            <select
+              value={form.lead_id}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  lead_id: event.target.value,
+                  opportunity_id: ""
+                }))
+              }
+              className="mt-1 w-full rounded-md border border-line px-3 py-2"
+            >
+              <option value="">리드 선택 없음</option>
+              {leads.map((lead) => (
+                <option key={lead.id} value={lead.id}>
+                  {lead.company_name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block text-sm font-medium">
+            내용
+            <textarea
+              value={form.description}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, description: event.target.value }))
+              }
+              className="mt-1 min-h-24 w-full rounded-md border border-line px-3 py-2"
+              placeholder="활동 내용"
+            />
+          </label>
           <button className="w-full rounded-md bg-rose-600 px-4 py-2 font-bold text-white">
             {selectedActivity ? "활동 수정" : "활동 저장"}
           </button>
@@ -1756,40 +1816,55 @@ function IntegrationSection({ onDataChanged }: { onDataChanged: DashboardProps["
       <form className="rounded-lg border border-line bg-white p-4" onSubmit={handleSubmit}>
         <h3 className="text-lg font-bold">연동 리드 테스트</h3>
         <div className="mt-4 space-y-3">
-          <select
-            value={channel}
-            onChange={(event) => setChannel(event.target.value as "web" | "chatbot")}
-            className="w-full rounded-md border border-line px-3 py-2"
-          >
-            <option value="web">홈페이지</option>
-            <option value="chatbot">챗봇</option>
-          </select>
-          <input
-            required
-            value={form.company_name}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, company_name: event.target.value }))
-            }
-            className="w-full rounded-md border border-line px-3 py-2"
-            placeholder="고객사명"
-          />
-          <input
-            required
-            value={form.contact_name}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, contact_name: event.target.value }))
-            }
-            className="w-full rounded-md border border-line px-3 py-2"
-            placeholder="담당자명"
-          />
-          <textarea
-            value={form.inquiry_content}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, inquiry_content: event.target.value }))
-            }
-            className="min-h-24 w-full rounded-md border border-line px-3 py-2"
-            placeholder="원문 문의 내용"
-          />
+          <label className="block text-sm font-medium">
+            <EnumLabel
+              label="연동 채널"
+              hint="홈페이지: 웹 폼 유입, 챗봇: 챗봇 상담 유입"
+            />
+            <select
+              value={channel}
+              onChange={(event) => setChannel(event.target.value as "web" | "chatbot")}
+              className="mt-1 w-full rounded-md border border-line px-3 py-2"
+            >
+              <option value="web">홈페이지</option>
+              <option value="chatbot">챗봇</option>
+            </select>
+          </label>
+          <label className="block text-sm font-medium">
+            고객사
+            <input
+              required
+              value={form.company_name}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, company_name: event.target.value }))
+              }
+              className="mt-1 w-full rounded-md border border-line px-3 py-2"
+              placeholder="고객사명"
+            />
+          </label>
+          <label className="block text-sm font-medium">
+            담당자
+            <input
+              required
+              value={form.contact_name}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, contact_name: event.target.value }))
+              }
+              className="mt-1 w-full rounded-md border border-line px-3 py-2"
+              placeholder="담당자명"
+            />
+          </label>
+          <label className="block text-sm font-medium">
+            문의 내용
+            <textarea
+              value={form.inquiry_content}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, inquiry_content: event.target.value }))
+              }
+              className="mt-1 min-h-24 w-full rounded-md border border-line px-3 py-2"
+              placeholder="원문 문의 내용"
+            />
+          </label>
           <button className="w-full rounded-md bg-rose-600 px-4 py-2 font-bold text-white">
             연동 리드 생성
           </button>
