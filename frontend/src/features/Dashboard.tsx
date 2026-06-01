@@ -1214,7 +1214,8 @@ function AccountSection({
                     <td className={tdClass}>
                       <button
                         type="button"
-                        onClick={async () => {
+                        onClick={async (event) => {
+                          event.stopPropagation();
                           await deleteAccount(account.id);
                           await onDataChanged();
                         }}
@@ -1285,7 +1286,8 @@ function AccountSection({
                     <td className={tdClass}>
                       <button
                         type="button"
-                        onClick={async () => {
+                        onClick={async (event) => {
+                          event.stopPropagation();
                           await deleteContact(contact.id);
                           await onDataChanged();
                         }}
@@ -1317,8 +1319,6 @@ function OpportunitySection({
 }) {
   const [selectedOpportunityId, setSelectedOpportunityId] = useState("");
   const [status, setStatus] = useState("");
-  const [closingOpportunityId, setClosingOpportunityId] = useState<string | null>(null);
-  const [closeStage, setCloseStage] = useState<PipelineStage>("CLOSED_WON");
   const [closeReason, setCloseReason] = useState("");
   const selectedOpportunity = opportunities.find(
     (opportunity) => opportunity.id === selectedOpportunityId
@@ -1340,38 +1340,33 @@ function OpportunitySection({
     event.preventDefault();
     setStatus(selectedOpportunity ? "영업기회 수정 중" : "영업기회 저장 중");
     try {
+      if ((form.stage === "CLOSED_WON" || form.stage === "CLOSED_LOST") && !closeReason.trim()) {
+        setStatus("Won/Lost 단계는 종료 사유를 입력해야 저장할 수 있습니다.");
+        return;
+      }
       const payload: OpportunityInput = {
         ...form,
         amount: digitsOnly(form.amount ?? "0") || "0"
       };
       if (selectedOpportunity) {
         await updateOpportunity(selectedOpportunity.id, payload);
+        if (form.stage !== selectedOpportunity.stage) {
+          await changeOpportunityStage(selectedOpportunity.id, {
+            stage: form.stage ?? "LEAD",
+            reason: closeReason || undefined,
+            lost_reason: form.stage === "CLOSED_LOST" ? closeReason : undefined
+          });
+        }
         setStatus("영업기회를 수정했습니다.");
       } else {
         await createOpportunity(payload);
         setStatus("영업기회를 저장했습니다.");
         setForm((current) => ({ ...current, name: "", amount: "0", next_step: "", competitor: "" }));
+        setCloseReason("");
       }
       await onDataChanged();
     } catch {
       setStatus("영업기회 저장 실패");
-    }
-  }
-
-  async function handleCloseOpportunity() {
-    if (!closingOpportunityId) return;
-    try {
-      await changeOpportunityStage(closingOpportunityId, {
-        stage: closeStage,
-        reason: closeReason || undefined,
-        lost_reason: closeStage === "CLOSED_LOST" ? closeReason || "종료" : undefined
-      });
-      setStatus("기회를 종료했습니다.");
-      setClosingOpportunityId(null);
-      setCloseReason("");
-      await onDataChanged();
-    } catch {
-      setStatus("기회 종료 실패");
     }
   }
 
@@ -1475,6 +1470,17 @@ function OpportunitySection({
               placeholder="다음 단계"
             />
           </label>
+          {(form.stage === "CLOSED_WON" || form.stage === "CLOSED_LOST") && (
+            <label className="block text-sm font-medium">
+              종료 사유
+              <textarea
+                value={closeReason}
+                onChange={(event) => setCloseReason(event.target.value)}
+                className="mt-1 min-h-24 w-full rounded-md border border-line px-3 py-2"
+                placeholder="Won/Lost 종료 사유를 입력하세요."
+              />
+            </label>
+          )}
           <button className="w-full rounded-md bg-rose-600 px-4 py-2 font-bold text-white">
             {selectedOpportunity ? "영업기회 수정" : "영업기회 저장"}
           </button>
@@ -1542,18 +1548,7 @@ function OpportunitySection({
                       {opportunity.competitor ? ` / ${opportunity.competitor}` : ""}
                     </td>
                     <td className={tdClass}>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setClosingOpportunityId(opportunity.id);
-                          setCloseStage("CLOSED_WON");
-                          setCloseReason("");
-                        }}
-                        className="rounded border border-rose-200 px-2 py-1 text-xs font-bold text-rose-700"
-                      >
-                        기회 종료
-                      </button>
+                      -
                     </td>
                   </tr>
               ))}
@@ -1561,51 +1556,6 @@ function OpportunitySection({
           </table>
         </div>
       </div>
-      {closingOpportunityId ? (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 px-4">
-          <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-lg">
-            <h3 className="text-lg font-bold">영업기회 종료</h3>
-            <div className="mt-4 space-y-3">
-              <label className="block text-sm font-medium">
-                종료 구분
-                <select
-                  value={closeStage}
-                  onChange={(event) => setCloseStage(event.target.value as PipelineStage)}
-                  className="mt-1 w-full rounded-md border border-line px-3 py-2"
-                >
-                  <option value="CLOSED_WON">Closed Won</option>
-                  <option value="CLOSED_LOST">Closed Lost</option>
-                </select>
-              </label>
-              <label className="block text-sm font-medium">
-                종료 사유
-                <textarea
-                  value={closeReason}
-                  onChange={(event) => setCloseReason(event.target.value)}
-                  className="mt-1 min-h-24 w-full rounded-md border border-line px-3 py-2"
-                  placeholder="종료 사유를 입력하세요."
-                />
-              </label>
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setClosingOpportunityId(null)}
-                  className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold"
-                >
-                  취소
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void handleCloseOpportunity()}
-                  className="rounded-md bg-rose-600 px-3 py-2 text-sm font-semibold text-white"
-                >
-                  종료
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </section>
   );
 }
@@ -1661,7 +1611,7 @@ function ActivitySection({
         setStatus("활동을 수정했습니다.");
       } else {
         await createActivity(payload);
-        setForm((current) => ({ ...current, subject: "", description: "", lead_id: "", opportunity_id: "" }));
+        setForm((current) => ({ ...current, description: "", lead_id: "", opportunity_id: "" }));
         setPlanOpportunityId("");
         setStatus("활동을 저장했습니다.");
       }
@@ -1676,15 +1626,6 @@ function ActivitySection({
       <form className="rounded-lg border border-line bg-white p-4" onSubmit={handleCreateActivity}>
         <h3 className="text-lg font-bold">{selectedActivity ? "활동 수정" : "활동 등록"}</h3>
         <div className="mt-4 space-y-3">
-          <label className="block text-sm font-medium">
-            제목
-            <input
-              value={form.subject}
-              onChange={(event) => setForm((current) => ({ ...current, subject: event.target.value }))}
-              className="mt-1 w-full rounded-md border border-line px-3 py-2"
-              placeholder="제목"
-            />
-          </label>
           <label className="block text-sm font-medium">
             <EnumLabel
               label="유형"
@@ -1823,7 +1764,6 @@ function ActivitySection({
               <tr>
                 <th className={`${thClass} whitespace-nowrap`}>유형</th>
                 <th className={`${thClass} whitespace-nowrap`}>일시</th>
-                <th className={`${thClass} whitespace-nowrap`}>제목</th>
                 <th className={`${thClass} whitespace-nowrap`}>상태</th>
                 <th className={`${thClass} whitespace-nowrap`}>우선순위</th>
                 <th className={`${thClass} min-w-[360px]`}>내용</th>
@@ -1860,7 +1800,6 @@ function ActivitySection({
                   <td className={`${tdClass} whitespace-nowrap`}>
                     {new Date(activity.activity_date).toLocaleString("ko-KR")}
                   </td>
-                  <td className={`${tdClass} whitespace-nowrap`}>{activity.subject || "제목 없음"}</td>
                   <td className={`${tdClass} whitespace-nowrap`}>{activity.status || "OPEN"}</td>
                   <td className={`${tdClass} whitespace-nowrap`}>{activity.priority || "MEDIUM"}</td>
                   <td className={`${tdClass} max-w-[520px] truncate`} title={activity.description || "내용 없음"}>
@@ -1881,7 +1820,7 @@ function ActivitySection({
                           setPlanOpportunityId(oppId);
                           setSelectedActivityId("");
                           setForm({
-                            subject: `${activity.subject || "영업기회"} 활동계획`,
+                            subject: "활동계획",
                             activity_type: "FOLLOW_UP",
                             activity_date: new Date().toISOString().slice(0, 16),
                             due_date: "",
@@ -1892,8 +1831,11 @@ function ActivitySection({
                             lead_id: ""
                           });
                           setStatus(oppId ? "활동계획 작성 모드입니다. 영업기회는 고정됩니다." : "영업기회가 없는 활동입니다.");
+                          if (typeof window !== "undefined") {
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }
                         }}
-                        className="rounded border border-slate-200 px-2 py-1 text-xs font-bold"
+                        className="rounded border border-rose-200 bg-rose-600 px-2 py-1 text-xs font-bold text-white"
                       >
                         활동계획
                       </button>
@@ -2252,9 +2194,9 @@ function LoginManagementSection({
                 onChange={(event) =>
                   setForm((current) => ({ ...current, mobile_phone: event.target.value }))
                 }
-                className="mt-1 w-full rounded-md border border-line px-3 py-2"
-              />
-            </label>
+              className="mt-1 w-full rounded-md border border-line px-3 py-2"
+            />
+          </label>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <label className="block text-sm font-medium">
@@ -2262,11 +2204,9 @@ function LoginManagementSection({
               <input
                 value={form.name}
                 onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-                className="mt-1 w-full rounded-md border border-line px-3 py-2"
-              />
+              className="mt-1 w-full rounded-md border border-line px-3 py-2"
+            />
             </label>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
             <label className="block text-sm font-medium">
               역할
               <select
@@ -2281,6 +2221,8 @@ function LoginManagementSection({
                 <option value="SALES_REP">영업담당자</option>
               </select>
             </label>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
             <label className="block text-sm font-medium">
               조직
               <input
@@ -2291,8 +2233,6 @@ function LoginManagementSection({
                 className="mt-1 w-full rounded-md border border-line px-3 py-2"
               />
             </label>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
             <label className="block text-sm font-medium">
               직책
               <input
