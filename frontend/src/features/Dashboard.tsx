@@ -1024,7 +1024,7 @@ function AccountSection({
                 {loginUsers
                   .filter((user) => user.role === "SALES_REP" || user.role === "ORG_MANAGER")
                   .map((user) => (
-                    <option key={user.id} value={user.id}>
+                    <option key={user.email} value={user.email}>
                       {user.name} ({user.organization})
                     </option>
                   ))}
@@ -1208,7 +1208,7 @@ function AccountSection({
                     </td>
                     <td className={`${tdClass} hidden lg:table-cell`}>{account.phone || "-"}</td>
                     <td className={`${tdClass} hidden lg:table-cell`}>
-                      {loginUsers.find((user) => user.id === account.owner_id)?.name || account.owner_id || "-"}
+                      {loginUsers.find((user) => user.email === account.owner_id)?.name || account.owner_id || "-"}
                     </td>
                     <td className={`${tdClass} hidden lg:table-cell`}>{account.website || "-"}</td>
                     <td className={tdClass}>
@@ -1809,7 +1809,7 @@ function ActivitySection({
                     {activity.description || "내용 없음"}
                   </td>
                   <td className={`${tdClass} hidden whitespace-nowrap lg:table-cell`}>
-                    {loginUsers.find((user) => user.id === activity.owner_id)?.name || activity.owner_id || "-"}
+                    {loginUsers.find((user) => user.email === activity.owner_id)?.name || activity.owner_id || "-"}
                   </td>
                   <td className={`${tdClass} hidden whitespace-nowrap lg:table-cell`}>
                     {activity.due_date || "-"}
@@ -2109,56 +2109,100 @@ function LoginManagementSection({
   onDataChanged: DashboardProps["onDataChanged"];
 }) {
   const [form, setForm] = useState<LoginUser>({
-    id: "",
     name: "",
     email: "",
+    mobile_phone: "",
     role: "SALES_REP",
     organization: "",
     title: "",
     password: ""
   });
   const [status, setStatus] = useState("");
+  const isEdit = loginUsers.some(
+    (user) => user.email.toLowerCase() === form.email.trim().toLowerCase()
+  );
 
   async function handleSave(event: FormEvent) {
     event.preventDefault();
-    if (!form.id) {
-      setStatus("사용자 ID를 입력해주세요.");
+    const passwordRule =
+      /^(?=.{8,}$)(?:(?=.*[A-Za-z])(?=.*\d)|(?=.*[A-Za-z])(?=.*[^A-Za-z0-9])|(?=.*\d)(?=.*[^A-Za-z0-9])).*$/;
+    if (!form.email.trim()) {
+      setStatus("이메일을 입력해주세요.");
+      return;
+    }
+    if (!isEdit && !passwordRule.test(form.password ?? "")) {
+      setStatus("비밀번호는 8자 이상, 문자/숫자/특수문자 중 2가지 이상 조합이어야 합니다.");
+      return;
+    }
+    if (isEdit && form.password && !passwordRule.test(form.password)) {
+      setStatus("비밀번호는 8자 이상, 문자/숫자/특수문자 중 2가지 이상 조합이어야 합니다.");
       return;
     }
     await upsertLoginUser(form);
-    setStatus("로그인 사용자를 저장했습니다.");
+    setStatus(
+      `로그인 사용자를 저장했습니다. 로그인 정보가 ${form.email} 주소로 전달되도록 설정되었습니다.`
+    );
     await onDataChanged();
+    if (!isEdit) {
+      setForm({
+        name: "",
+        email: "",
+        mobile_phone: "",
+        role: "SALES_REP",
+        organization: "",
+        title: "",
+        password: ""
+      });
+    } else {
+      setForm((current) => ({ ...current, password: "" }));
+    }
   }
 
   return (
     <section className="grid gap-4 lg:grid-cols-[380px_minmax(0,1fr)]">
       <form className="rounded-lg border border-line bg-white p-4" onSubmit={handleSave}>
-        <h3 className="text-lg font-bold">로그인 사용자 관리</h3>
+        <h3 className="text-lg font-bold">{isEdit ? "로그인 사용자 수정" : "로그인 사용자 관리"}</h3>
         <div className="mt-4 space-y-3">
-          <label className="block text-sm font-medium">
-            사용자 ID
-            <input
-              value={form.id}
-              onChange={(event) => setForm((current) => ({ ...current, id: event.target.value }))}
-              className="mt-1 w-full rounded-md border border-line px-3 py-2"
-            />
-          </label>
-          <label className="block text-sm font-medium">
-            이름
-            <input
-              value={form.name}
-              onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-              className="mt-1 w-full rounded-md border border-line px-3 py-2"
-            />
-          </label>
-          <label className="block text-sm font-medium">
-            이메일
-            <input
-              value={form.email}
-              onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
-              className="mt-1 w-full rounded-md border border-line px-3 py-2"
-            />
-          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block text-sm font-medium">
+              이메일(사용자 ID)
+              <input
+                value={form.email}
+                onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
+                className="mt-1 w-full rounded-md border border-line px-3 py-2"
+              />
+            </label>
+            <label className="block text-sm font-medium">
+              비밀번호
+              <input
+                type="password"
+                value={form.password ?? ""}
+                onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
+                className="mt-1 w-full rounded-md border border-line px-3 py-2"
+                placeholder={isEdit ? "변경 시에만 입력" : "8자 이상, 2종류 조합"}
+              />
+            </label>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block text-sm font-medium">
+              휴대폰
+              <input
+                value={form.mobile_phone ?? ""}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, mobile_phone: event.target.value }))
+                }
+                className="mt-1 w-full rounded-md border border-line px-3 py-2"
+              />
+            </label>
+            <label className="block text-sm font-medium">
+              이름
+              <input
+                value={form.name}
+                onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                className="mt-1 w-full rounded-md border border-line px-3 py-2"
+              />
+            </label>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <label className="block text-sm font-medium">
               역할
@@ -2194,17 +2238,9 @@ function LoginManagementSection({
                 className="mt-1 w-full rounded-md border border-line px-3 py-2"
               />
             </label>
-            <label className="block text-sm font-medium">
-              비밀번호
-              <input
-                value={form.password}
-                onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
-                className="mt-1 w-full rounded-md border border-line px-3 py-2"
-              />
-            </label>
           </div>
           <button className="w-full rounded-md bg-rose-600 px-4 py-2 font-bold text-white">
-            사용자 저장
+            {isEdit ? "사용자 수정" : "사용자 저장"}
           </button>
           {status ? <p className="text-sm font-medium text-slate-700">{status}</p> : null}
         </div>
@@ -2220,6 +2256,7 @@ function LoginManagementSection({
               <tr>
                 <th className={thClass}>이름</th>
                 <th className={thClass}>이메일</th>
+                <th className={thClass}>휴대폰</th>
                 <th className={thClass}>역할</th>
                 <th className={thClass}>조직</th>
                 <th className={thClass}>직책</th>
@@ -2228,9 +2265,10 @@ function LoginManagementSection({
             </thead>
             <tbody>
               {loginUsers.map((user) => (
-                <tr key={user.id} className={cherryHoverRowClass}>
+                <tr key={user.email} className={cherryHoverRowClass}>
                   <td className={`${tdClass} ${cherryTextClass}`}>{user.name}</td>
                   <td className={`${tdClass} whitespace-nowrap`}>{user.email}</td>
+                  <td className={`${tdClass} whitespace-nowrap`}>{user.mobile_phone || "-"}</td>
                   <td className={tdClass}>
                     {user.role === "ADMIN" ? "관리자" : user.role === "ORG_MANAGER" ? "조직장" : "영업담당자"}
                   </td>
@@ -2240,7 +2278,7 @@ function LoginManagementSection({
                     <div className="flex justify-center gap-2">
                       <button
                         type="button"
-                        onClick={() => setForm(user)}
+                        onClick={() => setForm({ ...user, password: "" })}
                         className="rounded border border-slate-200 px-2 py-1 text-xs font-bold"
                       >
                         선택
@@ -2248,7 +2286,7 @@ function LoginManagementSection({
                       <button
                         type="button"
                         onClick={async () => {
-                          await deleteLoginUser(user.id);
+                          await deleteLoginUser(user.email);
                           await onDataChanged();
                         }}
                         className="rounded border border-rose-200 px-2 py-1 text-xs font-bold text-rose-600"

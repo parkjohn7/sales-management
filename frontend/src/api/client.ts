@@ -459,31 +459,34 @@ const LOGIN_USERS_KEY = "sales-management-login-users";
 
 const defaultLoginUsers: LoginUser[] = [
   {
-    id: "user-admin-1",
     name: "관리자",
     email: "admin@cherrylab.com",
+    mobile_phone: "010-0000-0001",
     role: "ADMIN",
     organization: "본사",
     title: "시스템 관리자",
-    password: "admin1234"
+    password: "admin1234",
+    must_change_password: true
   },
   {
-    id: "user-org-1",
     name: "조직장 김본부",
     email: "manager@cherrylab.com",
+    mobile_phone: "010-0000-0002",
     role: "ORG_MANAGER",
     organization: "영업본부",
     title: "영업본부장",
-    password: "manager1234"
+    password: "manager1234",
+    must_change_password: true
   },
   {
-    id: "user-sales-1",
     name: "영업담당 박세일즈",
     email: "sales@cherrylab.com",
+    mobile_phone: "010-0000-0003",
     role: "SALES_REP",
     organization: "영업1팀",
     title: "Account Executive",
-    password: "sales1234"
+    password: "sales1234",
+    must_change_password: true
   }
 ];
 
@@ -516,14 +519,35 @@ export async function loadLoginUsers(): Promise<LoginUser[]> {
 
 export async function upsertLoginUser(user: LoginUser): Promise<LoginUser[]> {
   const users = getLoginUsersLocal();
-  const exists = users.some((item) => item.id === user.id);
-  const nextUsers = exists ? users.map((item) => (item.id === user.id ? user : item)) : [...users, user];
+  const normalizedEmail = user.email.trim().toLowerCase();
+  const exists = users.some((item) => item.email.toLowerCase() === normalizedEmail);
+  const nextUsers = exists
+    ? users.map((item) =>
+        item.email.toLowerCase() === normalizedEmail
+          ? {
+              ...item,
+              ...user,
+              email: normalizedEmail,
+              password: user.password?.trim() ? user.password : item.password
+            }
+          : item
+      )
+    : [
+        ...users,
+        {
+          ...user,
+          email: normalizedEmail,
+          must_change_password: true
+        }
+      ];
   setLoginUsersLocal(nextUsers);
   return nextUsers;
 }
 
-export async function deleteLoginUser(userId: string): Promise<LoginUser[]> {
-  const nextUsers = getLoginUsersLocal().filter((user) => user.id !== userId);
+export async function deleteLoginUser(email: string): Promise<LoginUser[]> {
+  const nextUsers = getLoginUsersLocal().filter(
+    (user) => user.email.toLowerCase() !== email.trim().toLowerCase()
+  );
   setLoginUsersLocal(nextUsers.length > 0 ? nextUsers : defaultLoginUsers);
   return getLoginUsersLocal();
 }
@@ -536,21 +560,28 @@ export async function authenticateLoginUser(email: string, password: string): Pr
 }
 
 export async function changeLoginUserPassword(
-  userId: string,
+  email: string,
   currentPassword: string,
   nextPassword: string
 ): Promise<{ success: boolean; message: string }> {
   const users = getLoginUsersLocal();
-  const target = users.find((user) => user.id === userId);
+  const target = users.find((user) => user.email.toLowerCase() === email.trim().toLowerCase());
   if (!target) {
     return { success: false, message: "사용자를 찾을 수 없습니다." };
   }
-  if (target.password !== currentPassword) {
+  if ((target.password ?? "") !== currentPassword) {
     return { success: false, message: "현재 비밀번호가 일치하지 않습니다." };
   }
-  if (!nextPassword || nextPassword.length < 6) {
-    return { success: false, message: "새 비밀번호는 6자 이상이어야 합니다." };
+  const passwordRule = /^(?=.{8,}$)(?:(?=.*[A-Za-z])(?=.*\d)|(?=.*[A-Za-z])(?=.*[^A-Za-z0-9])|(?=.*\d)(?=.*[^A-Za-z0-9])).*$/;
+  if (!passwordRule.test(nextPassword)) {
+    return { success: false, message: "새 비밀번호는 8자 이상, 문자/숫자/특수문자 중 2가지 이상 조합이어야 합니다." };
   }
-  setLoginUsersLocal(users.map((user) => (user.id === userId ? { ...user, password: nextPassword } : user)));
+  setLoginUsersLocal(
+    users.map((user) =>
+      user.email.toLowerCase() === email.trim().toLowerCase()
+        ? { ...user, password: nextPassword, must_change_password: false }
+        : user
+    )
+  );
   return { success: true, message: "비밀번호가 변경되었습니다." };
 }

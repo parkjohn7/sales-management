@@ -53,9 +53,11 @@ export function App() {
     void (async () => {
       const users = await loadLoginUsers();
       setLoginUsers(users);
-      const savedUserId = localStorage.getItem("sales-management-current-user-id");
-      if (savedUserId) {
-        const matched = users.find((user) => user.id === savedUserId);
+      const savedUserEmail = localStorage.getItem("sales-management-current-user-email");
+      if (savedUserEmail) {
+        const matched = users.find(
+          (user) => user.email.toLowerCase() === savedUserEmail.toLowerCase()
+        );
         if (matched) {
           setCurrentUser(matched);
         }
@@ -83,11 +85,11 @@ export function App() {
     }
     setLoginError("");
     setCurrentUser(user);
-    localStorage.setItem("sales-management-current-user-id", user.id);
+    localStorage.setItem("sales-management-current-user-email", user.email);
   }
 
   function handleLogout() {
-    localStorage.removeItem("sales-management-current-user-id");
+    localStorage.removeItem("sales-management-current-user-email");
     setCurrentUser(null);
     setLoginPassword("");
   }
@@ -95,12 +97,17 @@ export function App() {
   async function handleChangePassword(event: FormEvent) {
     event.preventDefault();
     if (!currentUser) return;
-    const result = await changeLoginUserPassword(currentUser.id, currentPassword, nextPassword);
+    const result = await changeLoginUserPassword(currentUser.email, currentPassword, nextPassword);
     setPasswordStatus(result.message);
     if (result.success) {
       setCurrentPassword("");
       setNextPassword("");
-      setLoginUsers(await loadLoginUsers());
+      const nextUsers = await loadLoginUsers();
+      setLoginUsers(nextUsers);
+      const nextCurrent = nextUsers.find(
+        (user) => user.email.toLowerCase() === currentUser.email.toLowerCase()
+      );
+      if (nextCurrent) setCurrentUser(nextCurrent);
       setTimeout(() => setShowPasswordModal(false), 800);
     }
   }
@@ -168,7 +175,7 @@ export function App() {
           setShowPasswordModal(true);
         }}
       />
-      {showPasswordModal ? (
+      {showPasswordModal || currentUser.must_change_password ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
           <form onSubmit={handleChangePassword} className="w-full max-w-md rounded-lg bg-white p-5 shadow-lg">
             <h3 className="text-lg font-bold text-ink">비밀번호 변경</h3>
@@ -193,13 +200,15 @@ export function App() {
               </label>
               {passwordStatus ? <p className="text-sm font-medium text-slate-700">{passwordStatus}</p> : null}
               <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowPasswordModal(false)}
-                  className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold"
-                >
-                  취소
-                </button>
+                {!currentUser.must_change_password ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordModal(false)}
+                    className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold"
+                  >
+                    취소
+                  </button>
+                ) : null}
                 <button className="rounded-md bg-rose-600 px-3 py-2 text-sm font-semibold text-white">
                   변경
                 </button>

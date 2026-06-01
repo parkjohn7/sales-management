@@ -231,11 +231,12 @@ export interface IntegrationLeadInput extends LeadCreateInput {
 }
 
 export interface LoginUser {
-  id: string;
   name: string;
   email: string;
+  mobile_phone?: string;
   role: LoginUserRole;
   organization: string;
   title?: string;
-  password: string;
+  password?: string;
+  must_change_password?: boolean;
 }
