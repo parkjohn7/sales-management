@@ -229,6 +229,24 @@ async function request<T>(
   return body.data;
 }
 
+async function requestPublic<T>(
+  path: string,
+  options: { method?: string; body?: unknown } = {}
+): Promise<T> {
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: options.method ?? "GET",
+    headers: {
+      ...(options.body ? { "Content-Type": "application/json" } : {})
+    },
+    body: options.body ? JSON.stringify(options.body) : undefined
+  });
+  if (!response.ok) {
+    throw new Error(`API request failed: ${response.status}`);
+  }
+  const body = (await response.json()) as { data: T };
+  return body.data;
+}
+
 export async function loadDashboard(): Promise<{
   kpis: DashboardKpis;
   pipeline: PipelineSummary[];
@@ -449,108 +467,45 @@ export function defaultStageProbabilities(): Record<PipelineStage, number> {
   return mockAdminSettings.stage_probabilities;
 }
 
-const LOGIN_USERS_KEY = "sales-management-login-users";
-
-const defaultLoginUsers: LoginUser[] = [
-  {
-    name: "관리자",
-    email: "admin@cherrylab.com",
-    mobile_phone: "010-0000-0001",
-    role: "ADMIN",
-    organization: "본사",
-    title: "시스템 관리자",
-    password: "admin1234",
-    must_change_password: true
-  },
-  {
-    name: "조직장 김본부",
-    email: "manager@cherrylab.com",
-    mobile_phone: "010-0000-0002",
-    role: "ORG_MANAGER",
-    organization: "영업본부",
-    title: "영업본부장",
-    password: "manager1234",
-    must_change_password: true
-  },
-  {
-    name: "영업담당 박세일즈",
-    email: "sales@cherrylab.com",
-    mobile_phone: "010-0000-0003",
-    role: "SALES_REP",
-    organization: "영업1팀",
-    title: "Account Executive",
-    password: "sales1234",
-    must_change_password: true
-  }
-];
-
-function getLoginUsersLocal(): LoginUser[] {
-  const raw = localStorage.getItem(LOGIN_USERS_KEY);
-  if (!raw) {
-    localStorage.setItem(LOGIN_USERS_KEY, JSON.stringify(defaultLoginUsers));
-    return defaultLoginUsers;
-  }
-  try {
-    const parsed = JSON.parse(raw) as LoginUser[];
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      localStorage.setItem(LOGIN_USERS_KEY, JSON.stringify(defaultLoginUsers));
-      return defaultLoginUsers;
-    }
-    return parsed;
-  } catch {
-    localStorage.setItem(LOGIN_USERS_KEY, JSON.stringify(defaultLoginUsers));
-    return defaultLoginUsers;
-  }
-}
-
-function setLoginUsersLocal(users: LoginUser[]) {
-  localStorage.setItem(LOGIN_USERS_KEY, JSON.stringify(users));
-}
-
 export async function loadLoginUsers(): Promise<LoginUser[]> {
-  return getLoginUsersLocal();
+  const hasToken = Boolean(localStorage.getItem("sales-management-token"));
+  if (hasToken) {
+    try {
+      return await request<LoginUser[]>("/admin/login-users");
+    } catch {
+      return requestPublic<LoginUser[]>("/auth/login-users");
+    }
+  }
+  return requestPublic<LoginUser[]>("/auth/login-users");
 }
 
 export async function upsertLoginUser(user: LoginUser): Promise<LoginUser[]> {
-  const users = getLoginUsersLocal();
-  const normalizedEmail = user.email.trim().toLowerCase();
-  const exists = users.some((item) => item.email.toLowerCase() === normalizedEmail);
-  const nextUsers = exists
-    ? users.map((item) =>
-        item.email.toLowerCase() === normalizedEmail
-          ? {
-              ...item,
-              ...user,
-              email: normalizedEmail,
-              password: user.password?.trim() ? user.password : item.password
-            }
-          : item
-      )
-    : [
-        ...users,
-        {
-          ...user,
-          email: normalizedEmail,
-          must_change_password: true
-        }
-      ];
-  setLoginUsersLocal(nextUsers);
-  return nextUsers;
+  await request<LoginUser>("/admin/login-users", {
+    method: "PUT",
+    body: { ...user, email: user.email.trim().toLowerCase() }
+  });
+  return loadLoginUsers();
 }
 
 export async function deleteLoginUser(email: string): Promise<LoginUser[]> {
-  const nextUsers = getLoginUsersLocal().filter(
-    (user) => user.email.toLowerCase() !== email.trim().toLowerCase()
-  );
-  setLoginUsersLocal(nextUsers.length > 0 ? nextUsers : defaultLoginUsers);
-  return getLoginUsersLocal();
+  await request<{ email: string; deleted: boolean }>(`/admin/login-users/${encodeURIComponent(email)}`, {
+    method: "DELETE"
+  });
+  return loadLoginUsers();
 }
 
 export async function authenticateLoginUser(email: string, password: string): Promise<LoginUser | null> {
-  const user = getLoginUsersLocal().find(
-    (item) => item.email.toLowerCase() === email.trim().toLowerCase() && item.password === password
-  );
-  return user ?? null;
+  try {
+    const data = await requestPublic<{ access_token: string; token_type: string; user: LoginUser }>(
+      "/auth/login",
+      { method: "POST", body: { email, password } }
+    );
+    localStorage.setItem("sales-management-token", data.access_token);
+    localStorage.setItem(TOKEN_USER_KEY, data.user.email.toLowerCase());
+    return data.user;
+  } catch {
+    return null;
+  }
 }
 
 export async function changeLoginUserPassword(
@@ -558,26 +513,18 @@ export async function changeLoginUserPassword(
   currentPassword: string,
   nextPassword: string
 ): Promise<{ success: boolean; message: string }> {
-  const users = getLoginUsersLocal();
-  const target = users.find((user) => user.email.toLowerCase() === email.trim().toLowerCase());
-  if (!target) {
-    return { success: false, message: "사용자를 찾을 수 없습니다." };
+  try {
+    return await request<{ success: boolean; message: string }>("/auth/change-password", {
+      method: "POST",
+      body: {
+        email,
+        current_password: currentPassword,
+        next_password: nextPassword
+      }
+    });
+  } catch {
+    return { success: false, message: "비밀번호 변경 API 호출 실패" };
   }
-  if ((target.password ?? "") !== currentPassword) {
-    return { success: false, message: "현재 비밀번호가 일치하지 않습니다." };
-  }
-  const passwordRule = /^(?=.{8,}$)(?:(?=.*[A-Za-z])(?=.*\d)|(?=.*[A-Za-z])(?=.*[^A-Za-z0-9])|(?=.*\d)(?=.*[^A-Za-z0-9])).*$/;
-  if (!passwordRule.test(nextPassword)) {
-    return { success: false, message: "새 비밀번호는 8자 이상, 문자/숫자/특수문자 중 2가지 이상 조합이어야 합니다." };
-  }
-  setLoginUsersLocal(
-    users.map((user) =>
-      user.email.toLowerCase() === email.trim().toLowerCase()
-        ? { ...user, password: nextPassword, must_change_password: false }
-        : user
-    )
-  );
-  return { success: true, message: "비밀번호가 변경되었습니다." };
 }
 
 export async function sendLoginCredentialEmail(
@@ -586,7 +533,6 @@ export async function sendLoginCredentialEmail(
   temporaryPassword: string
 ): Promise<{ sent: boolean; message: string }> {
   try {
-    await createAdminDevToken();
     return await request<{ sent: boolean; message: string }>("/admin/notify-login-credential", {
       method: "POST",
       body: {

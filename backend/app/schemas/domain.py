@@ -12,6 +12,48 @@ class DevTokenRequest(BaseModel):
     team_id: str | None = None
 
 
+class LoginUserRead(BaseModel):
+    name: str
+    email: str
+    mobile_phone: str | None = None
+    role: str
+    organization: str
+    title: str | None = None
+    must_change_password: bool = True
+
+
+class LoginUserUpsert(BaseModel):
+    name: str
+    email: str
+    mobile_phone: str | None = None
+    role: str
+    organization: str
+    title: str | None = None
+    password: str | None = None
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: LoginUserRead
+
+
+class ChangePasswordRequest(BaseModel):
+    email: str
+    current_password: str
+    next_password: str
+
+
+class ChangePasswordResponse(BaseModel):
+    success: bool
+    message: str
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"

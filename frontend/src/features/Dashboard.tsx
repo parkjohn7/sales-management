@@ -2033,16 +2033,31 @@ function IntegrationSection({ onDataChanged }: { onDataChanged: DashboardProps["
         <h3 className="text-lg font-bold">연동 운영 기준</h3>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {[
-            ["인증", "X-API-Key 헤더로 홈페이지/챗봇 인입을 보호합니다."],
-            ["원문 저장", "raw_payload와 chatbot_log를 리드에 함께 저장합니다."],
-            ["감사 로그", "integration actor로 리드 생성 기록을 남깁니다."],
-            ["후속 처리", "인입 후 리드 상세 화면에서 영업기회로 전환합니다."]
+            [
+              "인증",
+              "필수 헤더는 X-API-Key입니다. /api/v1/integrations/web/leads, /api/v1/integrations/chatbot/leads 두 엔드포인트 모두 Key 불일치 시 401로 차단됩니다."
+            ],
+            [
+              "원문 저장",
+              "요청 payload 원문은 raw_payload에 저장됩니다. 챗봇 채널은 chatbot_log를 함께 저장해 상담 맥락(intent, 요약 등)을 리드 이력으로 남깁니다."
+            ],
+            [
+              "감사 로그",
+              "연동으로 생성된 리드는 actor_id=integration, action=CREATE로 감사 로그에 기록됩니다. 운영 중 이슈가 생기면 생성 주체를 즉시 추적할 수 있습니다."
+            ],
+            [
+              "후속 처리",
+              "인입 직후 리드 화면에서 담당자 배정/점수 확인 후 영업기회 전환을 진행합니다. 전환 시 고객사·연락처·영업기회가 함께 생성됩니다."
+            ]
           ].map(([title, description]) => (
             <article key={title} className="rounded-md border border-line p-4">
               <strong>{title}</strong>
               <p className="mt-2 text-sm text-slate-600">{description}</p>
             </article>
           ))}
+        </div>
+        <div className="mt-4 rounded-md border border-rose-100 bg-rose-50/40 p-3 text-sm text-slate-700">
+          운영 체크포인트: API Key 교체 주기 관리, raw_payload 마스킹 기준, 연동 실패(401/422/500) 재시도 정책을 릴리즈 노트에 함께 기록합니다.
         </div>
       </div>
     </section>
@@ -2123,6 +2138,17 @@ function AdminSection({
               <p className="mt-1 text-xs font-bold text-mint">{policy.permissions.join(", ")}</p>
             </article>
           ))}
+        </div>
+        <div className="mt-4 rounded-md border border-line p-4 text-sm text-slate-700">
+          <p className="font-semibold text-ink">SUPER_ADMIN 전체데이터 정책</p>
+          <p className="mt-2">
+            전체데이터는 단순 조회가 아니라 리드/고객사/영업기회/활동의 전체 범위 수정과 관리자 설정, 감사로그 조회를 포함한 운영 권한입니다.
+            즉, 데이터 접근 정책 + 운영 제어 권한이 결합된 최고 권한입니다.
+          </p>
+          <p className="mt-2">
+            SALES_MANAGER는 팀/담당 데이터 운영, SALES_REP는 본인 담당 데이터 운영, EXECUTIVE는 집계 지표 중심 조회, MARKETING_USER는 리드/캠페인
+            분석 중심으로 사용합니다.
+          </p>
         </div>
       </div>
     </section>

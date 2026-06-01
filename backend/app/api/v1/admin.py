@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import Actor, get_current_actor, require_roles
-from app.api.responses import ok
+from app.api.responses import fail, ok
 from app.core.rbac import RoleCode
 from app.db.session import get_db
 from app.models import AuditLog
@@ -11,11 +11,13 @@ from app.schemas import (
     AuditLogRead,
     LoginCredentialMailRequest,
     LoginCredentialMailResponse,
+    LoginUserUpsert,
     RolePolicyRead,
 )
 from app.services.admin_settings_service import read_admin_settings, save_admin_settings
 from app.services.audit_service import record_audit_log
 from app.services.mail_service import send_login_credentials_email
+from app.services.login_user_service import delete_login_user, list_login_users, upsert_login_user
 
 router = APIRouter()
 
@@ -105,3 +107,56 @@ def notify_login_credential(
     )
     response = LoginCredentialMailResponse(sent=sent, message=message)
     return ok(response.model_dump(mode="json"))
+
+
+@router.get("/login-users")
+def get_login_users(
+    db: Session = Depends(get_db),
+    _: Actor = Depends(require_roles(RoleCode.SUPER_ADMIN)),
+) -> dict:
+    users = [item.model_dump(mode="json") for item in list_login_users(db)]
+    db.commit()
+    return ok(users)
+
+
+@router.put("/login-users")
+def save_login_user(
+    payload: LoginUserUpsert,
+    db: Session = Depends(get_db),
+    actor: Actor = Depends(require_roles(RoleCode.SUPER_ADMIN)),
+) -> dict:
+    try:
+        user = upsert_login_user(db, payload)
+    except ValueError as exc:
+        db.rollback()
+        raise fail(422, "INVALID_LOGIN_USER", str(exc)) from exc
+    record_audit_log(
+        db,
+        actor_id=actor.user_id,
+        action="UPSERT_LOGIN_USER",
+        resource_type="AdminSetting",
+        resource_id=payload.email.strip().lower(),
+        after_value=user.model_dump(mode="json"),
+    )
+    db.commit()
+    return ok(user.model_dump(mode="json"))
+
+
+@router.delete("/login-users/{email}")
+def remove_login_user(
+    email: str,
+    db: Session = Depends(get_db),
+    actor: Actor = Depends(require_roles(RoleCode.SUPER_ADMIN)),
+) -> dict:
+    deleted = delete_login_user(db, email)
+    if not deleted:
+        return ok({"email": email, "deleted": False})
+    record_audit_log(
+        db,
+        actor_id=actor.user_id,
+        action="DELETE_LOGIN_USER",
+        resource_type="AdminSetting",
+        resource_id=email.strip().lower(),
+    )
+    db.commit()
+    return ok({"email": email, "deleted": True})

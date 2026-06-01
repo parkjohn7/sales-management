@@ -37,8 +37,9 @@ def read_admin_settings(db: Session) -> AdminSettingsRead:
 def save_admin_settings(
     db: Session, payload: AdminSettingsUpdate, *, updated_by: str
 ) -> AdminSettingsRead:
-    merged = {**DEFAULT_SETTINGS.model_dump(), **payload.model_dump()}
     row = db.get(AdminSetting, SETTINGS_KEY)
+    base_value = row.value if row is not None else {}
+    merged = {**DEFAULT_SETTINGS.model_dump(), **base_value, **payload.model_dump()}
     if row is None:
         row = AdminSetting(key=SETTINGS_KEY, value=merged, updated_by=updated_by)
         db.add(row)
