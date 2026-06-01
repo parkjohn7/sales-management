@@ -251,3 +251,14 @@ class AuditLogRead(BaseModel):
     resource_type: str
     resource_id: str | None
     created_at: datetime
+
+
+class LoginCredentialMailRequest(BaseModel):
+    to_email: str
+    user_name: str
+    temporary_password: str
+
+
+class LoginCredentialMailResponse(BaseModel):
+    sent: bool
+    message: str

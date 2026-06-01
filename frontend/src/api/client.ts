@@ -585,3 +585,23 @@ export async function changeLoginUserPassword(
   );
   return { success: true, message: "비밀번호가 변경되었습니다." };
 }
+
+export async function sendLoginCredentialEmail(
+  toEmail: string,
+  userName: string,
+  temporaryPassword: string
+): Promise<{ sent: boolean; message: string }> {
+  try {
+    await createAdminDevToken();
+    return await request<{ sent: boolean; message: string }>("/admin/notify-login-credential", {
+      method: "POST",
+      body: {
+        to_email: toEmail,
+        user_name: userName,
+        temporary_password: temporaryPassword
+      }
+    });
+  } catch {
+    return { sent: false, message: "메일 발송 API 호출 실패" };
+  }
+}

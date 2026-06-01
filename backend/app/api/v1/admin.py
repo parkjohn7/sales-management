@@ -6,9 +6,16 @@ from app.api.responses import ok
 from app.core.rbac import RoleCode
 from app.db.session import get_db
 from app.models import AuditLog
-from app.schemas import AdminSettingsUpdate, AuditLogRead, RolePolicyRead
+from app.schemas import (
+    AdminSettingsUpdate,
+    AuditLogRead,
+    LoginCredentialMailRequest,
+    LoginCredentialMailResponse,
+    RolePolicyRead,
+)
 from app.services.admin_settings_service import read_admin_settings, save_admin_settings
 from app.services.audit_service import record_audit_log
+from app.services.mail_service import send_login_credentials_email
 
 router = APIRouter()
 
@@ -84,3 +91,17 @@ def list_audit_logs(
 ) -> dict:
     logs = db.query(AuditLog).order_by(AuditLog.created_at.desc()).limit(page_size).all()
     return ok([AuditLogRead.model_validate(log).model_dump(mode="json") for log in logs])
+
+
+@router.post("/notify-login-credential")
+def notify_login_credential(
+    payload: LoginCredentialMailRequest,
+    _: Actor = Depends(require_roles(RoleCode.SUPER_ADMIN)),
+) -> dict:
+    sent, message = send_login_credentials_email(
+        to_email=payload.to_email,
+        user_name=payload.user_name,
+        temporary_password=payload.temporary_password,
+    )
+    response = LoginCredentialMailResponse(sent=sent, message=message)
+    return ok(response.model_dump(mode="json"))

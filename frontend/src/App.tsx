@@ -190,7 +190,7 @@ export function App() {
                 />
               </label>
               <label className="block text-sm font-medium">
-                새 비밀번호 (6자 이상)
+                새 비밀번호 (8자 이상)
                 <input
                   type="password"
                   value={nextPassword}

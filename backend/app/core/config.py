@@ -12,6 +12,12 @@ class Settings(BaseSettings):
     integration_api_key: str = "local-integration-key"
     access_token_expire_minutes: int = 60 * 8
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_username: str | None = None
+    smtp_password: str | None = None
+    smtp_from_email: str | None = None
+    smtp_use_tls: bool = True
 
     @property
     def cors_origin_list(self) -> list[str]:

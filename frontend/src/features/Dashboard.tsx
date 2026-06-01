@@ -29,6 +29,7 @@ import {
   updateContact,
   updateLead,
   upsertLoginUser,
+  sendLoginCredentialEmail,
   updateOpportunity
 } from "../api/client";
 import { MetricCard } from "../components/MetricCard";
@@ -2139,9 +2140,17 @@ function LoginManagementSection({
       return;
     }
     await upsertLoginUser(form);
-    setStatus(
-      `로그인 사용자를 저장했습니다. 로그인 정보가 ${form.email} 주소로 전달되도록 설정되었습니다.`
-    );
+    const shouldNotify = Boolean((form.password ?? "").trim());
+    if (shouldNotify) {
+      const result = await sendLoginCredentialEmail(form.email, form.name, form.password ?? "");
+      setStatus(
+        result.sent
+          ? `로그인 사용자를 저장했고, ${form.email}로 로그인 정보를 발송했습니다.`
+          : `로그인 사용자를 저장했습니다. (메일 발송 실패: ${result.message})`
+      );
+    } else {
+      setStatus(`로그인 사용자를 저장했습니다. 비밀번호 변경이 없어 메일 발송은 생략했습니다.`);
+    }
     await onDataChanged();
     if (!isEdit) {
       setForm({
