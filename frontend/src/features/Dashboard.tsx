@@ -1227,8 +1227,14 @@ function AccountSection({
                         type="button"
                         onClick={async (event) => {
                           event.stopPropagation();
-                          await deleteAccount(account.id);
-                          await onDataChanged();
+                          setStatus("고객사 삭제 중");
+                          try {
+                            await deleteAccount(account.id);
+                            await onDataChanged();
+                            setStatus("고객사를 삭제했습니다.");
+                          } catch {
+                            setStatus("고객사 삭제 실패: 연결된 연락처 또는 영업기회가 있는지 확인해주세요.");
+                          }
                         }}
                         className="rounded border border-rose-200 px-2 py-1 text-xs font-bold text-rose-600"
                       >
@@ -2342,7 +2348,6 @@ export function Dashboard({
   rolePolicies,
   loginUsers,
   currentUser,
-  usingMockData,
   onCreateLead,
   onDataChanged,
   onLogout,
@@ -2407,12 +2412,6 @@ export function Dashboard({
               </button>
             </div>
           </header>
-
-          {usingMockData && (
-            <div className="mt-4 rounded-md border border-gold/30 bg-gold/10 px-4 py-2.5 text-sm text-ink">
-              API 서버 연결 전이라 샘플 데이터로 화면을 표시하고 있습니다.
-            </div>
-          )}
 
           <nav className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden" aria-label="모바일 메뉴">
             {menuItems.map((item) => (

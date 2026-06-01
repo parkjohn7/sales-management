@@ -5,7 +5,8 @@ import {
   changeLoginUserPassword,
   createLead,
   loadDashboard,
-  loadLoginUsers
+  loadLoginUsers,
+  syncDevTokenForLoginUser
 } from "./api/client";
 import type {
   AccountSummary,
@@ -48,21 +49,27 @@ export function App() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [nextPassword, setNextPassword] = useState("");
   const [passwordStatus, setPasswordStatus] = useState("");
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     void (async () => {
-      const users = await loadLoginUsers();
-      setLoginUsers(users);
-      const savedUserEmail = localStorage.getItem("sales-management-current-user-email");
-      if (savedUserEmail) {
-        const matched = users.find(
-          (user) => user.email.toLowerCase() === savedUserEmail.toLowerCase()
-        );
-        if (matched) {
-          setCurrentUser(matched);
+      try {
+        const users = await loadLoginUsers();
+        setLoginUsers(users);
+        const savedUserEmail = localStorage.getItem("sales-management-current-user-email");
+        if (savedUserEmail) {
+          const matched = users.find(
+            (user) => user.email.toLowerCase() === savedUserEmail.toLowerCase()
+          );
+          if (matched) {
+            await syncDevTokenForLoginUser(matched);
+            setCurrentUser(matched);
+          }
         }
+        setState(await loadDashboard());
+      } catch {
+        setLoadError("API 서버 연결 또는 DB 마이그레이션 상태를 확인해주세요.");
       }
-      setState(await loadDashboard());
     })();
   }, []);
 
@@ -84,8 +91,10 @@ export function App() {
       return;
     }
     setLoginError("");
+    await syncDevTokenForLoginUser(user);
     setCurrentUser(user);
     localStorage.setItem("sales-management-current-user-email", user.email);
+    setState(await loadDashboard());
   }
 
   function handleLogout() {
@@ -116,7 +125,7 @@ export function App() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f5f7f8] text-ink">
         <div className="rounded-lg border border-line bg-white px-5 py-4 text-sm font-medium">
-          영업 현황을 불러오는 중
+          {loadError || "영업 현황을 불러오는 중"}
         </div>
       </main>
     );

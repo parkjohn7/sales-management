@@ -23,6 +23,7 @@ import type {
 } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "/api/v1";
+const TOKEN_USER_KEY = "sales-management-token-user-email";
 
 const mockKpis: DashboardKpis = {
   new_leads: 12,
@@ -219,16 +220,7 @@ async function request<T>(
   });
   if (response.status === 401 && token) {
     localStorage.removeItem("sales-management-token");
-    await createDevToken();
-    const refreshedToken = localStorage.getItem("sales-management-token");
-    response = await fetch(`${API_BASE}${path}`, {
-      method: options.method ?? "GET",
-      headers: {
-        ...(options.body ? { "Content-Type": "application/json" } : {}),
-        ...(refreshedToken ? { Authorization: `Bearer ${refreshedToken}` } : {})
-      },
-      body: options.body ? JSON.stringify(options.body) : undefined
-    });
+    localStorage.removeItem(TOKEN_USER_KEY);
   }
   if (!response.ok) {
     throw new Error(`API request failed: ${response.status}`);
@@ -250,121 +242,65 @@ export async function loadDashboard(): Promise<{
   rolePolicies: RolePolicy[];
   usingMockData: boolean;
 }> {
-  try {
-    await ensureDevToken();
-    const [
-      overviewResult,
-      leadsResult,
-      opportunitiesResult,
-      accountsResult,
-      contactsResult,
-      activitiesResult,
-      reportsResult,
-      adminSettingsResult,
-      rolePoliciesResult
-    ] = await Promise.allSettled([
-      request<{ kpis: DashboardKpis; pipeline: PipelineSummary[] }>("/dashboard/overview"),
-      request<LeadSummary[]>("/leads?page_size=5"),
-      request<OpportunitySummary[]>("/opportunities?page_size=10"),
-      request<AccountSummary[]>("/accounts?page_size=50"),
-      request<ContactSummary[]>("/contacts?page_size=50"),
-      request<ActivitySummary[]>("/activities?page_size=50"),
-      request<DashboardReports>("/dashboard/reports"),
-      request<AdminSettings>("/admin/settings"),
-      request<RolePolicy[]>("/admin/role-policy")
-    ]);
+  await ensureDevToken();
+  const [
+    overview,
+    leads,
+    opportunities,
+    accounts,
+    contacts,
+    activities,
+    reports,
+    adminSettings,
+    rolePolicies
+  ] = await Promise.all([
+    request<{ kpis: DashboardKpis; pipeline: PipelineSummary[] }>("/dashboard/overview"),
+    request<LeadSummary[]>("/leads?page_size=50"),
+    request<OpportunitySummary[]>("/opportunities?page_size=50"),
+    request<AccountSummary[]>("/accounts?page_size=50"),
+    request<ContactSummary[]>("/contacts?page_size=50"),
+    request<ActivitySummary[]>("/activities?page_size=50"),
+    request<DashboardReports>("/dashboard/reports"),
+    request<AdminSettings>("/admin/settings"),
+    request<RolePolicy[]>("/admin/role-policy")
+  ]);
 
-    const overview =
-      overviewResult.status === "fulfilled"
-        ? overviewResult.value
-        : { kpis: mockKpis, pipeline: mockPipeline };
-    const leads = leadsResult.status === "fulfilled" ? leadsResult.value : mockLeads;
-    const opportunities =
-      opportunitiesResult.status === "fulfilled" ? opportunitiesResult.value : mockOpportunities;
-    const accounts = accountsResult.status === "fulfilled" ? accountsResult.value : mockAccounts;
-    const contacts = contactsResult.status === "fulfilled" ? contactsResult.value : mockContacts;
-    const activities =
-      activitiesResult.status === "fulfilled" ? activitiesResult.value : mockActivities;
-    const reports = reportsResult.status === "fulfilled" ? reportsResult.value : mockReports;
-    const adminSettings =
-      adminSettingsResult.status === "fulfilled" ? adminSettingsResult.value : mockAdminSettings;
-    const rolePolicies =
-      rolePoliciesResult.status === "fulfilled"
-        ? rolePoliciesResult.value
-        : [
-            {
-              role: "SUPER_ADMIN",
-              data_scope: "전체 데이터",
-              permissions: ["settings:write", "audit:read", "sales:write", "reports:read"]
-            },
-            {
-              role: "SALES_REP",
-              data_scope: "본인 담당 데이터",
-              permissions: ["sales:write"]
-            }
-          ];
-
-    const usingMockData =
-      overviewResult.status !== "fulfilled" ||
-      leadsResult.status !== "fulfilled" ||
-      opportunitiesResult.status !== "fulfilled" ||
-      accountsResult.status !== "fulfilled" ||
-      contactsResult.status !== "fulfilled" ||
-      activitiesResult.status !== "fulfilled" ||
-      reportsResult.status !== "fulfilled" ||
-      adminSettingsResult.status !== "fulfilled" ||
-      rolePoliciesResult.status !== "fulfilled";
-
-    return {
-      kpis: overview.kpis,
-      pipeline: overview.pipeline,
-      leads,
-      opportunities,
-      accounts,
-      contacts,
-      activities,
-      reports,
-      adminSettings,
-      rolePolicies,
-      usingMockData
-    };
-  } catch {
-    return {
-      kpis: mockKpis,
-      pipeline: mockPipeline,
-      leads: mockLeads,
-      opportunities: mockOpportunities,
-      accounts: mockAccounts,
-      contacts: mockContacts,
-      activities: mockActivities,
-      reports: mockReports,
-      adminSettings: mockAdminSettings,
-      rolePolicies: [
-        {
-          role: "SUPER_ADMIN",
-          data_scope: "전체 데이터",
-          permissions: ["settings:write", "audit:read", "sales:write", "reports:read"]
-        },
-        {
-          role: "SALES_REP",
-          data_scope: "본인 담당 데이터",
-          permissions: ["sales:write"]
-        }
-      ],
-      usingMockData: true
-    };
-  }
+  return {
+    kpis: overview.kpis,
+    pipeline: overview.pipeline,
+    leads,
+    opportunities,
+    accounts,
+    contacts,
+    activities,
+    reports,
+    adminSettings,
+    rolePolicies,
+    usingMockData: false
+  };
 }
 
-export async function createDevToken(role = "SALES_REP"): Promise<void> {
+function apiRoleForLoginUser(user: LoginUser): string {
+  if (user.role === "ADMIN") return "SUPER_ADMIN";
+  if (user.role === "ORG_MANAGER") return "SALES_MANAGER";
+  return "SALES_REP";
+}
+
+export async function createDevToken(role = "SALES_REP", user?: LoginUser): Promise<void> {
+  const tokenUser = user ?? {
+    email: role === "SUPER_ADMIN" ? "admin@cherrylab.com" : "sales@cherrylab.com",
+    name: role === "SUPER_ADMIN" ? "개발 관리자" : "개발 영업 담당자",
+    role: role === "SUPER_ADMIN" ? "ADMIN" : "SALES_REP"
+  } as LoginUser;
+  const apiRole = user ? apiRoleForLoginUser(user) : role;
   const response = await fetch(`${API_BASE}/auth/dev-token`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      user_id: "dev-sales-rep",
-      email: "sales@example.com",
-      name: role === "SUPER_ADMIN" ? "개발 관리자" : "개발 영업 담당자",
-      role
+      user_id: tokenUser.email,
+      email: tokenUser.email,
+      name: tokenUser.name,
+      role: apiRole
     })
   });
   if (!response.ok) {
@@ -372,6 +308,7 @@ export async function createDevToken(role = "SALES_REP"): Promise<void> {
   }
   const body = (await response.json()) as { data: { access_token: string } };
   localStorage.setItem("sales-management-token", body.data.access_token);
+  localStorage.setItem(TOKEN_USER_KEY, tokenUser.email.toLowerCase());
 }
 
 export async function createAdminDevToken(): Promise<void> {
@@ -392,6 +329,17 @@ export async function ensureDevToken(): Promise<void> {
   if (!localStorage.getItem("sales-management-token")) {
     await createDevToken();
   }
+}
+
+export async function syncDevTokenForLoginUser(user: LoginUser): Promise<void> {
+  const normalizedEmail = user.email.toLowerCase();
+  if (
+    localStorage.getItem("sales-management-token") &&
+    localStorage.getItem(TOKEN_USER_KEY) === normalizedEmail
+  ) {
+    return;
+  }
+  await createDevToken(apiRoleForLoginUser(user), user);
 }
 
 export async function convertLead(leadId: string, payload: LeadConvertInput) {
