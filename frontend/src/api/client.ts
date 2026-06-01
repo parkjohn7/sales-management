@@ -258,17 +258,69 @@ export async function loadDashboard(): Promise<{
 }> {
   try {
     await ensureDevToken();
-    const overview = await request<{ kpis: DashboardKpis; pipeline: PipelineSummary[] }>(
-      "/dashboard/overview"
-    );
-    const leads = await request<LeadSummary[]>("/leads?page_size=5");
-    const opportunities = await request<OpportunitySummary[]>("/opportunities?page_size=10");
-    const accounts = await request<AccountSummary[]>("/accounts?page_size=50");
-    const contacts = await request<ContactSummary[]>("/contacts?page_size=50");
-    const activities = await request<ActivitySummary[]>("/activities?page_size=50");
-    const reports = await request<DashboardReports>("/dashboard/reports");
-    const adminSettings = await request<AdminSettings>("/admin/settings");
-    const rolePolicies = await request<RolePolicy[]>("/admin/role-policy");
+    const [
+      overviewResult,
+      leadsResult,
+      opportunitiesResult,
+      accountsResult,
+      contactsResult,
+      activitiesResult,
+      reportsResult,
+      adminSettingsResult,
+      rolePoliciesResult
+    ] = await Promise.allSettled([
+      request<{ kpis: DashboardKpis; pipeline: PipelineSummary[] }>("/dashboard/overview"),
+      request<LeadSummary[]>("/leads?page_size=5"),
+      request<OpportunitySummary[]>("/opportunities?page_size=10"),
+      request<AccountSummary[]>("/accounts?page_size=50"),
+      request<ContactSummary[]>("/contacts?page_size=50"),
+      request<ActivitySummary[]>("/activities?page_size=50"),
+      request<DashboardReports>("/dashboard/reports"),
+      request<AdminSettings>("/admin/settings"),
+      request<RolePolicy[]>("/admin/role-policy")
+    ]);
+
+    const overview =
+      overviewResult.status === "fulfilled"
+        ? overviewResult.value
+        : { kpis: mockKpis, pipeline: mockPipeline };
+    const leads = leadsResult.status === "fulfilled" ? leadsResult.value : mockLeads;
+    const opportunities =
+      opportunitiesResult.status === "fulfilled" ? opportunitiesResult.value : mockOpportunities;
+    const accounts = accountsResult.status === "fulfilled" ? accountsResult.value : mockAccounts;
+    const contacts = contactsResult.status === "fulfilled" ? contactsResult.value : mockContacts;
+    const activities =
+      activitiesResult.status === "fulfilled" ? activitiesResult.value : mockActivities;
+    const reports = reportsResult.status === "fulfilled" ? reportsResult.value : mockReports;
+    const adminSettings =
+      adminSettingsResult.status === "fulfilled" ? adminSettingsResult.value : mockAdminSettings;
+    const rolePolicies =
+      rolePoliciesResult.status === "fulfilled"
+        ? rolePoliciesResult.value
+        : [
+            {
+              role: "SUPER_ADMIN",
+              data_scope: "전체 데이터",
+              permissions: ["settings:write", "audit:read", "sales:write", "reports:read"]
+            },
+            {
+              role: "SALES_REP",
+              data_scope: "본인 담당 데이터",
+              permissions: ["sales:write"]
+            }
+          ];
+
+    const usingMockData =
+      overviewResult.status !== "fulfilled" ||
+      leadsResult.status !== "fulfilled" ||
+      opportunitiesResult.status !== "fulfilled" ||
+      accountsResult.status !== "fulfilled" ||
+      contactsResult.status !== "fulfilled" ||
+      activitiesResult.status !== "fulfilled" ||
+      reportsResult.status !== "fulfilled" ||
+      adminSettingsResult.status !== "fulfilled" ||
+      rolePoliciesResult.status !== "fulfilled";
+
     return {
       kpis: overview.kpis,
       pipeline: overview.pipeline,
@@ -280,7 +332,7 @@ export async function loadDashboard(): Promise<{
       reports,
       adminSettings,
       rolePolicies,
-      usingMockData: false
+      usingMockData
     };
   } catch {
     return {
