@@ -1,4 +1,5 @@
 export type LeadGrade = "HOT" | "WARM" | "COLD";
+export type LoginUserRole = "ADMIN" | "ORG_MANAGER" | "SALES_REP";
 export type PipelineStage =
   | "LEAD"
   | "QUALIFIED"
@@ -227,4 +228,14 @@ export interface ActivityInput {
 export interface IntegrationLeadInput extends LeadCreateInput {
   raw_payload?: Record<string, unknown>;
   chatbot_log?: Record<string, unknown>;
+}
+
+export interface LoginUser {
+  id: string;
+  name: string;
+  email: string;
+  role: LoginUserRole;
+  organization: string;
+  title?: string;
+  password: string;
 }

@@ -18,6 +18,7 @@ import {
   createActivity,
   createContact,
   createIntegrationLead,
+  deleteLoginUser,
   createOpportunity,
   deleteAccount,
   deleteActivity,
@@ -27,6 +28,7 @@ import {
   updateActivity,
   updateContact,
   updateLead,
+  upsertLoginUser,
   updateOpportunity
 } from "../api/client";
 import { MetricCard } from "../components/MetricCard";
@@ -41,6 +43,8 @@ import type {
   DashboardKpis,
   DashboardReports,
   IntegrationLeadInput,
+  LoginUser,
+  LoginUserRole,
   LeadCreateInput,
   LeadSummary,
   OpportunityInput,
@@ -61,9 +65,12 @@ interface DashboardProps {
   reports: DashboardReports;
   adminSettings: AdminSettings;
   rolePolicies: RolePolicy[];
+  loginUsers: LoginUser[];
+  currentUser: LoginUser;
   usingMockData: boolean;
   onCreateLead: (payload: LeadCreateInput) => Promise<void>;
   onDataChanged: () => Promise<void>;
+  onLogout: () => void;
 }
 
 const formatter = new Intl.NumberFormat("ko-KR");
@@ -75,7 +82,8 @@ const menuItems = [
   "활동",
   "리포트",
   "연동",
-  "관리자"
+  "관리자",
+  "로그인관리"
 ] as const;
 type MenuItem = (typeof menuItems)[number];
 
@@ -808,10 +816,12 @@ function LeadSection({
 function AccountSection({
   accounts,
   contacts,
+  loginUsers,
   onDataChanged
 }: {
   accounts: AccountSummary[];
   contacts: ContactSummary[];
+  loginUsers: LoginUser[];
   onDataChanged: DashboardProps["onDataChanged"];
 }) {
   const industryOptions = [
@@ -1002,14 +1012,22 @@ function AccountSection({
                 label="영업담당자"
                 hint="고객 담당자가 아니라 우리 회사의 담당 영업사원(오너)입니다."
               />
-              <input
+              <select
                 value={accountForm.owner_id}
                 onChange={(event) =>
                   setAccountForm((current) => ({ ...current, owner_id: event.target.value }))
                 }
                 className="mt-1 w-full rounded-md border border-line px-3 py-2"
-                placeholder="예: 김영업"
-              />
+              >
+                <option value="">영업담당자 선택</option>
+                {loginUsers
+                  .filter((user) => user.role === "SALES_REP" || user.role === "ORG_MANAGER")
+                  .map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.name} ({user.organization})
+                    </option>
+                  ))}
+              </select>
             </label>
             <label className="block text-sm font-medium">
               웹사이트
@@ -1188,7 +1206,9 @@ function AccountSection({
                       {account.employee_count ? `${formatter.format(account.employee_count)}명` : "-"}
                     </td>
                     <td className={`${tdClass} hidden lg:table-cell`}>{account.phone || "-"}</td>
-                    <td className={`${tdClass} hidden lg:table-cell`}>{account.owner_id || "-"}</td>
+                    <td className={`${tdClass} hidden lg:table-cell`}>
+                      {loginUsers.find((user) => user.id === account.owner_id)?.name || account.owner_id || "-"}
+                    </td>
                     <td className={`${tdClass} hidden lg:table-cell`}>{account.website || "-"}</td>
                     <td className={tdClass}>
                       <button
@@ -1538,11 +1558,13 @@ function ActivitySection({
   activities,
   opportunities,
   leads,
+  loginUsers,
   onDataChanged
 }: {
   activities: ActivitySummary[];
   opportunities: OpportunitySummary[];
   leads: LeadSummary[];
+  loginUsers: LoginUser[];
   onDataChanged: DashboardProps["onDataChanged"];
 }) {
   const [selectedActivityId, setSelectedActivityId] = useState("");
@@ -1786,7 +1808,7 @@ function ActivitySection({
                     {activity.description || "내용 없음"}
                   </td>
                   <td className={`${tdClass} hidden whitespace-nowrap lg:table-cell`}>
-                    {activity.owner_id || "-"}
+                    {loginUsers.find((user) => user.id === activity.owner_id)?.name || activity.owner_id || "-"}
                   </td>
                   <td className={`${tdClass} hidden whitespace-nowrap lg:table-cell`}>
                     {activity.due_date || "-"}
@@ -2078,6 +2100,172 @@ function AdminSection({
   );
 }
 
+function LoginManagementSection({
+  loginUsers,
+  onDataChanged
+}: {
+  loginUsers: LoginUser[];
+  onDataChanged: DashboardProps["onDataChanged"];
+}) {
+  const [form, setForm] = useState<LoginUser>({
+    id: "",
+    name: "",
+    email: "",
+    role: "SALES_REP",
+    organization: "",
+    title: "",
+    password: ""
+  });
+  const [status, setStatus] = useState("");
+
+  async function handleSave(event: FormEvent) {
+    event.preventDefault();
+    if (!form.id) {
+      setStatus("사용자 ID를 입력해주세요.");
+      return;
+    }
+    await upsertLoginUser(form);
+    setStatus("로그인 사용자를 저장했습니다.");
+    await onDataChanged();
+  }
+
+  return (
+    <section className="grid gap-4 lg:grid-cols-[380px_minmax(0,1fr)]">
+      <form className="rounded-lg border border-line bg-white p-4" onSubmit={handleSave}>
+        <h3 className="text-lg font-bold">로그인 사용자 관리</h3>
+        <div className="mt-4 space-y-3">
+          <label className="block text-sm font-medium">
+            사용자 ID
+            <input
+              value={form.id}
+              onChange={(event) => setForm((current) => ({ ...current, id: event.target.value }))}
+              className="mt-1 w-full rounded-md border border-line px-3 py-2"
+            />
+          </label>
+          <label className="block text-sm font-medium">
+            이름
+            <input
+              value={form.name}
+              onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+              className="mt-1 w-full rounded-md border border-line px-3 py-2"
+            />
+          </label>
+          <label className="block text-sm font-medium">
+            이메일
+            <input
+              value={form.email}
+              onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
+              className="mt-1 w-full rounded-md border border-line px-3 py-2"
+            />
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block text-sm font-medium">
+              역할
+              <select
+                value={form.role}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, role: event.target.value as LoginUserRole }))
+                }
+                className="mt-1 w-full rounded-md border border-line px-3 py-2"
+              >
+                <option value="ADMIN">관리자</option>
+                <option value="ORG_MANAGER">조직장</option>
+                <option value="SALES_REP">영업담당자</option>
+              </select>
+            </label>
+            <label className="block text-sm font-medium">
+              조직
+              <input
+                value={form.organization}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, organization: event.target.value }))
+                }
+                className="mt-1 w-full rounded-md border border-line px-3 py-2"
+              />
+            </label>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block text-sm font-medium">
+              직책
+              <input
+                value={form.title ?? ""}
+                onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
+                className="mt-1 w-full rounded-md border border-line px-3 py-2"
+              />
+            </label>
+            <label className="block text-sm font-medium">
+              비밀번호
+              <input
+                value={form.password}
+                onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
+                className="mt-1 w-full rounded-md border border-line px-3 py-2"
+              />
+            </label>
+          </div>
+          <button className="w-full rounded-md bg-rose-600 px-4 py-2 font-bold text-white">
+            사용자 저장
+          </button>
+          {status ? <p className="text-sm font-medium text-slate-700">{status}</p> : null}
+        </div>
+      </form>
+      <div className={`${panelClass} overflow-hidden`}>
+        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2.5">
+          <h3 className="text-lg font-bold">로그인 사용자 목록</h3>
+          <span className="text-sm font-semibold text-slate-500">{loginUsers.length} rows</span>
+        </div>
+        <div className={tableScrollClass}>
+          <table className={tableClass}>
+            <thead>
+              <tr>
+                <th className={thClass}>이름</th>
+                <th className={thClass}>이메일</th>
+                <th className={thClass}>역할</th>
+                <th className={thClass}>조직</th>
+                <th className={thClass}>직책</th>
+                <th className={thClass}>작업</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loginUsers.map((user) => (
+                <tr key={user.id} className={cherryHoverRowClass}>
+                  <td className={`${tdClass} ${cherryTextClass}`}>{user.name}</td>
+                  <td className={`${tdClass} whitespace-nowrap`}>{user.email}</td>
+                  <td className={tdClass}>
+                    {user.role === "ADMIN" ? "관리자" : user.role === "ORG_MANAGER" ? "조직장" : "영업담당자"}
+                  </td>
+                  <td className={tdClass}>{user.organization}</td>
+                  <td className={tdClass}>{user.title || "-"}</td>
+                  <td className={tdClass}>
+                    <div className="flex justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setForm(user)}
+                        className="rounded border border-slate-200 px-2 py-1 text-xs font-bold"
+                      >
+                        선택
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await deleteLoginUser(user.id);
+                          await onDataChanged();
+                        }}
+                        className="rounded border border-rose-200 px-2 py-1 text-xs font-bold text-rose-600"
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function Dashboard({
   kpis,
   pipeline,
@@ -2089,9 +2277,12 @@ export function Dashboard({
   reports,
   adminSettings,
   rolePolicies,
+  loginUsers,
+  currentUser,
   usingMockData,
   onCreateLead,
-  onDataChanged
+  onDataChanged,
+  onLogout
 }: DashboardProps) {
   const [activeView, setActiveView] = useState<MenuItem>("대시보드");
 
@@ -2132,8 +2323,17 @@ export function Dashboard({
               <p className="text-sm font-bold text-rose-700">Cherrylab Sales Cloud</p>
               <h2 className="text-2xl font-bold">Cherrysales</h2>
             </div>
-            <div className="rounded-full border border-rose-100 bg-rose-50 px-3 py-1 text-xs font-bold text-rose-700">
-              MVP Workspace
+            <div className="flex items-center gap-2">
+              <div className="rounded-full border border-rose-100 bg-rose-50 px-3 py-1 text-xs font-bold text-rose-700">
+                {currentUser.organization} · {currentUser.name}
+              </div>
+              <button
+                type="button"
+                onClick={onLogout}
+                className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700"
+              >
+                로그아웃
+              </button>
             </div>
           </header>
 
@@ -2176,6 +2376,7 @@ export function Dashboard({
               <AccountSection
                 accounts={accounts}
                 contacts={contacts}
+                loginUsers={loginUsers}
                 onDataChanged={onDataChanged}
               />
             )}
@@ -2191,6 +2392,7 @@ export function Dashboard({
                 activities={activities}
                 opportunities={opportunities}
                 leads={leads}
+                loginUsers={loginUsers}
                 onDataChanged={onDataChanged}
               />
             )}
@@ -2202,6 +2404,9 @@ export function Dashboard({
                 rolePolicies={rolePolicies}
                 onDataChanged={onDataChanged}
               />
+            )}
+            {activeView === "로그인관리" && (
+              <LoginManagementSection loginUsers={loginUsers} onDataChanged={onDataChanged} />
             )}
           </div>
         </section>

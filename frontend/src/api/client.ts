@@ -13,6 +13,7 @@ import type {
   LeadConvertInput,
   LeadSummary,
   LeadUpdateInput,
+  LoginUser,
   OpportunityStageChangeInput,
   OpportunityInput,
   OpportunitySummary,
@@ -452,4 +453,84 @@ export async function createIntegrationLead(channel: "web" | "chatbot", payload:
 
 export function defaultStageProbabilities(): Record<PipelineStage, number> {
   return mockAdminSettings.stage_probabilities;
+}
+
+const LOGIN_USERS_KEY = "sales-management-login-users";
+
+const defaultLoginUsers: LoginUser[] = [
+  {
+    id: "user-admin-1",
+    name: "관리자",
+    email: "admin@cherrylab.com",
+    role: "ADMIN",
+    organization: "본사",
+    title: "시스템 관리자",
+    password: "admin1234"
+  },
+  {
+    id: "user-org-1",
+    name: "조직장 김본부",
+    email: "manager@cherrylab.com",
+    role: "ORG_MANAGER",
+    organization: "영업본부",
+    title: "영업본부장",
+    password: "manager1234"
+  },
+  {
+    id: "user-sales-1",
+    name: "영업담당 박세일즈",
+    email: "sales@cherrylab.com",
+    role: "SALES_REP",
+    organization: "영업1팀",
+    title: "Account Executive",
+    password: "sales1234"
+  }
+];
+
+function getLoginUsersLocal(): LoginUser[] {
+  const raw = localStorage.getItem(LOGIN_USERS_KEY);
+  if (!raw) {
+    localStorage.setItem(LOGIN_USERS_KEY, JSON.stringify(defaultLoginUsers));
+    return defaultLoginUsers;
+  }
+  try {
+    const parsed = JSON.parse(raw) as LoginUser[];
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      localStorage.setItem(LOGIN_USERS_KEY, JSON.stringify(defaultLoginUsers));
+      return defaultLoginUsers;
+    }
+    return parsed;
+  } catch {
+    localStorage.setItem(LOGIN_USERS_KEY, JSON.stringify(defaultLoginUsers));
+    return defaultLoginUsers;
+  }
+}
+
+function setLoginUsersLocal(users: LoginUser[]) {
+  localStorage.setItem(LOGIN_USERS_KEY, JSON.stringify(users));
+}
+
+export async function loadLoginUsers(): Promise<LoginUser[]> {
+  return getLoginUsersLocal();
+}
+
+export async function upsertLoginUser(user: LoginUser): Promise<LoginUser[]> {
+  const users = getLoginUsersLocal();
+  const exists = users.some((item) => item.id === user.id);
+  const nextUsers = exists ? users.map((item) => (item.id === user.id ? user : item)) : [...users, user];
+  setLoginUsersLocal(nextUsers);
+  return nextUsers;
+}
+
+export async function deleteLoginUser(userId: string): Promise<LoginUser[]> {
+  const nextUsers = getLoginUsersLocal().filter((user) => user.id !== userId);
+  setLoginUsersLocal(nextUsers.length > 0 ? nextUsers : defaultLoginUsers);
+  return getLoginUsersLocal();
+}
+
+export async function authenticateLoginUser(email: string, password: string): Promise<LoginUser | null> {
+  const user = getLoginUsersLocal().find(
+    (item) => item.email.toLowerCase() === email.trim().toLowerCase() && item.password === password
+  );
+  return user ?? null;
 }

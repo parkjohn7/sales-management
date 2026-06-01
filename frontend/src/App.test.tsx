@@ -107,7 +107,26 @@ describe("Dashboard", () => {
         data_scope: "본인 담당 데이터",
         permissions: ["sales:write"]
       }
-    ]
+    ],
+    loginUsers: [
+      {
+        id: "user-sales-1",
+        name: "영업담당 박세일즈",
+        email: "sales@cherrylab.com",
+        role: "SALES_REP" as const,
+        organization: "영업1팀",
+        password: "sales1234"
+      }
+    ],
+    currentUser: {
+      id: "user-admin-1",
+      name: "관리자",
+      email: "admin@cherrylab.com",
+      role: "ADMIN" as const,
+      organization: "본사",
+      password: "admin1234"
+    },
+    onLogout: () => undefined
   };
 
   it("renders the Korean product name and KPI labels", () => {
