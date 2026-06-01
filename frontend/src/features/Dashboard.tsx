@@ -1737,16 +1737,17 @@ function ActivitySection({
           <span className="text-sm font-semibold text-slate-500">{activities.length} rows</span>
         </div>
         <div className={tableScrollClass}>
-          <table className={tableClass}>
+          <table className="w-full min-w-[1320px] border-separate border-spacing-0 text-left text-sm">
             <thead>
               <tr>
-                <th className={thClass}>유형</th>
-                <th className={thClass}>제목</th>
-                <th className={thClass}>일시</th>
-                <th className={`${thClass} hidden whitespace-nowrap md:table-cell`}>기한</th>
-                <th className={`${thClass} hidden lg:table-cell`}>상태/우선순위</th>
-                <th className={`${thClass} hidden xl:table-cell`}>내용</th>
-                <th className={`${thClass} hidden lg:table-cell`}>담당</th>
+                <th className={`${thClass} whitespace-nowrap`}>유형</th>
+                <th className={`${thClass} whitespace-nowrap`}>일시</th>
+                <th className={`${thClass} whitespace-nowrap`}>제목</th>
+                <th className={`${thClass} whitespace-nowrap`}>상태</th>
+                <th className={`${thClass} whitespace-nowrap`}>우선순위</th>
+                <th className={`${thClass} min-w-[360px]`}>내용</th>
+                <th className={`${thClass} hidden whitespace-nowrap lg:table-cell`}>영업담당자</th>
+                <th className={`${thClass} hidden whitespace-nowrap lg:table-cell`}>기한</th>
                 <th className={thClass}>작업</th>
               </tr>
             </thead>
@@ -1775,16 +1776,21 @@ function ActivitySection({
                   <td className={`${tdClass} ${cherryTextClass}`}>
                     {activityTypeLabels[activity.activity_type] || activity.activity_type}
                   </td>
-                  <td className={tdClass}>{activity.subject || "제목 없음"}</td>
-                  <td className={tdClass}>{new Date(activity.activity_date).toLocaleString("ko-KR")}</td>
-                  <td className={`${tdClass} hidden whitespace-nowrap md:table-cell`}>
+                  <td className={`${tdClass} whitespace-nowrap`}>
+                    {new Date(activity.activity_date).toLocaleString("ko-KR")}
+                  </td>
+                  <td className={`${tdClass} whitespace-nowrap`}>{activity.subject || "제목 없음"}</td>
+                  <td className={`${tdClass} whitespace-nowrap`}>{activity.status || "OPEN"}</td>
+                  <td className={`${tdClass} whitespace-nowrap`}>{activity.priority || "MEDIUM"}</td>
+                  <td className={`${tdClass} max-w-[520px] truncate`} title={activity.description || "내용 없음"}>
+                    {activity.description || "내용 없음"}
+                  </td>
+                  <td className={`${tdClass} hidden whitespace-nowrap lg:table-cell`}>
+                    {activity.owner_id || "-"}
+                  </td>
+                  <td className={`${tdClass} hidden whitespace-nowrap lg:table-cell`}>
                     {activity.due_date || "-"}
                   </td>
-                  <td className={`${tdClass} hidden lg:table-cell`}>
-                    {activity.status || "OPEN"} / {activity.priority || "MEDIUM"}
-                  </td>
-                  <td className={`${tdClass} hidden xl:table-cell`}>{activity.description || "내용 없음"}</td>
-                  <td className={`${tdClass} hidden lg:table-cell`}>{activity.owner_id || "-"}</td>
                   <td className={tdClass}>
                     <div className="flex gap-2">
                       <button
