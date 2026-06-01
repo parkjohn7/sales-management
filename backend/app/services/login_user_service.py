@@ -68,8 +68,7 @@ def _ensure_login_users(db: Session) -> list[dict]:
     payload = row.value or {}
     users = payload.get("login_users")
     if not isinstance(users, list) or len(users) == 0:
-        payload["login_users"] = DEFAULT_LOGIN_USERS
-        row.value = payload
+        row.value = {**payload, "login_users": [dict(item) for item in DEFAULT_LOGIN_USERS]}
         db.flush()
         return list(DEFAULT_LOGIN_USERS)
     return users
@@ -124,7 +123,8 @@ def upsert_login_user(db: Session, payload: LoginUserUpsert) -> LoginUserRead:
         ),
         None,
     )
-    current = users[index] if index is not None else {}
+    next_users = [dict(item) for item in users]
+    current = next_users[index] if index is not None else {}
     if index is None and (payload.password is None or not PASSWORD_RULE.match(payload.password)):
         raise ValueError("새 사용자 비밀번호는 8자 이상, 2종류 조합이어야 합니다.")
     if payload.password and not PASSWORD_RULE.match(payload.password):
@@ -142,12 +142,11 @@ def upsert_login_user(db: Session, payload: LoginUserUpsert) -> LoginUserRead:
     }
 
     if index is None:
-        users.append(next_item)
+        next_users.append(next_item)
     else:
-        users[index] = {**current, **next_item}
+        next_users[index] = {**current, **next_item}
 
-    data["login_users"] = users
-    row.value = data
+    row.value = {**data, "login_users": next_users}
     row.updated_by = "system"
     db.flush()
     return LoginUserRead(
@@ -173,8 +172,7 @@ def delete_login_user(db: Session, email: str) -> bool:
     ]
     if len(next_users) == len(users):
         return False
-    data["login_users"] = next_users or list(DEFAULT_LOGIN_USERS)
-    row.value = data
+    row.value = {**data, "login_users": next_users or [dict(item) for item in DEFAULT_LOGIN_USERS]}
     row.updated_by = "system"
     db.flush()
     return True
@@ -193,19 +191,19 @@ def change_login_user_password(
     row = _ensure_admin_row(db)
     data = row.value or {}
     users = _ensure_login_users(db)
+    next_users = [dict(item) for item in users]
     normalized_email = _normalize_email(email)
-    for index, user in enumerate(users):
+    for index, user in enumerate(next_users):
         if _normalize_email(str(user.get("email", ""))) != normalized_email:
             continue
         if str(user.get("password", "")) != current_password:
             return False, "현재 비밀번호가 일치하지 않습니다."
-        users[index] = {
+        next_users[index] = {
             **user,
             "password": next_password,
             "must_change_password": False,
         }
-        data["login_users"] = users
-        row.value = data
+        row.value = {**data, "login_users": next_users}
         row.updated_by = normalized_email
         db.flush()
         return True, "비밀번호가 변경되었습니다."
