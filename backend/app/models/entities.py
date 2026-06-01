@@ -68,7 +68,7 @@ class Account(TimestampMixin, Base):
     business_number: Mapped[str | None] = mapped_column(String(64), index=True)
     account_type: Mapped[str | None] = mapped_column(String(64), index=True)
     industry: Mapped[str | None] = mapped_column(String(120), index=True)
-    annual_revenue: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))
+    annual_revenue: Mapped[Decimal | None] = mapped_column(Numeric(18, 2))
     employee_count: Mapped[int | None] = mapped_column(Integer)
     phone: Mapped[str | None] = mapped_column(String(64), index=True)
     website: Mapped[str | None] = mapped_column(String(255))
@@ -108,7 +108,7 @@ class Lead(TimestampMixin, Base):
     source_channel: Mapped[str] = mapped_column(String(64), index=True, default="manual")
     lead_source: Mapped[str | None] = mapped_column(String(64), index=True)
     rating: Mapped[str | None] = mapped_column(String(32), index=True)
-    annual_revenue: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))
+    annual_revenue: Mapped[Decimal | None] = mapped_column(Numeric(18, 2))
     employee_count: Mapped[int | None] = mapped_column(Integer)
     campaign_name: Mapped[str | None] = mapped_column(String(255), index=True)
     inquiry_content: Mapped[str | None] = mapped_column(Text)
@@ -138,10 +138,10 @@ class Opportunity(TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     opportunity_type: Mapped[str | None] = mapped_column(String(64), index=True)
     stage: Mapped[str] = mapped_column(String(32), default="LEAD", index=True, nullable=False)
-    amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), default=Decimal("0"), nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0"), nullable=False)
     probability: Mapped[int] = mapped_column(Integer, default=10, nullable=False)
     forecast_amount: Mapped[Decimal] = mapped_column(
-        Numeric(14, 2), default=Decimal("0"), nullable=False
+        Numeric(18, 2), default=Decimal("0"), nullable=False
     )
     expected_close_date: Mapped[date | None] = mapped_column(Date, index=True)
     primary_campaign_source: Mapped[str | None] = mapped_column(String(255), index=True)
