@@ -806,6 +806,22 @@ function AccountSection({
   contacts: ContactSummary[];
   onDataChanged: DashboardProps["onDataChanged"];
 }) {
+  const industryOptions = [
+    "정보통신업",
+    "제조업",
+    "도소매업",
+    "금융 및 보험업",
+    "전문·과학·기술 서비스업",
+    "건설업",
+    "운수 및 창고업",
+    "보건업 및 사회복지 서비스업",
+    "교육 서비스업",
+    "숙박 및 음식점업",
+    "부동산업",
+    "예술·스포츠·여가 서비스업",
+    "공공행정·국방·사회보장 행정",
+    "기타 서비스업"
+  ];
   const [selectedAccountId, setSelectedAccountId] = useState("");
   const [selectedContactId, setSelectedContactId] = useState("");
   const selectedAccount = accounts.find((account) => account.id === selectedAccountId);
@@ -829,7 +845,7 @@ function AccountSection({
     mobile_phone: selectedContact?.mobile_phone ?? "",
     title: selectedContact?.title ?? "",
     department: selectedContact?.department ?? "",
-    role_type: selectedContact?.role_type ?? "PRACTITIONER"
+    role_type: selectedContact?.role_type ?? "UNKNOWN"
   });
   const [status, setStatus] = useState("");
 
@@ -910,27 +926,36 @@ function AccountSection({
                 </select>
               </label>
               <label className="block text-sm font-medium">
-                휴대폰
+                대표전화
                 <input
                   value={accountForm.phone}
                   onChange={(event) =>
                     setAccountForm((current) => ({ ...current, phone: event.target.value }))
                   }
                   className="mt-1 w-full min-w-0 rounded-md border border-line px-3 py-2"
-                  placeholder="대표 휴대폰"
+                  placeholder="대표전화"
                 />
               </label>
             </div>
             <label className="block text-sm font-medium">
-              산업
-              <input
+              <EnumLabel
+                label="산업"
+                hint="표준 산업 분류에서 선택합니다. 해당되지 않으면 기타 서비스업을 선택하세요."
+              />
+              <select
                 value={accountForm.industry}
                 onChange={(event) =>
                   setAccountForm((current) => ({ ...current, industry: event.target.value }))
                 }
                 className="mt-1 w-full rounded-md border border-line px-3 py-2"
-                placeholder="산업"
-              />
+              >
+                <option value="">산업 선택</option>
+                {industryOptions.map((industry) => (
+                  <option key={industry} value={industry}>
+                    {industry}
+                  </option>
+                ))}
+              </select>
             </label>
             <div className="grid grid-cols-2 gap-3">
               <label className="block text-sm font-medium">
@@ -965,14 +990,17 @@ function AccountSection({
               </label>
             </div>
             <label className="block text-sm font-medium">
-              담당자
+              <EnumLabel
+                label="영업담당자"
+                hint="고객 담당자가 아니라 우리 회사의 담당 영업사원(오너)입니다."
+              />
               <input
                 value={accountForm.owner_id}
                 onChange={(event) =>
                   setAccountForm((current) => ({ ...current, owner_id: event.target.value }))
                 }
                 className="mt-1 w-full rounded-md border border-line px-3 py-2"
-                placeholder="담당자"
+                placeholder="예: 김영업"
               />
             </label>
             <label className="block text-sm font-medium">
@@ -1027,50 +1055,58 @@ function AccountSection({
                 placeholder="이름"
               />
             </label>
-            <label className="block text-sm font-medium">
-              이메일
-              <input
-                value={contactForm.email}
-                onChange={(event) =>
-                  setContactForm((current) => ({ ...current, email: event.target.value }))
-                }
-                className="mt-1 w-full rounded-md border border-line px-3 py-2"
-                placeholder="이메일"
-              />
-            </label>
-            <label className="block text-sm font-medium">
-              직책
-              <input
-                value={contactForm.title}
-                onChange={(event) =>
-                  setContactForm((current) => ({ ...current, title: event.target.value }))
-                }
-                className="mt-1 w-full rounded-md border border-line px-3 py-2"
-                placeholder="직책"
-              />
-            </label>
             <div className="grid grid-cols-2 gap-3">
-              <input
-                value={contactForm.department}
-                onChange={(event) =>
-                  setContactForm((current) => ({ ...current, department: event.target.value }))
-                }
-                className="w-full min-w-0 rounded-md border border-line px-3 py-2"
-                placeholder="부서"
-              />
-              <input
-                value={contactForm.mobile_phone}
-                onChange={(event) =>
-                  setContactForm((current) => ({ ...current, mobile_phone: event.target.value }))
-                }
-                className="w-full min-w-0 rounded-md border border-line px-3 py-2"
-                placeholder="휴대폰"
-              />
+              <label className="block text-sm font-medium">
+                이메일
+                <input
+                  value={contactForm.email}
+                  onChange={(event) =>
+                    setContactForm((current) => ({ ...current, email: event.target.value }))
+                  }
+                  className="mt-1 w-full min-w-0 rounded-md border border-line px-3 py-2"
+                  placeholder="이메일"
+                />
+              </label>
+              <label className="block text-sm font-medium">
+                휴대폰
+                <input
+                  value={contactForm.mobile_phone}
+                  onChange={(event) =>
+                    setContactForm((current) => ({ ...current, mobile_phone: event.target.value }))
+                  }
+                  className="mt-1 w-full min-w-0 rounded-md border border-line px-3 py-2"
+                  placeholder="휴대폰"
+                />
+              </label>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block text-sm font-medium">
+                직책
+                <input
+                  value={contactForm.title}
+                  onChange={(event) =>
+                    setContactForm((current) => ({ ...current, title: event.target.value }))
+                  }
+                  className="mt-1 w-full min-w-0 rounded-md border border-line px-3 py-2"
+                  placeholder="직책"
+                />
+              </label>
+              <label className="block text-sm font-medium">
+                부서
+                <input
+                  value={contactForm.department}
+                  onChange={(event) =>
+                    setContactForm((current) => ({ ...current, department: event.target.value }))
+                  }
+                  className="mt-1 w-full min-w-0 rounded-md border border-line px-3 py-2"
+                  placeholder="부서"
+                />
+              </label>
             </div>
             <label className="block text-sm font-medium">
               <EnumLabel
                 label="역할"
-                hint="DECISION_MAKER: 의사결정권자, PRACTITIONER: 실무자, PROCUREMENT: 구매담당"
+                hint="UNKNOWN: 미확인, DECISION_MAKER: 의사결정권자, PRACTITIONER: 실무자, PROCUREMENT: 구매담당"
               />
               <select
                 value={contactForm.role_type}
@@ -1079,6 +1115,7 @@ function AccountSection({
                 }
                 className="mt-1 w-full rounded-md border border-line px-3 py-2"
               >
+                <option value="UNKNOWN">unknow</option>
                 <option value="DECISION_MAKER">Decision Maker</option>
                 <option value="PRACTITIONER">Practitioner</option>
                 <option value="PROCUREMENT">Procurement</option>
@@ -1105,8 +1142,8 @@ function AccountSection({
                   <th className={`${thClass} hidden sm:table-cell`}>산업</th>
                   <th className={`${thClass} hidden md:table-cell`}>연 매출</th>
                   <th className={`${thClass} hidden md:table-cell`}>직원 수</th>
-                  <th className={`${thClass} hidden lg:table-cell`}>휴대폰</th>
-                  <th className={`${thClass} hidden lg:table-cell`}>담당자</th>
+                  <th className={`${thClass} hidden lg:table-cell`}>대표전화</th>
+                  <th className={`${thClass} hidden lg:table-cell`}>영업담당자</th>
                   <th className={`${thClass} hidden lg:table-cell`}>웹사이트</th>
                   <th className={thClass}>작업</th>
                 </tr>
@@ -1196,7 +1233,7 @@ function AccountSection({
                         mobile_phone: contact.mobile_phone ?? "",
                         title: contact.title ?? "",
                         department: contact.department ?? "",
-                        role_type: contact.role_type ?? "PRACTITIONER"
+                        role_type: contact.role_type ?? "UNKNOWN"
                       });
                     }}
                     className={`${cherryHoverRowClass} cursor-pointer ${
