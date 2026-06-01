@@ -18,10 +18,10 @@ import {
   createActivity,
   createContact,
   createIntegrationLead,
+  changeOpportunityStage,
   deleteLoginUser,
   createOpportunity,
   deleteAccount,
-  deleteActivity,
   deleteContact,
   updateAdminSettings,
   updateAccount,
@@ -29,7 +29,6 @@ import {
   updateContact,
   updateLead,
   upsertLoginUser,
-  sendLoginCredentialEmail,
   updateOpportunity
 } from "../api/client";
 import { MetricCard } from "../components/MetricCard";
@@ -1318,6 +1317,9 @@ function OpportunitySection({
 }) {
   const [selectedOpportunityId, setSelectedOpportunityId] = useState("");
   const [status, setStatus] = useState("");
+  const [closingOpportunityId, setClosingOpportunityId] = useState<string | null>(null);
+  const [closeStage, setCloseStage] = useState<PipelineStage>("CLOSED_WON");
+  const [closeReason, setCloseReason] = useState("");
   const selectedOpportunity = opportunities.find(
     (opportunity) => opportunity.id === selectedOpportunityId
   );
@@ -1353,6 +1355,23 @@ function OpportunitySection({
       await onDataChanged();
     } catch {
       setStatus("영업기회 저장 실패");
+    }
+  }
+
+  async function handleCloseOpportunity() {
+    if (!closingOpportunityId) return;
+    try {
+      await changeOpportunityStage(closingOpportunityId, {
+        stage: closeStage,
+        reason: closeReason || undefined,
+        lost_reason: closeStage === "CLOSED_LOST" ? closeReason || "종료" : undefined
+      });
+      setStatus("기회를 종료했습니다.");
+      setClosingOpportunityId(null);
+      setCloseReason("");
+      await onDataChanged();
+    } catch {
+      setStatus("기회 종료 실패");
     }
   }
 
@@ -1527,23 +1546,13 @@ function OpportunitySection({
                         type="button"
                         onClick={(event) => {
                           event.stopPropagation();
-                          setSelectedOpportunityId(opportunity.id);
-                          setForm({
-                            account_id: opportunity.account_id ?? "",
-                            name: opportunity.name,
-                            stage: opportunity.stage,
-                            amount: opportunity.amount,
-                            expected_close_date: opportunity.expected_close_date ?? "",
-                            owner_id: opportunity.owner_name ?? "",
-                            opportunity_type: opportunity.opportunity_type ?? "New Business",
-                            next_step: opportunity.next_step ?? "",
-                            primary_campaign_source: opportunity.primary_campaign_source ?? "",
-                            competitor: opportunity.competitor ?? ""
-                          });
+                          setClosingOpportunityId(opportunity.id);
+                          setCloseStage("CLOSED_WON");
+                          setCloseReason("");
                         }}
                         className="rounded border border-rose-200 px-2 py-1 text-xs font-bold text-rose-700"
                       >
-                        선택
+                        기회 종료
                       </button>
                     </td>
                   </tr>
@@ -1552,6 +1561,51 @@ function OpportunitySection({
           </table>
         </div>
       </div>
+      {closingOpportunityId ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 px-4">
+          <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-lg">
+            <h3 className="text-lg font-bold">영업기회 종료</h3>
+            <div className="mt-4 space-y-3">
+              <label className="block text-sm font-medium">
+                종료 구분
+                <select
+                  value={closeStage}
+                  onChange={(event) => setCloseStage(event.target.value as PipelineStage)}
+                  className="mt-1 w-full rounded-md border border-line px-3 py-2"
+                >
+                  <option value="CLOSED_WON">Closed Won</option>
+                  <option value="CLOSED_LOST">Closed Lost</option>
+                </select>
+              </label>
+              <label className="block text-sm font-medium">
+                종료 사유
+                <textarea
+                  value={closeReason}
+                  onChange={(event) => setCloseReason(event.target.value)}
+                  className="mt-1 min-h-24 w-full rounded-md border border-line px-3 py-2"
+                  placeholder="종료 사유를 입력하세요."
+                />
+              </label>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setClosingOpportunityId(null)}
+                  className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold"
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleCloseOpportunity()}
+                  className="rounded-md bg-rose-600 px-3 py-2 text-sm font-semibold text-white"
+                >
+                  종료
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -1570,6 +1624,7 @@ function ActivitySection({
   onDataChanged: DashboardProps["onDataChanged"];
 }) {
   const [selectedActivityId, setSelectedActivityId] = useState("");
+  const [planOpportunityId, setPlanOpportunityId] = useState("");
   const selectedActivity = activities.find((activity) => activity.id === selectedActivityId);
   const [form, setForm] = useState<ActivityInput>({
     subject: selectedActivity?.subject ?? "",
@@ -1606,7 +1661,8 @@ function ActivitySection({
         setStatus("활동을 수정했습니다.");
       } else {
         await createActivity(payload);
-        setForm((current) => ({ ...current, subject: "", description: "" }));
+        setForm((current) => ({ ...current, subject: "", description: "", lead_id: "", opportunity_id: "" }));
+        setPlanOpportunityId("");
         setStatus("활동을 저장했습니다.");
       }
       await onDataChanged();
@@ -1698,7 +1754,7 @@ function ActivitySection({
             <EnumLabel label="영업기회" hint="활동이 특정 영업기회와 연관된 경우 선택합니다." />
             <select
               value={form.opportunity_id}
-              disabled={Boolean(form.lead_id)}
+              disabled={Boolean(form.lead_id) || Boolean(planOpportunityId)}
               onChange={(event) =>
                 setForm((current) => ({
                   ...current,
@@ -1720,7 +1776,7 @@ function ActivitySection({
             <EnumLabel label="리드" hint="영업기회가 없고 리드 단계 활동이면 리드를 선택합니다." />
             <select
               value={form.lead_id}
-              disabled={Boolean(form.opportunity_id)}
+              disabled={Boolean(form.opportunity_id) || Boolean(planOpportunityId)}
               onChange={(event) =>
                 setForm((current) => ({
                   ...current,
@@ -1748,6 +1804,7 @@ function ActivitySection({
               className="mt-1 min-h-24 w-full rounded-md border border-line px-3 py-2"
               placeholder="활동 내용"
             />
+            <p className="mt-1 text-xs text-slate-500">템플릿: [계획] 작성..., [결과] 작성...</p>
           </label>
           <button className="w-full rounded-md bg-rose-600 px-4 py-2 font-bold text-white">
             {selectedActivity ? "활동 수정" : "활동 저장"}
@@ -1819,23 +1876,26 @@ function ActivitySection({
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={async () => {
-                          await updateActivity(activity.id, { description: "후속 조치 필요" });
-                          await onDataChanged();
+                        onClick={() => {
+                          const oppId = activity.opportunity_id ?? "";
+                          setPlanOpportunityId(oppId);
+                          setSelectedActivityId("");
+                          setForm({
+                            subject: `${activity.subject || "영업기회"} 활동계획`,
+                            activity_type: "FOLLOW_UP",
+                            activity_date: new Date().toISOString().slice(0, 16),
+                            due_date: "",
+                            status: "OPEN",
+                            priority: "MEDIUM",
+                            description: "[계획] \n[결과] ",
+                            opportunity_id: oppId,
+                            lead_id: ""
+                          });
+                          setStatus(oppId ? "활동계획 작성 모드입니다. 영업기회는 고정됩니다." : "영업기회가 없는 활동입니다.");
                         }}
                         className="rounded border border-slate-200 px-2 py-1 text-xs font-bold"
                       >
-                        후속
-                      </button>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          await deleteActivity(activity.id);
-                          await onDataChanged();
-                        }}
-                        className="rounded border border-rose-200 px-2 py-1 text-xs font-bold text-rose-600"
-                      >
-                        삭제
+                        활동계획
                       </button>
                     </div>
                   </td>
@@ -2140,17 +2200,11 @@ function LoginManagementSection({
       return;
     }
     await upsertLoginUser(form);
-    const shouldNotify = Boolean((form.password ?? "").trim());
-    if (shouldNotify) {
-      const result = await sendLoginCredentialEmail(form.email, form.name, form.password ?? "");
-      setStatus(
-        result.sent
-          ? `로그인 사용자를 저장했고, ${form.email}로 로그인 정보를 발송했습니다.`
-          : `로그인 사용자를 저장했습니다. (메일 발송 실패: ${result.message})`
-      );
-    } else {
-      setStatus(`로그인 사용자를 저장했습니다. 비밀번호 변경이 없어 메일 발송은 생략했습니다.`);
-    }
+    setStatus(
+      isEdit
+        ? "로그인 사용자를 수정했습니다."
+        : "사용자 초대 메일 발송 준비가 완료되었습니다. (실발송은 추후 연동)"
+    );
     await onDataChanged();
     if (!isEdit) {
       setForm({
@@ -2172,15 +2226,15 @@ function LoginManagementSection({
       <form className="rounded-lg border border-line bg-white p-4" onSubmit={handleSave}>
         <h3 className="text-lg font-bold">{isEdit ? "로그인 사용자 수정" : "로그인 사용자 관리"}</h3>
         <div className="mt-4 space-y-3">
+          <label className="block text-sm font-medium">
+            이메일(사용자 ID)
+            <input
+              value={form.email}
+              onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
+              className="mt-1 w-full rounded-md border border-line px-3 py-2"
+            />
+          </label>
           <div className="grid grid-cols-2 gap-3">
-            <label className="block text-sm font-medium">
-              이메일(사용자 ID)
-              <input
-                value={form.email}
-                onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
-                className="mt-1 w-full rounded-md border border-line px-3 py-2"
-              />
-            </label>
             <label className="block text-sm font-medium">
               비밀번호
               <input
@@ -2191,8 +2245,6 @@ function LoginManagementSection({
                 placeholder={isEdit ? "변경 시에만 입력" : "8자 이상, 2종류 조합"}
               />
             </label>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
             <label className="block text-sm font-medium">
               휴대폰
               <input
@@ -2203,6 +2255,8 @@ function LoginManagementSection({
                 className="mt-1 w-full rounded-md border border-line px-3 py-2"
               />
             </label>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
             <label className="block text-sm font-medium">
               이름
               <input
@@ -2249,7 +2303,7 @@ function LoginManagementSection({
             </label>
           </div>
           <button className="w-full rounded-md bg-rose-600 px-4 py-2 font-bold text-white">
-            {isEdit ? "사용자 수정" : "사용자 저장"}
+            {isEdit ? "사용자 수정" : "사용자 초대 메일 발송"}
           </button>
           {status ? <p className="text-sm font-medium text-slate-700">{status}</p> : null}
         </div>
