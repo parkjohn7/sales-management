@@ -60,6 +60,7 @@ export interface OpportunitySummary {
   next_step?: string | null;
   primary_campaign_source?: string | null;
   competitor?: string | null;
+  lost_reason?: string | null;
 }
 
 export interface AccountSummary {

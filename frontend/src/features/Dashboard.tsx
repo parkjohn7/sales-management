@@ -1349,7 +1349,8 @@ function OpportunitySection({
         amount: digitsOnly(form.amount ?? "0") || "0"
       };
       if (selectedOpportunity) {
-        await updateOpportunity(selectedOpportunity.id, payload);
+        const { stage, ...updatePayload } = payload;
+        await updateOpportunity(selectedOpportunity.id, updatePayload);
         if (form.stage !== selectedOpportunity.stage) {
           await changeOpportunityStage(selectedOpportunity.id, {
             stage: form.stage ?? "LEAD",
@@ -1502,9 +1503,9 @@ function OpportunitySection({
                 <th className={thClass}>현재 단계</th>
                 <th className={thClass}>예상 금액</th>
                 <th className={thClass}>Forecast</th>
+                <th className={`${thClass} hidden xl:table-cell`}>종료사유</th>
                 <th className={`${thClass} hidden lg:table-cell`}>다음 단계</th>
                 <th className={`${thClass} hidden xl:table-cell`}>캠페인/경쟁사</th>
-                <th className={thClass}>작업</th>
               </tr>
             </thead>
             <tbody>
@@ -1542,13 +1543,11 @@ function OpportunitySection({
                     </td>
                     <td className={tdClass}>{money(opportunity.amount)}</td>
                     <td className={tdClass}>{money(opportunity.forecast_amount)}</td>
+                    <td className={`${tdClass} hidden xl:table-cell`}>{opportunity.lost_reason || "-"}</td>
                     <td className={`${tdClass} hidden lg:table-cell`}>{opportunity.next_step || "-"}</td>
                     <td className={`${tdClass} hidden xl:table-cell`}>
                       {opportunity.primary_campaign_source || "-"}
                       {opportunity.competitor ? ` / ${opportunity.competitor}` : ""}
-                    </td>
-                    <td className={tdClass}>
-                      -
                     </td>
                   </tr>
               ))}
@@ -1624,7 +1623,9 @@ function ActivitySection({
   return (
     <section className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
       <form className="rounded-lg border border-line bg-white p-4" onSubmit={handleCreateActivity}>
-        <h3 className="text-lg font-bold">{selectedActivity ? "활동 수정" : "활동 등록"}</h3>
+        <h3 className="text-lg font-bold">
+          {planOpportunityId ? "활동계획등록" : selectedActivity ? "활동 수정" : "활동 등록"}
+        </h3>
         <div className="mt-4 space-y-3">
           <label className="block text-sm font-medium">
             <EnumLabel
@@ -1673,6 +1674,7 @@ function ActivitySection({
                 onChange={(event) => setForm((current) => ({ ...current, status: event.target.value }))}
                 className="mt-1 w-full min-w-0 rounded-md border border-line px-3 py-2"
               >
+                <option value="">선택</option>
                 <option value="OPEN">Open</option>
                 <option value="IN_PROGRESS">In Progress</option>
                 <option value="DONE">Done</option>
@@ -1685,6 +1687,7 @@ function ActivitySection({
                 onChange={(event) => setForm((current) => ({ ...current, priority: event.target.value }))}
                 className="mt-1 w-full min-w-0 rounded-md border border-line px-3 py-2"
               >
+                <option value="">선택</option>
                 <option value="HIGH">High</option>
                 <option value="MEDIUM">Medium</option>
                 <option value="LOW">Low</option>
@@ -1748,7 +1751,7 @@ function ActivitySection({
             <p className="mt-1 text-xs text-slate-500">템플릿: [계획] 작성..., [결과] 작성...</p>
           </label>
           <button className="w-full rounded-md bg-rose-600 px-4 py-2 font-bold text-white">
-            {selectedActivity ? "활동 수정" : "활동 저장"}
+            {planOpportunityId ? "활동계획저장" : selectedActivity ? "활동 수정" : "활동 저장"}
           </button>
           {status && <p className="text-sm font-medium text-slate-700">{status}</p>}
         </div>
@@ -1824,8 +1827,8 @@ function ActivitySection({
                             activity_type: "FOLLOW_UP",
                             activity_date: new Date().toISOString().slice(0, 16),
                             due_date: "",
-                            status: "OPEN",
-                            priority: "MEDIUM",
+                            status: "",
+                            priority: "",
                             description: "[계획] \n[결과] ",
                             opportunity_id: oppId,
                             lead_id: ""
@@ -2187,16 +2190,6 @@ function LoginManagementSection({
                 placeholder={isEdit ? "변경 시에만 입력" : "8자 이상, 2종류 조합"}
               />
             </label>
-            <label className="block text-sm font-medium">
-              휴대폰
-              <input
-                value={form.mobile_phone ?? ""}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, mobile_phone: event.target.value }))
-                }
-              className="mt-1 w-full rounded-md border border-line px-3 py-2"
-            />
-          </label>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <label className="block text-sm font-medium">
@@ -2204,9 +2197,21 @@ function LoginManagementSection({
               <input
                 value={form.name}
                 onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-              className="mt-1 w-full rounded-md border border-line px-3 py-2"
-            />
+                className="mt-1 w-full rounded-md border border-line px-3 py-2"
+              />
             </label>
+            <label className="block text-sm font-medium">
+              휴대폰
+              <input
+                value={form.mobile_phone ?? ""}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, mobile_phone: event.target.value }))
+                }
+                className="mt-1 w-full rounded-md border border-line px-3 py-2"
+              />
+            </label>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
             <label className="block text-sm font-medium">
               역할
               <select
