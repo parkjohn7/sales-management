@@ -1349,6 +1349,7 @@ function OpportunitySection({
 
   async function handleSave(event: FormEvent) {
     event.preventDefault();
+    setStatus("");
     setStatus(selectedOpportunity ? "영업기회 수정 중" : "영업기회 저장 중");
     try {
       if ((form.stage === "CLOSED_WON" || form.stage === "CLOSED_LOST") && !closeReason.trim()) {
@@ -1359,6 +1360,18 @@ function OpportunitySection({
         ...form,
         amount: digitsOnly(form.amount ?? "0") || "0"
       };
+      if (!payload.expected_close_date) {
+        delete payload.expected_close_date;
+      }
+      if (!payload.next_step) {
+        delete payload.next_step;
+      }
+      if (!payload.primary_campaign_source) {
+        delete payload.primary_campaign_source;
+      }
+      if (!payload.competitor) {
+        delete payload.competitor;
+      }
       if (selectedOpportunity) {
         const updatePayload: Partial<OpportunityInput> = { ...payload, stage: form.stage };
         if (!updatePayload.owner_id) {
@@ -1378,7 +1391,7 @@ function OpportunitySection({
       }
       await onDataChanged();
     } catch {
-      setStatus("영업기회 저장 실패: 고객사/단계/종료사유를 확인해주세요.");
+      setStatus("영업기회 저장 실패: 입력값을 다시 확인해주세요.");
     }
   }
 
