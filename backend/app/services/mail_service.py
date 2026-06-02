@@ -1,10 +1,12 @@
-from email.message import EmailMessage
 import smtplib
+from email.message import EmailMessage
 
 from app.core.config import get_settings
 
 
-def send_login_credentials_email(*, to_email: str, user_name: str, temporary_password: str) -> tuple[bool, str]:
+def send_login_credentials_email(
+    *, to_email: str, user_name: str, temporary_password: str
+) -> tuple[bool, str]:
     settings = get_settings()
     if not settings.smtp_host or not settings.smtp_from_email:
         return False, "SMTP 설정이 없습니다. smtp_host/smtp_from_email을 확인해주세요."

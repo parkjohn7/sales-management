@@ -180,7 +180,11 @@ def test_closed_lost_api_requires_lost_reason() -> None:
 
 def test_opportunity_patch_updates_stage_with_reason() -> None:
     headers = auth_headers(user_id="sales-stage-patch")
-    account_response = client.post("/api/v1/accounts", headers=headers, json={"name": "단계변경고객"})
+    account_response = client.post(
+        "/api/v1/accounts",
+        headers=headers,
+        json={"name": "단계변경고객"},
+    )
     assert account_response.status_code == 200
     account_id = account_response.json()["data"]["id"]
 

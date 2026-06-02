@@ -16,8 +16,8 @@ from app.schemas import (
 )
 from app.services.admin_settings_service import read_admin_settings, save_admin_settings
 from app.services.audit_service import record_audit_log
-from app.services.mail_service import send_login_credentials_email
 from app.services.login_user_service import delete_login_user, list_login_users, upsert_login_user
+from app.services.mail_service import send_login_credentials_email
 
 router = APIRouter()
 

@@ -138,7 +138,9 @@ def upsert_login_user(db: Session, payload: LoginUserUpsert) -> LoginUserRead:
         "organization": payload.organization,
         "title": payload.title or "",
         "password": payload.password or current.get("password", ""),
-        "must_change_password": True if index is None else bool(current.get("must_change_password", True)),
+        "must_change_password": (
+            True if index is None else bool(current.get("must_change_password", True))
+        ),
     }
 
     if index is None:
@@ -150,12 +152,12 @@ def upsert_login_user(db: Session, payload: LoginUserUpsert) -> LoginUserRead:
     row.updated_by = "system"
     db.flush()
     return LoginUserRead(
-        name=next_item["name"],
-        email=next_item["email"],
-        mobile_phone=next_item["mobile_phone"],
-        role=next_item["role"],
-        organization=next_item["organization"],
-        title=next_item["title"],
+        name=str(next_item["name"]),
+        email=str(next_item["email"]),
+        mobile_phone=str(next_item["mobile_phone"]) or None,
+        role=str(next_item["role"]),
+        organization=str(next_item["organization"]),
+        title=str(next_item["title"]) or None,
         must_change_password=bool(next_item["must_change_password"]),
     )
 
@@ -172,7 +174,10 @@ def delete_login_user(db: Session, email: str) -> bool:
     ]
     if len(next_users) == len(users):
         return False
-    row.value = {**data, "login_users": next_users or [dict(item) for item in DEFAULT_LOGIN_USERS]}
+    row.value = {
+        **data,
+        "login_users": next_users or [dict(item) for item in DEFAULT_LOGIN_USERS],
+    }
     row.updated_by = "system"
     db.flush()
     return True
