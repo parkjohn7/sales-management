@@ -30,6 +30,7 @@ import {
   upsertLoginUser,
   updateOpportunity
 } from "../api/client";
+import { CherrySalesBrand } from "../components/CherrySalesBrand";
 import { MetricCard } from "../components/MetricCard";
 import type {
   AccountInput,
@@ -2390,10 +2391,14 @@ export function Dashboard({
   return (
     <main className="min-h-screen bg-[#fff7f8] text-ink">
       <div className="mx-auto flex max-w-[1440px] gap-0 px-4 py-4 sm:px-6">
-        <aside className="hidden w-64 shrink-0 rounded-l-md border border-rose-950/10 bg-[#2a0f18] p-4 text-white shadow-sm lg:block">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-rose-200">Cherrylab</p>
-            <h1 className="mt-1 text-2xl font-bold">Cherrysales</h1>
+        <aside className="hidden w-72 shrink-0 rounded-l-[28px] border border-rose-950/10 bg-[linear-gradient(180deg,#37131f_0%,#2a0f18_54%,#200a13_100%)] p-5 text-white shadow-[0_22px_60px_rgba(39,8,20,0.24)] lg:block">
+          <div className="rounded-[24px] border border-white/10 bg-white/5 p-4 backdrop-blur">
+            <CherrySalesBrand
+              compact
+              subtitle="Cherrylab Revenue Workspace"
+              subtitleClassName="text-rose-200/80"
+              titleClassName="text-white"
+            />
           </div>
           <nav className="mt-7 space-y-1 text-base">
             {menuItems.map((item) => (
@@ -2412,11 +2417,15 @@ export function Dashboard({
           </nav>
         </aside>
 
-        <section className="min-w-0 flex-1 rounded-r-md border border-l-0 border-rose-100 bg-white/80 p-4 shadow-sm">
+        <section className="min-w-0 flex-1 rounded-r-[28px] border border-l-0 border-rose-100 bg-white/88 p-4 shadow-[0_22px_60px_rgba(190,24,93,0.08)] backdrop-blur">
           <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
             <div>
-              <p className="text-sm font-bold text-rose-700">Cherrylab Sales Cloud</p>
-              <h2 className="text-2xl font-bold">Cherrysales</h2>
+              <CherrySalesBrand
+                compact
+                subtitle="Cherrylab Sales Cloud"
+                subtitleClassName="text-rose-500"
+                titleClassName="text-rose-700"
+              />
             </div>
             <div className="flex items-center gap-2">
               <div className="rounded-full border border-rose-100 bg-rose-50 px-3 py-1 text-xs font-bold text-rose-700">

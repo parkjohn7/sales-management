@@ -8,6 +8,7 @@ import {
   loadLoginUsers,
   syncDevTokenForLoginUser
 } from "./api/client";
+import { CherrySalesBrand } from "./components/CherrySalesBrand";
 import type {
   AccountSummary,
   ActivitySummary,
@@ -136,20 +137,29 @@ export function App() {
 
   if (!currentUser) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#fff7f8] px-4">
+      <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#fff8f8] px-4 py-10">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,214,0.35),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(244,114,182,0.18),_transparent_32%)]" />
         <form
           onSubmit={handleLoginSubmit}
-          className="w-full max-w-md rounded-lg border border-line bg-white p-6 shadow-sm"
+          className="relative w-full max-w-md overflow-hidden rounded-[28px] border border-rose-100 bg-white/95 p-7 shadow-[0_28px_80px_rgba(136,19,55,0.14)] backdrop-blur"
         >
-          <h1 className="text-2xl font-bold text-ink">Cherrysales 로그인</h1>
-          <p className="mt-2 text-sm text-slate-600">로그인 사용자 관리에 등록된 계정으로 로그인하세요.</p>
+          <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-rose-200 via-rose-500 to-rose-700" />
+          <CherrySalesBrand
+            subtitle="Cherrylab Revenue Workspace"
+            subtitleClassName="text-rose-400"
+            titleClassName="text-rose-700"
+          />
+          <h1 className="mt-6 text-2xl font-bold text-ink">CherrySales 로그인</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            로그인 사용자 관리에 등록된 계정으로 로그인하고 영업 파이프라인을 이어가세요.
+          </p>
           <div className="mt-5 space-y-3">
             <label className="block text-sm font-medium">
               이메일
               <input
                 value={loginEmail}
                 onChange={(event) => setLoginEmail(event.target.value)}
-                className="mt-1 w-full rounded-md border border-line px-3 py-2"
+                className="mt-1 w-full rounded-xl border border-rose-100 bg-rose-50/40 px-3 py-2.5 outline-none transition focus:border-rose-300 focus:bg-white"
                 placeholder="admin@cherrylab.com"
               />
             </label>
@@ -159,12 +169,14 @@ export function App() {
                 type="password"
                 value={loginPassword}
                 onChange={(event) => setLoginPassword(event.target.value)}
-                className="mt-1 w-full rounded-md border border-line px-3 py-2"
+                className="mt-1 w-full rounded-xl border border-rose-100 bg-rose-50/40 px-3 py-2.5 outline-none transition focus:border-rose-300 focus:bg-white"
                 placeholder="password"
               />
             </label>
             {loginError ? <p className="text-sm font-medium text-rose-600">{loginError}</p> : null}
-            <button className="w-full rounded-md bg-rose-600 px-4 py-2 font-bold text-white">로그인</button>
+            <button className="w-full rounded-xl bg-gradient-to-r from-rose-700 via-rose-600 to-pink-500 px-4 py-3 font-bold text-white shadow-[0_16px_30px_rgba(190,24,93,0.28)] transition hover:brightness-105">
+              로그인
+            </button>
           </div>
         </form>
       </main>
