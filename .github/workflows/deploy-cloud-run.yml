@@ -150,7 +150,7 @@ jobs:
             --set-env-vars="DATABASE_URL=${{ secrets.DATABASE_URL }}" \
             --set-env-vars="DEV_TOKEN_SECRET=${{ secrets.DEV_TOKEN_SECRET }}" \
             --set-env-vars="INTEGRATION_API_KEY=${{ secrets.INTEGRATION_API_KEY }}" \
-            --set-env-vars="CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173" \
+            --set-env-vars="^~^CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173" \
             ${CLOUDSQL_FLAG} \
             --service-account=${{ env.GCP_SERVICE_ACCOUNT }}
 
@@ -204,7 +204,7 @@ jobs:
           gcloud run services update ${{ env.BACKEND_SERVICE }} \
             --region=${{ env.GCP_REGION }} \
             --project=${{ env.GCP_PROJECT_ID }} \
-            --update-env-vars="CORS_ORIGINS=${{ env.FRONTEND_URL }},http://localhost:5173,http://127.0.0.1:5173"
+            --update-env-vars="^~^CORS_ORIGINS=${{ env.FRONTEND_URL }},http://localhost:5173,http://127.0.0.1:5173"
 
       - name: Smoke Test
         run: |
