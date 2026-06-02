@@ -12,7 +12,9 @@ COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini ./alembic.ini
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
-RUN chmod +x ./docker-entrypoint.sh
+
+RUN chmod +x docker-entrypoint.sh
 
 EXPOSE 8000
-CMD ["./docker-entrypoint.sh"]
+
+ENTRYPOINT ["./docker-entrypoint.sh"]

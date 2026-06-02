@@ -7,12 +7,12 @@ on:
       - main
 
 env:
-  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-  GCP_REGION: ${{ vars.GCP_REGION }}
-  GCP_ARTIFACT_REPOSITORY: ${{ vars.GCP_ARTIFACT_REPOSITORY || 'sales-management' }}
-  GCP_BACKEND_SERVICE: ${{ vars.GCP_BACKEND_SERVICE || 'sales-management-backend' }}
-  GCP_FRONTEND_SERVICE: ${{ vars.GCP_FRONTEND_SERVICE || 'sales-management-frontend' }}
-  GAR_HOST: ${{ vars.GCP_REGION }}-docker.pkg.dev
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_REGION: ${{ secrets.GCP_REGION }}
+  GAR_HOST: ${{ secrets.GCP_REGION }}-docker.pkg.dev
+  REPO: sales-management-docker-repo
+  BACKEND_SERVICE: sales-management-backend
+  FRONTEND_SERVICE: sales-management-frontend
 
 jobs:
   verify:
@@ -48,109 +48,97 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
+      id-token: write   # Workload Identity Federation 필수
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Workload Identity Federation으로 GCP 인증 (JSON 키 불필요)
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Enable APIs
-        run: |
-          gcloud services enable \
-            run.googleapis.com \
-            artifactregistry.googleapis.com \
-            cloudbuild.googleapis.com \
-            sqladmin.googleapis.com
+      # Artifact Registry 인증
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.GAR_HOST }} --quiet
 
-      - name: Ensure Artifact Registry repository
+      # ── Backend ──────────────────────────────────────────
+      - name: Build & Push Backend Image
         run: |
-          gcloud artifacts repositories describe "$GCP_ARTIFACT_REPOSITORY" \
-            --location "$GCP_REGION" >/dev/null 2>&1 \
-          || gcloud artifacts repositories create "$GCP_ARTIFACT_REPOSITORY" \
-            --repository-format docker \
-            --location "$GCP_REGION" \
-            --description "영업관리시스템 containers"
-
-      - name: Configure Docker
-        run: gcloud auth configure-docker "$GAR_HOST" --quiet
-
-      - name: Build and push backend
-        env:
-          BACKEND_IMAGE: ${{ env.GAR_HOST }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_ARTIFACT_REPOSITORY }}/sales-management-backend:${{ github.sha }}
-        run: |
-          docker build -t "$BACKEND_IMAGE" ./backend
-          docker push "$BACKEND_IMAGE"
-          echo "BACKEND_IMAGE=$BACKEND_IMAGE" >> "$GITHUB_ENV"
-
-      - name: Deploy backend
-        run: |
-          DEPLOY_ARGS=(
-            run deploy "$GCP_BACKEND_SERVICE"
-            --image "$BACKEND_IMAGE"
-            --region "$GCP_REGION"
-            --platform managed
-            --allow-unauthenticated
-            --port 8000
-            --set-env-vars "APP_ENV=prod"
-            --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }}"
-            --set-env-vars "DEV_TOKEN_SECRET=${{ secrets.DEV_TOKEN_SECRET }}"
-            --set-env-vars "INTEGRATION_API_KEY=${{ secrets.INTEGRATION_API_KEY }}"
-            --set-env-vars "^~^CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173"
-          )
-          if [ -n "${{ vars.GCP_CLOUD_SQL_INSTANCE }}" ]; then
-            DEPLOY_ARGS+=(--add-cloudsql-instances "${{ vars.GCP_CLOUD_SQL_INSTANCE }}")
-          fi
-          gcloud "${DEPLOY_ARGS[@]}"
-          BACKEND_URL="$(gcloud run services describe "$GCP_BACKEND_SERVICE" \
-            --region "$GCP_REGION" \
-            --format 'value(status.url)')"
-          echo "BACKEND_URL=$BACKEND_URL" >> "$GITHUB_ENV"
-
-      - name: Build and push frontend
-        env:
-          FRONTEND_IMAGE: ${{ env.GAR_HOST }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_ARTIFACT_REPOSITORY }}/sales-management-frontend:${{ github.sha }}
-        run: |
+          IMAGE="${{ env.GAR_HOST }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPO }}/${{ env.BACKEND_SERVICE }}"
           docker build \
-            --build-arg "VITE_API_BASE_URL=${BACKEND_URL}/api/v1" \
-            -t "$FRONTEND_IMAGE" \
-            ./frontend
-          docker push "$FRONTEND_IMAGE"
-          echo "FRONTEND_IMAGE=$FRONTEND_IMAGE" >> "$GITHUB_ENV"
+            -t "${IMAGE}:${{ github.sha }}" \
+            -t "${IMAGE}:latest" \
+            ./backend
+          docker push "${IMAGE}:${{ github.sha }}"
+          docker push "${IMAGE}:latest"
+          echo "BACKEND_IMAGE=${IMAGE}:${{ github.sha }}" >> $GITHUB_ENV
 
-      - name: Deploy frontend
+      - name: Deploy Backend to Cloud Run
         run: |
-          gcloud run deploy "$GCP_FRONTEND_SERVICE" \
-            --image "$FRONTEND_IMAGE" \
-            --region "$GCP_REGION" \
-            --platform managed \
+          gcloud run deploy ${{ env.BACKEND_SERVICE }} \
+            --image="${{ env.BACKEND_IMAGE }}" \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }} \
+            --platform=managed \
             --allow-unauthenticated \
-            --port 8080
-          FRONTEND_URL="$(gcloud run services describe "$GCP_FRONTEND_SERVICE" \
-            --region "$GCP_REGION" \
-            --format 'value(status.url)')"
-          echo "FRONTEND_URL=$FRONTEND_URL" >> "$GITHUB_ENV"
+            --port=8000 \
+            --memory=512Mi \
+            --cpu=1 \
+            --min-instances=0 \
+            --max-instances=10 \
+            --set-env-vars="DATABASE_URL=${{ secrets.DATABASE_URL }}" \
+            --set-env-vars="DEV_TOKEN_SECRET=${{ secrets.DEV_TOKEN_SECRET }}" \
+            --set-env-vars="INTEGRATION_API_KEY=${{ secrets.INTEGRATION_API_KEY }}" \
+            --set-cloudsql-instances="${{ env.GCP_PROJECT_ID }}:${{ env.GCP_REGION }}:free-trial-first-project" \
+            --service-account=${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-      - name: Update backend CORS
+      - name: Get Backend URL
         run: |
-          gcloud run services update "$GCP_BACKEND_SERVICE" \
-            --region "$GCP_REGION" \
-            --update-env-vars "^~^CORS_ORIGINS=${FRONTEND_URL},http://localhost:5173,http://127.0.0.1:5173"
+          URL=$(gcloud run services describe ${{ env.BACKEND_SERVICE }} \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }} \
+            --format='value(status.url)')
+          echo "BACKEND_URL=${URL}" >> $GITHUB_ENV
+          echo "✅ Backend: ${URL}"
 
-      - name: Smoke test
+      # ── Frontend ─────────────────────────────────────────
+      - name: Build & Push Frontend Image
         run: |
-          curl --fail "${BACKEND_URL}/api/v1/health"
-          curl --fail "${FRONTEND_URL}/healthz"
+          IMAGE="${{ env.GAR_HOST }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPO }}/${{ env.FRONTEND_SERVICE }}"
+          docker build \
+            --build-arg VITE_API_BASE_URL="${{ env.BACKEND_URL }}/api/v1" \
+            -t "${IMAGE}:${{ github.sha }}" \
+            -t "${IMAGE}:latest" \
+            ./frontend
+          docker push "${IMAGE}:${{ github.sha }}"
+          docker push "${IMAGE}:latest"
+          echo "FRONTEND_IMAGE=${IMAGE}:${{ github.sha }}" >> $GITHUB_ENV
 
-      - name: Deployment summary
+      - name: Deploy Frontend to Cloud Run
         run: |
-          echo "Backend:  ${BACKEND_URL}" >> "$GITHUB_STEP_SUMMARY"
-          echo "Frontend: ${FRONTEND_URL}" >> "$GITHUB_STEP_SUMMARY"
+          gcloud run deploy ${{ env.FRONTEND_SERVICE }} \
+            --image="${{ env.FRONTEND_IMAGE }}" \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }} \
+            --platform=managed \
+            --allow-unauthenticated \
+            --port=8080 \
+            --memory=256Mi \
+            --cpu=1 \
+            --min-instances=0 \
+            --max-instances=5
+
+      - name: Get Frontend URL
+        run: |
+          URL=$(gcloud run services describe ${{ env.FRONTEND_SERVICE }} \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }} \
+            --format='value(status.url)')
+          echo "✅ Frontend: ${URL}"
