@@ -2384,31 +2384,31 @@ export function Dashboard({
 
   function menuClass(item: MenuItem) {
     return item === activeView
-      ? "bg-rose-600 text-white"
-      : "bg-transparent text-ink hover:bg-white";
+      ? "bg-rose-600 text-white shadow-[0_14px_28px_rgba(190,24,93,0.22)]"
+      : "bg-transparent text-slate-600 hover:bg-rose-50 hover:text-rose-700";
   }
 
   return (
     <main className="min-h-screen bg-[#fff7f8] text-ink">
       <div className="mx-auto flex max-w-[1440px] gap-0 px-4 py-4 sm:px-6">
-        <aside className="hidden w-72 shrink-0 rounded-l-[28px] border border-rose-950/10 bg-[linear-gradient(180deg,#37131f_0%,#2a0f18_54%,#200a13_100%)] p-5 text-white shadow-[0_22px_60px_rgba(39,8,20,0.24)] lg:block">
-          <div className="rounded-[24px] border border-white/10 bg-white/5 p-4 backdrop-blur">
+        <aside className="hidden w-72 shrink-0 rounded-l-[28px] border border-rose-100 bg-[linear-gradient(180deg,#fffefe_0%,#fff7f9_60%,#fff2f6_100%)] p-5 text-slate-700 shadow-[0_22px_60px_rgba(190,24,93,0.08)] lg:block">
+          <div className="rounded-[24px] border border-rose-100 bg-white/95 p-4 shadow-[0_18px_36px_rgba(190,24,93,0.08)]">
             <CherrySalesBrand
               compact
               subtitle="Cherrylab Revenue Workspace"
-              subtitleClassName="text-rose-200/80"
-              titleClassName="text-white"
+              subtitleClassName="text-rose-400"
+              titleClassName="text-rose-700"
             />
           </div>
-          <nav className="mt-7 space-y-1 text-base">
+          <nav className="mt-7 space-y-1.5 text-base">
             {menuItems.map((item) => (
               <button
                 key={item}
                 onClick={() => setActiveView(item)}
-                className={`flex w-full items-center rounded-md px-3 py-2.5 text-left font-semibold ${
+                className={`flex w-full items-center rounded-2xl px-4 py-3 text-left font-semibold transition ${
                   item === activeView
-                    ? "bg-rose-500 text-white"
-                    : "bg-transparent text-slate-200 hover:bg-white/10"
+                    ? "bg-rose-600 text-white shadow-[0_14px_28px_rgba(190,24,93,0.2)]"
+                    : "bg-transparent text-slate-600 hover:bg-rose-50 hover:text-rose-700"
                 }`}
               >
                 {item}
