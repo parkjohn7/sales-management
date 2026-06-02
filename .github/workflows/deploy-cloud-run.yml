@@ -7,12 +7,13 @@ on:
       - main
 
 env:
-  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  GCP_REGION: ${{ secrets.GCP_REGION }}
-  GAR_HOST: ${{ secrets.GCP_REGION }}-docker.pkg.dev
-  REPO: sales-management-docker-repo
-  BACKEND_SERVICE: sales-management-backend
-  FRONTEND_SERVICE: sales-management-frontend
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  GCP_REGION: ${{ vars.GCP_REGION }}
+  GAR_HOST: ${{ vars.GCP_REGION }}-docker.pkg.dev
+  REPO: ${{ vars.GCP_ARTIFACT_REPOSITORY }}
+  BACKEND_SERVICE: ${{ vars.GCP_BACKEND_SERVICE }}
+  FRONTEND_SERVICE: ${{ vars.GCP_FRONTEND_SERVICE }}
+  CLOUD_SQL_INSTANCE: ${{ vars.GCP_CLOUD_SQL_INSTANCE }}
 
 jobs:
   verify:
@@ -20,6 +21,40 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Validate deployment configuration
+        env:
+          GCP_PROJECT_ID: ${{ env.GCP_PROJECT_ID }}
+          GCP_REGION: ${{ env.GCP_REGION }}
+          REPO: ${{ env.REPO }}
+          BACKEND_SERVICE: ${{ env.BACKEND_SERVICE }}
+          FRONTEND_SERVICE: ${{ env.FRONTEND_SERVICE }}
+          WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          GCP_SERVICE_ACCOUNT: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DEV_TOKEN_SECRET: ${{ secrets.DEV_TOKEN_SECRET }}
+          INTEGRATION_API_KEY: ${{ secrets.INTEGRATION_API_KEY }}
+        run: |
+          missing=0
+          for key in \
+            GCP_PROJECT_ID \
+            GCP_REGION \
+            REPO \
+            BACKEND_SERVICE \
+            FRONTEND_SERVICE \
+            WORKLOAD_IDENTITY_PROVIDER \
+            GCP_SERVICE_ACCOUNT \
+            DATABASE_URL \
+            DEV_TOKEN_SECRET \
+            INTEGRATION_API_KEY; do
+            if [ -z "${!key}" ]; then
+              echo "Missing required Actions setting: ${key}"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -58,8 +93,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
 
       - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
@@ -82,6 +117,10 @@ jobs:
 
       - name: Deploy Backend to Cloud Run
         run: |
+          CLOUDSQL_FLAG=""
+          if [ -n "${{ env.CLOUD_SQL_INSTANCE }}" ]; then
+            CLOUDSQL_FLAG="--set-cloudsql-instances=${{ env.CLOUD_SQL_INSTANCE }}"
+          fi
           gcloud run deploy ${{ env.BACKEND_SERVICE }} \
             --image="${{ env.BACKEND_IMAGE }}" \
             --region=${{ env.GCP_REGION }} \
@@ -93,11 +132,13 @@ jobs:
             --cpu=1 \
             --min-instances=0 \
             --max-instances=10 \
+            --set-env-vars="APP_ENV=prod" \
             --set-env-vars="DATABASE_URL=${{ secrets.DATABASE_URL }}" \
             --set-env-vars="DEV_TOKEN_SECRET=${{ secrets.DEV_TOKEN_SECRET }}" \
             --set-env-vars="INTEGRATION_API_KEY=${{ secrets.INTEGRATION_API_KEY }}" \
-            --set-cloudsql-instances="${{ env.GCP_PROJECT_ID }}:${{ env.GCP_REGION }}:free-trial-first-project" \
-            --service-account=${{ secrets.GCP_SERVICE_ACCOUNT }}
+            --set-env-vars="CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173" \
+            ${CLOUDSQL_FLAG} \
+            --service-account=${{ vars.GCP_SERVICE_ACCOUNT }}
 
       - name: Get Backend URL
         run: |
@@ -141,4 +182,17 @@ jobs:
             --region=${{ env.GCP_REGION }} \
             --project=${{ env.GCP_PROJECT_ID }} \
             --format='value(status.url)')
+          echo "FRONTEND_URL=${URL}" >> $GITHUB_ENV
           echo "✅ Frontend: ${URL}"
+
+      - name: Update Backend CORS
+        run: |
+          gcloud run services update ${{ env.BACKEND_SERVICE }} \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }} \
+            --update-env-vars="CORS_ORIGINS=${{ env.FRONTEND_URL }},http://localhost:5173,http://127.0.0.1:5173"
+
+      - name: Smoke Test
+        run: |
+          curl --fail "${{ env.BACKEND_URL }}/api/v1/health"
+          curl --fail "${{ env.FRONTEND_URL }}/healthz"
