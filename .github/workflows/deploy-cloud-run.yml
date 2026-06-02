@@ -198,4 +198,4 @@ jobs:
       - name: Smoke Test
         run: |
           curl --fail "${{ env.BACKEND_URL }}/api/v1/health"
-          curl --fail "${{ env.FRONTEND_URL }}/healthz"
+          curl --fail "${{ env.FRONTEND_URL }}/"
