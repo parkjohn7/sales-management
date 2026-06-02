@@ -28,8 +28,11 @@ gcloud artifacts repositories describe "${GCP_ARTIFACT_REPOSITORY}" \
 
 gcloud auth configure-docker "${GAR_HOST}" --quiet
 
-docker build -t "${BACKEND_IMAGE}" ./backend
-docker push "${BACKEND_IMAGE}"
+docker buildx build \
+  --platform linux/amd64 \
+  -t "${BACKEND_IMAGE}" \
+  --push \
+  ./backend
 
 BACKEND_DEPLOY_ARGS=(
   run deploy "${GCP_BACKEND_SERVICE}"
@@ -55,11 +58,12 @@ BACKEND_URL="$(gcloud run services describe "${GCP_BACKEND_SERVICE}" \
   --region "${GCP_REGION}" \
   --format 'value(status.url)')"
 
-docker build \
+docker buildx build \
+  --platform linux/amd64 \
   --build-arg "VITE_API_BASE_URL=${BACKEND_URL}/api/v1" \
   -t "${FRONTEND_IMAGE}" \
+  --push \
   ./frontend
-docker push "${FRONTEND_IMAGE}"
 
 gcloud run deploy "${GCP_FRONTEND_SERVICE}" \
   --image "${FRONTEND_IMAGE}" \

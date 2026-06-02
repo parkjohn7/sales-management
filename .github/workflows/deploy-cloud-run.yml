@@ -99,6 +99,9 @@ jobs:
       - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       # Artifact Registry 인증
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ env.GAR_HOST }} --quiet
@@ -107,12 +110,12 @@ jobs:
       - name: Build & Push Backend Image
         run: |
           IMAGE="${{ env.GAR_HOST }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPO }}/${{ env.BACKEND_SERVICE }}"
-          docker build \
+          docker buildx build \
+            --platform linux/amd64 \
             -t "${IMAGE}:${{ github.sha }}" \
             -t "${IMAGE}:latest" \
+            --push \
             ./backend
-          docker push "${IMAGE}:${{ github.sha }}"
-          docker push "${IMAGE}:latest"
           echo "BACKEND_IMAGE=${IMAGE}:${{ github.sha }}" >> $GITHUB_ENV
 
       - name: Deploy Backend to Cloud Run
@@ -153,13 +156,13 @@ jobs:
       - name: Build & Push Frontend Image
         run: |
           IMAGE="${{ env.GAR_HOST }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPO }}/${{ env.FRONTEND_SERVICE }}"
-          docker build \
+          docker buildx build \
+            --platform linux/amd64 \
             --build-arg VITE_API_BASE_URL="${{ env.BACKEND_URL }}/api/v1" \
             -t "${IMAGE}:${{ github.sha }}" \
             -t "${IMAGE}:latest" \
+            --push \
             ./frontend
-          docker push "${IMAGE}:${{ github.sha }}"
-          docker push "${IMAGE}:latest"
           echo "FRONTEND_IMAGE=${IMAGE}:${{ github.sha }}" >> $GITHUB_ENV
 
       - name: Deploy Frontend to Cloud Run
