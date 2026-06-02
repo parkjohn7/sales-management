@@ -7,13 +7,16 @@ on:
       - main
 
 env:
-  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-  GCP_REGION: ${{ vars.GCP_REGION }}
-  GAR_HOST: ${{ vars.GCP_REGION }}-docker.pkg.dev
-  REPO: ${{ vars.GCP_ARTIFACT_REPOSITORY }}
-  BACKEND_SERVICE: ${{ vars.GCP_BACKEND_SERVICE }}
-  FRONTEND_SERVICE: ${{ vars.GCP_FRONTEND_SERVICE }}
-  CLOUD_SQL_INSTANCE: ${{ vars.GCP_CLOUD_SQL_INSTANCE }}
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID != '' && vars.GCP_PROJECT_ID || 'sales-management-498110' }}
+  GCP_REGION: ${{ vars.GCP_REGION != '' && vars.GCP_REGION || 'asia-northeast3' }}
+  GAR_HOST: ${{ (vars.GCP_REGION != '' && vars.GCP_REGION || 'asia-northeast3') }}-docker.pkg.dev
+  REPO: ${{ vars.GCP_ARTIFACT_REPOSITORY != '' && vars.GCP_ARTIFACT_REPOSITORY || 'sales-management-docker-repo' }}
+  BACKEND_SERVICE: ${{ vars.GCP_BACKEND_SERVICE != '' && vars.GCP_BACKEND_SERVICE || 'sales-management-backend' }}
+  FRONTEND_SERVICE: ${{ vars.GCP_FRONTEND_SERVICE != '' && vars.GCP_FRONTEND_SERVICE || 'sales-management-frontend' }}
+  CLOUD_SQL_INSTANCE: ${{ vars.GCP_CLOUD_SQL_INSTANCE != '' && vars.GCP_CLOUD_SQL_INSTANCE || 'sales-management-498110:asia-northeast3:free-trial-first-project' }}
+  WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '' && vars.GCP_WORKLOAD_IDENTITY_PROVIDER || 'projects/57171998407/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider' }}
+  GCP_SERVICE_ACCOUNT: ${{ vars.GCP_SERVICE_ACCOUNT != '' && vars.GCP_SERVICE_ACCOUNT || 'github-actions-deployer@sales-management-498110.iam.gserviceaccount.com' }}
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   verify:
@@ -29,8 +32,9 @@ jobs:
           REPO: ${{ env.REPO }}
           BACKEND_SERVICE: ${{ env.BACKEND_SERVICE }}
           FRONTEND_SERVICE: ${{ env.FRONTEND_SERVICE }}
-          WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          GCP_SERVICE_ACCOUNT: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          CLOUD_SQL_INSTANCE: ${{ env.CLOUD_SQL_INSTANCE }}
+          WORKLOAD_IDENTITY_PROVIDER: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          GCP_SERVICE_ACCOUNT: ${{ env.GCP_SERVICE_ACCOUNT }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DEV_TOKEN_SECRET: ${{ secrets.DEV_TOKEN_SECRET }}
           INTEGRATION_API_KEY: ${{ secrets.INTEGRATION_API_KEY }}
@@ -55,6 +59,13 @@ jobs:
           if [ "$missing" -ne 0 ]; then
             exit 1
           fi
+          echo "Deployment target"
+          echo "- project: ${GCP_PROJECT_ID}"
+          echo "- region: ${GCP_REGION}"
+          echo "- artifact repo: ${REPO}"
+          echo "- backend service: ${BACKEND_SERVICE}"
+          echo "- frontend service: ${FRONTEND_SERVICE}"
+          echo "- cloud sql instance: ${CLOUD_SQL_INSTANCE}"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -93,8 +104,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
 
       - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
@@ -141,7 +152,7 @@ jobs:
             --set-env-vars="INTEGRATION_API_KEY=${{ secrets.INTEGRATION_API_KEY }}" \
             --set-env-vars="CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173" \
             ${CLOUDSQL_FLAG} \
-            --service-account=${{ vars.GCP_SERVICE_ACCOUNT }}
+            --service-account=${{ env.GCP_SERVICE_ACCOUNT }}
 
       - name: Get Backend URL
         run: |

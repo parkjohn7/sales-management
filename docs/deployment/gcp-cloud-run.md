@@ -54,6 +54,11 @@ postgresql+psycopg://sales:REPLACE_ME@/sales_management?host=/cloudsql/my-projec
 
 ## GitHub Variables
 
+현재 저장소는 `sales-management-498110` 프로젝트에 대한 기본 배포 대상이 워크플로우에 내장되어 있습니다.
+즉, 같은 GCP 프로젝트와 Cloud Run 서비스에 배포하는 경우 아래 Variables가 비어 있어도 워크플로우는 실행됩니다.
+
+다만 다른 프로젝트나 서비스명으로 바꾸려면 아래 값을 GitHub Variables로 설정해 override하는 방식을 권장합니다.
+
 Repository Settings > Secrets and variables > Actions > Variables:
 
 ```text
@@ -68,6 +73,21 @@ GCP_CLOUD_SQL_INSTANCE
 ```
 
 `GCP_CLOUD_SQL_INSTANCE`는 선택값입니다. Cloud SQL을 붙일 때만 사용합니다.
+
+기본 내장값은 아래와 같습니다.
+
+```text
+GCP_PROJECT_ID=sales-management-498110
+GCP_REGION=asia-northeast3
+GCP_ARTIFACT_REPOSITORY=sales-management-docker-repo
+GCP_BACKEND_SERVICE=sales-management-backend
+GCP_FRONTEND_SERVICE=sales-management-frontend
+GCP_CLOUD_SQL_INSTANCE=sales-management-498110:asia-northeast3:free-trial-first-project
+GCP_WORKLOAD_IDENTITY_PROVIDER=projects/57171998407/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider
+GCP_SERVICE_ACCOUNT=github-actions-deployer@sales-management-498110.iam.gserviceaccount.com
+```
+
+따라서 현재 저장소에서 필수로 유지되어야 하는 GitHub Actions 설정은 사실상 `Secrets` 3개입니다.
 
 ## GitHub Secrets
 
@@ -93,7 +113,7 @@ INTEGRATION_API_KEY
 6. Frontend Cloud Run deploy
 7. Frontend URL 조회
 8. Backend `CORS_ORIGINS`를 Frontend URL로 업데이트
-9. `/api/v1/health`, `/healthz` smoke test
+9. Backend `/api/v1/health`, Frontend `/` smoke test
 
 `main` 브랜치 push 또는 GitHub Actions 수동 실행으로 배포됩니다.
 
@@ -118,9 +138,33 @@ scripts/gcp/deploy-cloud-run.sh
 ## 운영 체크
 
 - Backend health: `https://BACKEND_URL/api/v1/health`
-- Frontend health: `https://FRONTEND_URL/healthz`
+- Frontend root: `https://FRONTEND_URL/`
 - 브라우저 테스트: 리드 생성, 리드 전환, 영업기회 단계 변경, 리포트, 연동 리드 생성
 - Cloud Run logs에서 `alembic upgrade head` 성공 여부 확인
+
+## 이번 GitHub Actions 실패 원인
+
+2026-06-02 기준 원격 실패 run은 애플리케이션 코드 문제가 아니라, GitHub Actions `Variables`가 비어 있어서 `Validate deployment configuration` 단계에서 중단된 케이스였습니다.
+
+실패 증상:
+
+```text
+Missing required Actions setting: GCP_PROJECT_ID
+Missing required Actions setting: GCP_REGION
+Missing required Actions setting: REPO
+Missing required Actions setting: BACKEND_SERVICE
+Missing required Actions setting: FRONTEND_SERVICE
+Missing required Actions setting: WORKLOAD_IDENTITY_PROVIDER
+Missing required Actions setting: GCP_SERVICE_ACCOUNT
+```
+
+이후 워크플로우를 수정해:
+
+- 현재 운영 중인 GCP 대상은 기본값으로 내장
+- 저장소 Variables가 있으면 그 값으로 override
+- Secrets(`DATABASE_URL`, `DEV_TOKEN_SECRET`, `INTEGRATION_API_KEY`)만 필수 검증
+
+구조로 정리했습니다.
 
 ## 주의
 
