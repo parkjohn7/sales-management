@@ -5,6 +5,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SQLITE_DB="${1:-$ROOT_DIR/backend/.local/sales_management.db}"
 PG_DB="${PG_DB:-sales_management}"
 PG_USER="${PG_USER:-sales}"
+PG_PASSWORD="${PG_PASSWORD:-sales}"
+PG_PORT="${PG_PORT:-5433}"
 
 if [ ! -f "$SQLITE_DB" ]; then
   echo "SQLite DB not found: $SQLITE_DB"
@@ -26,7 +28,7 @@ docker compose -f "$ROOT_DIR/docker-compose.yml" exec -T postgres \
 echo "Applying alembic migrations to PostgreSQL..."
 (
   cd "$ROOT_DIR/backend"
-  DATABASE_URL="postgresql+psycopg://$PG_USER:sales@localhost:5432/$PG_DB" .venv/bin/alembic upgrade head
+  DATABASE_URL="postgresql+psycopg://$PG_USER:$PG_PASSWORD@localhost:$PG_PORT/$PG_DB" .venv/bin/alembic upgrade head
 )
 
 TABLES="$(

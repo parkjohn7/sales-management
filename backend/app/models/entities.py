@@ -127,6 +127,18 @@ class Lead(TimestampMixin, Base):
     opportunities: Mapped[list[Opportunity]] = relationship(back_populates="lead")
     activities: Mapped[list[Activity]] = relationship(back_populates="lead")
 
+    @property
+    def converted_opportunity_id(self) -> str | None:
+        if not self.opportunities:
+            return None
+        return self.opportunities[0].id
+
+    @property
+    def converted_opportunity_name(self) -> str | None:
+        if not self.opportunities:
+            return None
+        return self.opportunities[0].name
+
 
 class Opportunity(TimestampMixin, Base):
     __tablename__ = "opportunities"

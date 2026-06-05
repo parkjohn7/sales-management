@@ -478,8 +478,7 @@ interface BusinessPipelineRow {
 }
 
 function buildBusinessRows(
-  opportunities: OpportunitySummary[],
-  leads: LeadSummary[]
+  opportunities: OpportunitySummary[]
 ): BusinessPipelineRow[] {
   const opportunityRows = opportunities.map((opportunity) => ({
     id: `opportunity-${opportunity.id}`,
@@ -492,28 +491,15 @@ function buildBusinessRows(
     stageMeta: `확률 ${opportunity.probability}%`,
     expectedCloseDate: opportunity.expected_close_date
   }));
-  const leadRows = leads.map((lead) => ({
-    id: `lead-${lead.id}`,
-    title: lead.company_name,
-    subtitle: `${lead.contact_name} · ${lead.source_channel}`,
-    stage: "LEAD" as PipelineStage,
-    amountLabel: "금액 미정",
-    forecastLabel: `${lead.lead_score}점 · ${lead.lead_grade}`,
-    ownerLabel: "리드",
-    stageMeta: lead.status,
-    expectedCloseDate: null
-  }));
-  return [...opportunityRows, ...leadRows];
+  return opportunityRows;
 }
 
 function StageMatrix({
-  opportunities,
-  leads
+  opportunities
 }: {
   opportunities: OpportunitySummary[];
-  leads: LeadSummary[];
 }) {
-  const businessRows = buildBusinessRows(opportunities, leads);
+  const businessRows = buildBusinessRows(opportunities);
 
   return (
     <section className="mt-4 rounded-lg border border-line bg-white p-4 sm:p-5">
@@ -719,7 +705,7 @@ function DashboardHome({
         </div>
       </section>
 
-      <StageMatrix opportunities={opportunities} leads={leads} />
+      <StageMatrix opportunities={opportunities} />
     </section>
   );
 }
@@ -776,6 +762,7 @@ function LeadSection({
                   <th className={thClass}>담당자</th>
                   <th className={`${thClass} hidden sm:table-cell`}>직책</th>
                   <th className={`${thClass} hidden md:table-cell`}>직원 수</th>
+                  <th className={`${thClass} hidden lg:table-cell`}>전환 영업기회</th>
                   <th className={thClass}>리드품질</th>
                   <th className={thClass}>점수</th>
                   <th className={thClass}>리드처리상태</th>
@@ -796,6 +783,9 @@ function LeadSection({
                     <td className={`${tdClass} hidden sm:table-cell`}>{lead.title || "-"}</td>
                     <td className={`${tdClass} hidden md:table-cell`}>
                       {lead.employee_count ? formatter.format(lead.employee_count) : "-"}
+                    </td>
+                    <td className={`${tdClass} hidden lg:table-cell`}>
+                      {lead.converted_opportunity_name || "-"}
                     </td>
                     <td className={tdClass}>
                       <span className={`rounded-full px-2 py-1 text-xs font-bold ${gradeClass(lead.lead_grade)}`}>
@@ -1708,6 +1698,7 @@ function ActivitySection({
 }) {
   const [selectedActivityId, setSelectedActivityId] = useState("");
   const selectedActivity = activities.find((activity) => activity.id === selectedActivityId);
+  const opportunityNameById = new Map(opportunities.map((opportunity) => [opportunity.id, opportunity.name]));
   const [form, setForm] = useState<ActivityInput>({
     activity_type: selectedActivity?.activity_type ?? "",
     activity_date: selectedActivity
@@ -1919,6 +1910,7 @@ function ActivitySection({
           <table className="w-full min-w-[1460px] border-separate border-spacing-0 text-left text-sm">
             <thead>
               <tr>
+                <th className={`${thClass} min-w-[220px]`}>영업기회</th>
                 <th className={`${thClass} whitespace-nowrap`}>유형</th>
                 <th className={`${thClass} whitespace-nowrap`}>일시</th>
                 <th className={`${thClass} min-w-[320px]`}>메모</th>
@@ -1951,6 +1943,11 @@ function ActivitySection({
                     selectedActivityId === activity.id ? "bg-rose-50" : ""
                   }`}
                 >
+                  <td className={`${tdClass} ${cherryTextClass}`}>
+                    {activity.opportunity_id
+                      ? opportunityNameById.get(activity.opportunity_id) || activity.opportunity_id
+                      : "-"}
+                  </td>
                   <td className={`${tdClass} ${cherryTextClass}`}>
                     {activityTypeLabels[activity.activity_type] || activity.activity_type}
                   </td>

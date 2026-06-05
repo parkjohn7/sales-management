@@ -40,6 +40,8 @@ export interface LeadSummary {
   lead_score: number;
   lead_grade: LeadGrade;
   status: string;
+  converted_opportunity_id?: string | null;
+  converted_opportunity_name?: string | null;
 }
 
 export interface OpportunitySummary {

@@ -176,6 +176,8 @@ class LeadRead(LeadCreate):
     lead_score: int
     lead_grade: str
     status: str
+    converted_opportunity_id: str | None = None
+    converted_opportunity_name: str | None = None
     created_at: datetime
     updated_at: datetime
 

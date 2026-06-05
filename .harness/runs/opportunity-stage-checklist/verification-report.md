@@ -49,5 +49,12 @@ make verify
 
 ## Runtime Notes
 
-- 현재 로컬 기본 PostgreSQL(`localhost:5432`)은 포트 충돌 및 인증 불일치로 즉시 사용 불가
-- 데모 확인용으로는 별도 SQLite 런타임 DB를 사용해 기능을 검증함
+- 프로젝트 PostgreSQL 로컬 포트를 `5433`으로 변경하여 기존 `5432` 충돌을 해소함
+- 데모 SQLite(`backend/.local/stage_checklist_demo.db`) 데이터를 PostgreSQL로 이관 완료
+- PostgreSQL 이관 결과:
+  - leads: 3
+  - accounts: 3
+  - contacts: 3
+  - opportunities: 3
+  - activities: 3
+- 최종 로컬 백엔드는 `.env.local` 기준 PostgreSQL(`localhost:5433`)을 사용하도록 재기동함
