@@ -49,6 +49,8 @@ export interface OpportunitySummary {
   account_id?: string;
   contact_id?: string | null;
   lead_id?: string | null;
+  lead_company_name?: string | null;
+  lead_contact_name?: string | null;
   name: string;
   stage: PipelineStage;
   amount: string;

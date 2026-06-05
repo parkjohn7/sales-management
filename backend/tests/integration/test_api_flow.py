@@ -93,6 +93,12 @@ def test_lead_to_opportunity_flow_and_dashboard() -> None:
     account_id = convert_response.json()["data"]["account_id"]
     contact_id = convert_response.json()["data"]["contact_id"]
 
+    leads_response = client.get("/api/v1/leads", headers=headers)
+    assert leads_response.status_code == 200
+    converted_lead = leads_response.json()["data"][0]
+    assert converted_lead["converted_opportunity_id"] == opportunity_id
+    assert converted_lead["converted_opportunity_name"] == "체리랩 도입"
+
     account_response = client.get(f"/api/v1/accounts/{account_id}", headers=headers)
     assert account_response.status_code == 200
     assert account_response.json()["data"]["account_type"] == "Prospect"
@@ -115,6 +121,15 @@ def test_lead_to_opportunity_flow_and_dashboard() -> None:
     assert opportunity["forecast_amount"] == "5000000.00"
     assert opportunity["opportunity_type"] == "New Business"
     assert opportunity["primary_campaign_source"] == "2026 상반기 캠페인"
+
+    opportunities_response = client.get("/api/v1/opportunities", headers=headers)
+    assert opportunities_response.status_code == 200
+    listed_opportunity = next(
+        item for item in opportunities_response.json()["data"] if item["id"] == opportunity_id
+    )
+    assert listed_opportunity["lead_id"] == lead["id"]
+    assert listed_opportunity["lead_company_name"] == "체리랩"
+    assert listed_opportunity["lead_contact_name"] == "김매니저"
 
     activity_response = client.post(
         "/api/v1/activities",

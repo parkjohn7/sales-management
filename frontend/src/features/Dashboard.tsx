@@ -712,14 +712,19 @@ function DashboardHome({
 
 function LeadSection({
   leads,
+  selectedLeadId,
+  onSelectLead,
+  onOpenOpportunity,
   onCreateLead,
   onDataChanged
 }: {
   leads: LeadSummary[];
+  selectedLeadId: string;
+  onSelectLead: (leadId: string) => void;
+  onOpenOpportunity: (opportunityId: string) => void;
   onCreateLead: DashboardProps["onCreateLead"];
   onDataChanged: DashboardProps["onDataChanged"];
 }) {
-  const [selectedLeadId, setSelectedLeadId] = useState("");
   const [status, setStatus] = useState("");
   const selectedLead = leads.find((lead) => lead.id === selectedLeadId);
 
@@ -773,7 +778,7 @@ function LeadSection({
                 {leads.map((lead) => (
                   <tr
                     key={lead.id}
-                    onClick={() => setSelectedLeadId(lead.id)}
+                    onClick={() => onSelectLead(lead.id)}
                     className={`cursor-pointer hover:bg-rose-50 ${
                       selectedLead?.id === lead.id ? "bg-rose-50" : "bg-white"
                     }`}
@@ -785,7 +790,20 @@ function LeadSection({
                       {lead.employee_count ? formatter.format(lead.employee_count) : "-"}
                     </td>
                     <td className={`${tdClass} hidden lg:table-cell`}>
-                      {lead.converted_opportunity_name || "-"}
+                      {lead.converted_opportunity_id && lead.converted_opportunity_name ? (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onOpenOpportunity(lead.converted_opportunity_id!);
+                          }}
+                          className="font-semibold text-rose-700 underline decoration-rose-300 underline-offset-2"
+                        >
+                          {lead.converted_opportunity_name}
+                        </button>
+                      ) : (
+                        "-"
+                      )}
                     </td>
                     <td className={tdClass}>
                       <span className={`rounded-full px-2 py-1 text-xs font-bold ${gradeClass(lead.lead_grade)}`}>
@@ -799,16 +817,29 @@ function LeadSection({
                       </span>
                     </td>
                     <td className={tdClass}>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          void handleQuickConvert(lead);
-                        }}
-                        className="rounded border border-rose-200 px-2 py-1 text-xs font-bold text-rose-700"
-                      >
-                        영업기회 전환
-                      </button>
+                      {lead.converted_opportunity_id && lead.converted_opportunity_name ? (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onOpenOpportunity(lead.converted_opportunity_id!);
+                          }}
+                          className="rounded border border-rose-200 px-2 py-1 text-xs font-bold text-rose-700"
+                        >
+                          {lead.converted_opportunity_name}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void handleQuickConvert(lead);
+                          }}
+                          className="rounded border border-rose-200 px-2 py-1 text-xs font-bold text-rose-700"
+                        >
+                          영업기회 전환
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -1324,13 +1355,18 @@ function AccountSection({
 function OpportunitySection({
   opportunities,
   accounts,
+  selectedOpportunityId,
+  onSelectOpportunity,
+  onOpenLead,
   onDataChanged
 }: {
   opportunities: OpportunitySummary[];
   accounts: AccountSummary[];
+  selectedOpportunityId: string;
+  onSelectOpportunity: (opportunityId: string) => void;
+  onOpenLead: (leadId: string) => void;
   onDataChanged: DashboardProps["onDataChanged"];
 }) {
-  const [selectedOpportunityId, setSelectedOpportunityId] = useState("");
   const [status, setStatus] = useState("");
   const [closeReason, setCloseReason] = useState("");
   const [checklist, setChecklist] = useState<OpportunityChecklist | null>(null);
@@ -1354,6 +1390,38 @@ function OpportunitySection({
     setStatus("");
     setForm(updater);
   }
+
+  useEffect(() => {
+    if (!selectedOpportunity) {
+      setForm({
+        account_id: "",
+        name: "",
+        stage: "LEAD",
+        amount: "0",
+        expected_close_date: "",
+        owner_id: "",
+        opportunity_type: "New Business",
+        primary_campaign_source: "",
+        competitor: ""
+      });
+      setCloseReason("");
+      return;
+    }
+    setStatus("");
+    setChecklistStatus("");
+    setCloseReason(selectedOpportunity.lost_reason ?? "");
+    setForm({
+      account_id: selectedOpportunity.account_id ?? "",
+      name: selectedOpportunity.name,
+      stage: selectedOpportunity.stage,
+      amount: selectedOpportunity.amount,
+      expected_close_date: selectedOpportunity.expected_close_date ?? "",
+      owner_id: "",
+      opportunity_type: selectedOpportunity.opportunity_type ?? "New Business",
+      primary_campaign_source: selectedOpportunity.primary_campaign_source ?? "",
+      competitor: selectedOpportunity.competitor ?? ""
+    });
+  }, [selectedOpportunity]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1622,6 +1690,7 @@ function OpportunitySection({
             <thead>
               <tr>
                 <th className={thClass}>영업기회</th>
+                <th className={`${thClass} hidden lg:table-cell`}>리드</th>
                 <th className={`${thClass} hidden md:table-cell`}>유형</th>
                 <th className={thClass}>고객사</th>
                 <th className={thClass}>현재 단계</th>
@@ -1636,27 +1705,31 @@ function OpportunitySection({
                   <tr
                     key={opportunity.id}
                     onClick={() => {
-                      setStatus("");
-                      setChecklistStatus("");
-                      setSelectedOpportunityId(opportunity.id);
-                      setCloseReason(opportunity.lost_reason ?? "");
-                      setForm({
-                        account_id: opportunity.account_id ?? "",
-                        name: opportunity.name,
-                        stage: opportunity.stage,
-                        amount: opportunity.amount,
-                        expected_close_date: opportunity.expected_close_date ?? "",
-                        owner_id: "",
-                        opportunity_type: opportunity.opportunity_type ?? "New Business",
-                        primary_campaign_source: opportunity.primary_campaign_source ?? "",
-                        competitor: opportunity.competitor ?? ""
-                      });
+                      onSelectOpportunity(opportunity.id);
                     }}
                     className={`${cherryHoverRowClass} cursor-pointer ${
                       selectedOpportunity?.id === opportunity.id ? "bg-rose-50" : ""
                     }`}
                   >
                     <td className={`${tdClass} ${cherryTextClass}`}>{opportunity.name}</td>
+                    <td className={`${tdClass} hidden lg:table-cell`}>
+                      {opportunity.lead_id && opportunity.lead_company_name ? (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onOpenLead(opportunity.lead_id!);
+                          }}
+                          className="font-semibold text-rose-700 underline decoration-rose-300 underline-offset-2"
+                        >
+                          {opportunity.lead_contact_name
+                            ? `${opportunity.lead_company_name} / ${opportunity.lead_contact_name}`
+                            : opportunity.lead_company_name}
+                        </button>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
                     <td className={`${tdClass} hidden md:table-cell`}>
                       {opportunity.opportunity_type || "New Business"}
                     </td>
@@ -2484,6 +2557,18 @@ export function Dashboard({
   onOpenPasswordChange
 }: DashboardProps) {
   const [activeView, setActiveView] = useState<MenuItem>("대시보드");
+  const [selectedLeadId, setSelectedLeadId] = useState("");
+  const [selectedOpportunityId, setSelectedOpportunityId] = useState("");
+
+  function openLead(leadId: string) {
+    setSelectedLeadId(leadId);
+    setActiveView("리드");
+  }
+
+  function openOpportunity(opportunityId: string) {
+    setSelectedOpportunityId(opportunityId);
+    setActiveView("영업기회");
+  }
 
   function menuClass(item: MenuItem) {
     return item === activeView
@@ -2576,6 +2661,9 @@ export function Dashboard({
             {activeView === "리드" && (
               <LeadSection
                 leads={leads}
+                selectedLeadId={selectedLeadId}
+                onSelectLead={setSelectedLeadId}
+                onOpenOpportunity={openOpportunity}
                 onCreateLead={onCreateLead}
                 onDataChanged={onDataChanged}
               />
@@ -2592,6 +2680,9 @@ export function Dashboard({
               <OpportunitySection
                 opportunities={opportunities}
                 accounts={accounts}
+                selectedOpportunityId={selectedOpportunityId}
+                onSelectOpportunity={setSelectedOpportunityId}
+                onOpenLead={openLead}
                 onDataChanged={onDataChanged}
               />
             )}

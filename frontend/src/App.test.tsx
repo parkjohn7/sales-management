@@ -32,12 +32,17 @@ describe("Dashboard", () => {
         source_channel: "website",
         lead_score: 100,
         lead_grade: "HOT" as const,
-        status: "NEW"
+        status: "CONVERTED",
+        converted_opportunity_id: "opp-1",
+        converted_opportunity_name: "체리랩 전사 도입"
       }
     ],
     opportunities: [
       {
         id: "opp-1",
+        lead_id: "lead-1",
+        lead_company_name: "체리랩",
+        lead_contact_name: "김매니저",
         name: "체리랩 전사 도입",
         account_name: "체리랩",
         owner_name: "김도현",
@@ -157,7 +162,7 @@ describe("Dashboard", () => {
     expect(screen.getByText("SUPER_ADMIN")).toBeInTheDocument();
   });
 
-  it("shows workflow controls for conversion, stage changes, activities and admin settings", () => {
+  it("shows workflow controls for stage changes, activities and admin settings", () => {
     render(
       <div className="lg:block">
         <Dashboard {...props} />
@@ -166,7 +171,7 @@ describe("Dashboard", () => {
 
     fireEvent.click(screen.getAllByRole("button", { name: "리드" })[0]);
     expect(screen.getByRole("heading", { name: "리드 등록" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "영업기회 전환" })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "체리랩 전사 도입" }).length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getAllByRole("button", { name: "영업기회" })[0]);
     expect(screen.getByRole("heading", { name: "영업기회 등록" })).toBeInTheDocument();
@@ -249,5 +254,44 @@ describe("Dashboard", () => {
     expect(screen.getByText("제안 활동 등록")).toBeInTheDocument();
 
     checklistSpy.mockRestore();
+  });
+
+  it("opens the linked opportunity from a converted lead", async () => {
+    const checklistSpy = vi.spyOn(apiClient, "loadOpportunityChecklist").mockResolvedValue({
+      stage: "PROPOSAL",
+      stage_label: "Proposal",
+      enabled: true,
+      has_related_activity: true,
+      auto_advance_to: "NEGOTIATION",
+      items: [],
+    });
+
+    render(
+      <div className="lg:block">
+        <Dashboard {...props} />
+      </div>
+    );
+
+    fireEvent.click(screen.getAllByRole("button", { name: "리드" })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: "체리랩 전사 도입" })[0]);
+
+    await waitFor(() => expect(screen.getByRole("heading", { name: "영업기회 수정" })).toBeInTheDocument());
+    expect(checklistSpy).toHaveBeenCalledWith("opp-1");
+
+    checklistSpy.mockRestore();
+  });
+
+  it("opens the source lead from an opportunity row link", () => {
+    render(
+      <div className="lg:block">
+        <Dashboard {...props} />
+      </div>
+    );
+
+    fireEvent.click(screen.getAllByRole("button", { name: "영업기회" })[0]);
+    fireEvent.click(screen.getByRole("button", { name: "체리랩 / 김매니저" }));
+
+    expect(screen.getByRole("heading", { name: "리드 수정" })).toBeInTheDocument();
+    expect(screen.getByDisplayValue("체리랩")).toBeInTheDocument();
   });
 });

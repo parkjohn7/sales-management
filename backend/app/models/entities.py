@@ -169,6 +169,14 @@ class Opportunity(TimestampMixin, Base):
     activities: Mapped[list[Activity]] = relationship(back_populates="opportunity")
     stage_histories: Mapped[list[StageHistory]] = relationship(back_populates="opportunity")
 
+    @property
+    def lead_company_name(self) -> str | None:
+        return self.lead.company_name if self.lead else None
+
+    @property
+    def lead_contact_name(self) -> str | None:
+        return self.lead.contact_name if self.lead else None
+
 
 class Activity(Base):
     __tablename__ = "activities"

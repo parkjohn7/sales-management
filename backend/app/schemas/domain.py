@@ -258,6 +258,8 @@ class OpportunityRead(OpportunityCreate):
     model_config = ConfigDict(from_attributes=True)
 
     id: str
+    lead_company_name: str | None = None
+    lead_contact_name: str | None = None
     probability: int
     forecast_amount: Decimal
     closed_date: date | None = None

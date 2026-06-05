@@ -58,6 +58,12 @@
 Account deletion rule:
 `DELETE /accounts/{accountId}` fails with `409 ACCOUNT_HAS_RELATIONS` when related contacts or opportunities exist.
 
+Lead list payload note:
+- `GET /leads` includes `converted_opportunity_id` and `converted_opportunity_name` when a lead has already been converted.
+
+Opportunity list payload note:
+- `GET /opportunities` includes `lead_id`, `lead_company_name`, and `lead_contact_name` when the opportunity originated from a lead conversion.
+
 ## 4. Versioning
 
 - Breaking changes require explicit approval.
