@@ -59,6 +59,30 @@ export interface OpportunitySummary {
   primary_campaign_source?: string | null;
   competitor?: string | null;
   lost_reason?: string | null;
+  stage_checklist_state?: Record<string, Record<string, boolean>> | null;
+}
+
+export interface OpportunityChecklistItem {
+  key: string;
+  title: string;
+  description: string;
+  checked: boolean;
+}
+
+export interface OpportunityChecklist {
+  stage: PipelineStage;
+  stage_label: string;
+  enabled: boolean;
+  has_related_activity: boolean;
+  auto_advance_to?: PipelineStage | null;
+  items: OpportunityChecklistItem[];
+}
+
+export interface OpportunityChecklistToggleResult {
+  opportunity: OpportunitySummary;
+  checklist: OpportunityChecklist;
+  auto_advanced: boolean;
+  auto_advanced_to?: PipelineStage | null;
 }
 
 export interface AccountSummary {

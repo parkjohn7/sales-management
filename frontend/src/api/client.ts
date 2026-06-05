@@ -16,6 +16,8 @@ import type {
   LoginUser,
   OpportunityStageChangeInput,
   OpportunityInput,
+  OpportunityChecklist,
+  OpportunityChecklistToggleResult,
   OpportunitySummary,
   PipelineStage,
   PipelineSummary,
@@ -389,6 +391,23 @@ export async function updateOpportunity(opportunityId: string, payload: Partial<
   return request<OpportunitySummary>(`/opportunities/${opportunityId}`, {
     method: "PATCH",
     body: payload
+  });
+}
+
+export async function loadOpportunityChecklist(opportunityId: string) {
+  await ensureDevToken();
+  return request<OpportunityChecklist>(`/opportunities/${opportunityId}/checklist`);
+}
+
+export async function toggleOpportunityChecklistItem(
+  opportunityId: string,
+  itemKey: string,
+  checked: boolean
+) {
+  await ensureDevToken();
+  return request<OpportunityChecklistToggleResult>(`/opportunities/${opportunityId}/checklist`, {
+    method: "PATCH",
+    body: { item_key: itemKey, checked }
   });
 }
 

@@ -224,6 +224,34 @@ class OpportunityStageChangeRequest(BaseModel):
     lost_reason: str | None = None
 
 
+class OpportunityChecklistItemRead(BaseModel):
+    key: str
+    title: str
+    description: str
+    checked: bool
+
+
+class OpportunityChecklistRead(BaseModel):
+    stage: str
+    stage_label: str
+    enabled: bool
+    has_related_activity: bool
+    auto_advance_to: str | None = None
+    items: list[OpportunityChecklistItemRead]
+
+
+class OpportunityChecklistToggleRequest(BaseModel):
+    item_key: str
+    checked: bool
+
+
+class OpportunityChecklistToggleResponse(BaseModel):
+    opportunity: dict
+    checklist: OpportunityChecklistRead
+    auto_advanced: bool = False
+    auto_advanced_to: str | None = None
+
+
 class OpportunityRead(OpportunityCreate):
     model_config = ConfigDict(from_attributes=True)
 
@@ -232,6 +260,7 @@ class OpportunityRead(OpportunityCreate):
     forecast_amount: Decimal
     closed_date: date | None = None
     lost_reason: str | None = None
+    stage_checklist_state: dict | None = None
     created_at: datetime
     updated_at: datetime
 

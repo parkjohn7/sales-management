@@ -1,5 +1,5 @@
 import { Activity, Check, CircleHelp, Flame, Target, TrendingUp } from "lucide-react";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -19,9 +19,11 @@ import {
   createContact,
   createIntegrationLead,
   deleteLoginUser,
+  loadOpportunityChecklist,
   createOpportunity,
   deleteAccount,
   deleteContact,
+  toggleOpportunityChecklistItem,
   updateAdminSettings,
   updateAccount,
   updateActivity,
@@ -48,6 +50,7 @@ import type {
   LeadCreateInput,
   LeadSummary,
   OpportunityInput,
+  OpportunityChecklist,
   OpportunitySummary,
   PipelineStage,
   PipelineSummary,
@@ -694,7 +697,9 @@ function DashboardHome({
               ["Closed Won", Number(kpis.closed_won_amount), "#10b981"],
               ["Lead Volume", kpis.new_leads + kpis.hot_leads, "#f59e0b"]
             ].map(([label, value, color]) => {
-              const normalized = Math.min(100, Number(value) === 0 ? 8 : Math.max(18, Number(value) % 100));
+              const numericValue = Number(value);
+              const normalized =
+                numericValue === 0 ? 0 : Math.min(100, Math.max(18, numericValue % 100));
               return (
                 <div key={String(label)}>
                   <div className="flex items-center justify-between text-sm">
@@ -1338,6 +1343,8 @@ function OpportunitySection({
   const [selectedOpportunityId, setSelectedOpportunityId] = useState("");
   const [status, setStatus] = useState("");
   const [closeReason, setCloseReason] = useState("");
+  const [checklist, setChecklist] = useState<OpportunityChecklist | null>(null);
+  const [checklistStatus, setChecklistStatus] = useState("");
   const selectedOpportunity = opportunities.find(
     (opportunity) => opportunity.id === selectedOpportunityId
   );
@@ -1357,6 +1364,35 @@ function OpportunitySection({
     setStatus("");
     setForm(updater);
   }
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function syncChecklist() {
+      if (!selectedOpportunityId) {
+        setChecklist(null);
+        setChecklistStatus("");
+        return;
+      }
+      setChecklistStatus("");
+      try {
+        const nextChecklist = await loadOpportunityChecklist(selectedOpportunityId);
+        if (!cancelled) {
+          setChecklist(nextChecklist);
+        }
+      } catch {
+        if (!cancelled) {
+          setChecklist(null);
+          setChecklistStatus("체크리스트를 불러오지 못했습니다.");
+        }
+      }
+    }
+
+    void syncChecklist();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedOpportunityId]);
 
   async function handleSave(event: FormEvent) {
     event.preventDefault();
@@ -1404,11 +1440,34 @@ function OpportunitySection({
     }
   }
 
+  async function handleToggleChecklist(itemKey: string, checked: boolean) {
+    if (!selectedOpportunity) return;
+    setChecklistStatus("체크리스트 저장 중");
+    try {
+      const result = await toggleOpportunityChecklistItem(selectedOpportunity.id, itemKey, checked);
+      setChecklist(result.checklist);
+      setForm((current) => ({
+        ...current,
+        stage: result.opportunity.stage,
+      }));
+      setCloseReason(result.opportunity.lost_reason ?? "");
+      setChecklistStatus(
+        result.auto_advanced && result.auto_advanced_to
+          ? `${stageLabels[result.auto_advanced_to]} 단계로 자동 전환되었습니다.`
+          : "체크리스트를 저장했습니다."
+      );
+      await onDataChanged();
+    } catch {
+      setChecklistStatus("체크리스트 저장 실패");
+    }
+  }
+
   return (
     <section className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
-      <form className="rounded-lg border border-line bg-white p-4" onSubmit={handleSave}>
-        <h3 className="text-lg font-bold">{selectedOpportunity ? "영업기회 수정" : "영업기회 등록"}</h3>
-        <div className="mt-4 space-y-3">
+      <div className="space-y-4">
+        <form className="rounded-lg border border-line bg-white p-4" onSubmit={handleSave}>
+          <h3 className="text-lg font-bold">{selectedOpportunity ? "영업기회 수정" : "영업기회 등록"}</h3>
+          <div className="mt-4 space-y-3">
             <label className="block text-sm font-medium">
               <EnumLabel label="고객사" hint="이 영업기회가 연결될 고객사를 선택합니다." />
               <select
@@ -1515,8 +1574,54 @@ function OpportunitySection({
             {selectedOpportunity ? "영업기회 수정" : "영업기회 저장"}
           </button>
           {status && <p className="text-sm font-medium text-slate-700">{status}</p>}
-        </div>
-      </form>
+          </div>
+        </form>
+        {selectedOpportunity && checklist && (
+          <div className="rounded-lg border border-line bg-white p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-bold">현재 단계 체크리스트</h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  {stageLabels[checklist.stage]} 단계 완료 시{" "}
+                  {checklist.auto_advance_to ? stageLabels[checklist.auto_advance_to] : "다음"} 단계로 자동 전환됩니다.
+                </p>
+              </div>
+              <span className={`rounded-full px-2 py-1 text-xs font-bold ${statusPillClass(checklist.stage)}`}>
+                {stageLabels[checklist.stage]}
+              </span>
+            </div>
+            {!checklist.has_related_activity ? (
+              <p className="mt-4 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                이 영업기회에 활동을 먼저 등록하면 체크리스트를 진행할 수 있습니다.
+              </p>
+            ) : (
+              <div className="mt-4 space-y-2">
+                {checklist.items.map((item) => (
+                  <label
+                    key={item.key}
+                    className="flex cursor-pointer items-start gap-3 rounded-md border border-slate-200 px-3 py-2 hover:bg-rose-50"
+                  >
+                    <input
+                      type="checkbox"
+                      className="mt-1 h-4 w-4 accent-rose-600"
+                      checked={item.checked}
+                      disabled={!checklist.enabled}
+                      onChange={(event) => {
+                        void handleToggleChecklist(item.key, event.target.checked);
+                      }}
+                    />
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold text-slate-800">{item.title}</span>
+                      <span className="mt-0.5 block text-xs text-slate-500">{item.description}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+            {checklistStatus && <p className="mt-3 text-sm font-medium text-slate-700">{checklistStatus}</p>}
+          </div>
+        )}
+      </div>
       <div className={`${panelClass} overflow-hidden`}>
         <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2.5">
         <h3 className="text-lg font-bold">영업기회 목록</h3>
@@ -1542,6 +1647,7 @@ function OpportunitySection({
                     key={opportunity.id}
                     onClick={() => {
                       setStatus("");
+                      setChecklistStatus("");
                       setSelectedOpportunityId(opportunity.id);
                       setCloseReason(opportunity.lost_reason ?? "");
                       setForm({

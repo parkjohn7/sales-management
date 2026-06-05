@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Account, Contact, Lead, Opportunity
 from app.services.forecast_service import calculate_forecast_amount, get_stage_probability
+from app.services.stage_checklist_service import ensure_stage_checklist_state
 
 
 def convert_lead(
@@ -52,6 +53,7 @@ def convert_lead(
         primary_campaign_source=lead.campaign_name,
     )
     db.add(opportunity)
+    ensure_stage_checklist_state(opportunity, stage="QUALIFIED")
 
     lead.status = "CONVERTED"
     db.flush()

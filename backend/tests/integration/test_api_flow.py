@@ -214,6 +214,76 @@ def test_opportunity_patch_updates_stage_with_reason() -> None:
     assert won_update_response.json()["data"]["stage"] == "CLOSED_WON"
 
 
+def test_opportunity_stage_checklist_requires_activity_and_auto_advances() -> None:
+    headers = auth_headers(user_id="sales-checklist")
+    account_response = client.post(
+        "/api/v1/accounts",
+        headers=headers,
+        json={"name": "체크리스트고객"},
+    )
+    assert account_response.status_code == 200
+    account_id = account_response.json()["data"]["id"]
+
+    opportunity_response = client.post(
+        "/api/v1/opportunities",
+        headers=headers,
+        json={"account_id": account_id, "name": "체크리스트 영업기회", "amount": "2000000"},
+    )
+    assert opportunity_response.status_code == 200
+    opportunity_id = opportunity_response.json()["data"]["id"]
+
+    blocked_toggle = client.patch(
+        f"/api/v1/opportunities/{opportunity_id}/checklist",
+        headers=headers,
+        json={"item_key": "lead_profile_confirmed", "checked": True},
+    )
+    assert blocked_toggle.status_code == 422
+    assert blocked_toggle.json()["error"]["code"] == "CHECKLIST_REQUIRES_ACTIVITY"
+
+    activity_response = client.post(
+        "/api/v1/activities",
+        headers=headers,
+        json={
+            "opportunity_id": opportunity_id,
+            "activity_type": "MEETING",
+            "activity_date": datetime(2026, 6, 1, tzinfo=UTC).isoformat(),
+            "description": "체크리스트 시작 미팅",
+        },
+    )
+    assert activity_response.status_code == 200
+
+    checklist_response = client.get(
+        f"/api/v1/opportunities/{opportunity_id}/checklist",
+        headers=headers,
+    )
+    assert checklist_response.status_code == 200
+    checklist = checklist_response.json()["data"]
+    assert checklist["stage"] == "LEAD"
+    assert checklist["enabled"] is True
+    activity_item = next(item for item in checklist["items"] if item["key"] == "activity_logged")
+    assert activity_item["checked"] is True
+
+    first_toggle = client.patch(
+        f"/api/v1/opportunities/{opportunity_id}/checklist",
+        headers=headers,
+        json={"item_key": "lead_profile_confirmed", "checked": True},
+    )
+    assert first_toggle.status_code == 200
+    assert first_toggle.json()["data"]["auto_advanced"] is False
+
+    second_toggle = client.patch(
+        f"/api/v1/opportunities/{opportunity_id}/checklist",
+        headers=headers,
+        json={"item_key": "needs_identified", "checked": True},
+    )
+    assert second_toggle.status_code == 200
+    payload = second_toggle.json()["data"]
+    assert payload["auto_advanced"] is True
+    assert payload["auto_advanced_to"] == "QUALIFIED"
+    assert payload["opportunity"]["stage"] == "QUALIFIED"
+    assert payload["checklist"]["stage"] == "QUALIFIED"
+
+
 def test_contact_crud_flow() -> None:
     headers = auth_headers(user_id="contact-admin", role="ADMIN")
     account_response = client.post("/api/v1/accounts", headers=headers, json={"name": "연락처고객"})

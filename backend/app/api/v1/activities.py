@@ -4,9 +4,10 @@ from sqlalchemy.orm import Session
 from app.api.deps import Actor, get_current_actor
 from app.api.responses import fail, ok
 from app.db.session import get_db
-from app.models import Activity
+from app.models import Activity, Opportunity
 from app.schemas import ActivityCreate, ActivityRead, ActivityUpdate
 from app.services.audit_service import record_audit_log
+from app.services.stage_checklist_service import mark_stage_activity_logged
 
 router = APIRouter()
 
@@ -46,12 +47,26 @@ def create_activity(
     db: Session = Depends(get_db),
     actor: Actor = Depends(get_current_actor),
 ) -> dict:
+    opportunity: Opportunity | None = None
+    if payload.opportunity_id:
+        opportunity = db.get(Opportunity, payload.opportunity_id)
+        if opportunity is None:
+            raise fail(
+                404,
+                "OPPORTUNITY_NOT_FOUND",
+                "활동을 연결할 영업기회를 찾을 수 없습니다.",
+                {"opportunity_id": payload.opportunity_id},
+            )
+        if actor.role == "SALES_REP" and opportunity.owner_id != actor.user_id:
+            raise fail(403, "FORBIDDEN", "본인 영업기회에만 활동을 등록할 수 있습니다.")
     activity = Activity(
         **payload.model_dump(exclude={"owner_id"}),
         owner_id=payload.owner_id or actor.user_id,
     )
     db.add(activity)
     db.flush()
+    if opportunity is not None:
+        mark_stage_activity_logged(opportunity)
     record_audit_log(
         db,
         actor_id=actor.user_id,

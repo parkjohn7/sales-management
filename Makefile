@@ -1,4 +1,4 @@
-.PHONY: setup lint lint-backend lint-frontend typecheck typecheck-backend typecheck-frontend test test-unit test-integration test-frontend test-e2e verify dev-backend dev-frontend local-postgres-up local-postgres-down migrate-sqlite-to-postgres harness-impact harness-review harness-log
+.PHONY: setup lint lint-backend lint-frontend typecheck typecheck-backend typecheck-frontend test test-unit test-integration test-frontend test-e2e verify dev-backend dev-frontend local-postgres-up local-postgres-down migrate-sqlite-to-postgres seed-stage-checklist-demo harness-impact harness-review harness-log
 
 TASK_ID ?= manual-$(shell date +%Y%m%d-%H%M%S)
 
@@ -85,6 +85,9 @@ local-postgres-down:
 
 migrate-sqlite-to-postgres:
 	bash scripts/dev/migrate-sqlite-to-postgres.sh
+
+seed-stage-checklist-demo:
+	cd backend && uv run python ../scripts/dev/seed_stage_checklist_demo.py
 
 harness-impact:
 	bash scripts/harness/generate-impact-map.sh $(TASK_ID)

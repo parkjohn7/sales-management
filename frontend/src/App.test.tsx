@@ -1,6 +1,7 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
+import * as apiClient from "./api/client";
 import { Dashboard } from "./features/Dashboard";
 
 describe("Dashboard", () => {
@@ -190,5 +191,63 @@ describe("Dashboard", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "연동" })[0]);
     expect(screen.getByRole("heading", { name: "연동 리드 테스트" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "연동 리드 생성" })).toBeInTheDocument();
+  });
+
+  it("renders 0 percent in Sales Health when KPI values are zero", () => {
+    render(
+      <div className="lg:block">
+        <Dashboard
+          {...props}
+          kpis={{
+            new_leads: 0,
+            hot_leads: 0,
+            forecast_amount: "0",
+            closed_won_amount: "0",
+            activity_count: 0
+          }}
+        />
+      </div>
+    );
+
+    expect(screen.getAllByText("0%").length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("loads the selected opportunity checklist", async () => {
+    const checklistSpy = vi.spyOn(apiClient, "loadOpportunityChecklist").mockResolvedValue({
+      stage: "PROPOSAL",
+      stage_label: "Proposal",
+      enabled: true,
+      has_related_activity: true,
+      auto_advance_to: "NEGOTIATION",
+      items: [
+        {
+          key: "activity_logged",
+          title: "제안 활동 등록",
+          description: "제안 단계 관련 활동이 기록되었습니다.",
+          checked: true
+        },
+        {
+          key: "proposal_shared",
+          title: "제안서 전달",
+          description: "제안서 또는 견적서가 전달되었습니다.",
+          checked: false
+        }
+      ]
+    });
+
+    render(
+      <div className="lg:block">
+        <Dashboard {...props} />
+      </div>
+    );
+
+    fireEvent.click(screen.getAllByRole("button", { name: "영업기회" })[0]);
+    fireEvent.click(screen.getAllByText("체리랩 전사 도입")[0]);
+
+    await waitFor(() => expect(checklistSpy).toHaveBeenCalled());
+    expect(screen.getByText("현재 단계 체크리스트")).toBeInTheDocument();
+    expect(screen.getByText("제안 활동 등록")).toBeInTheDocument();
+
+    checklistSpy.mockRestore();
   });
 });

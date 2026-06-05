@@ -148,6 +148,7 @@ class Opportunity(TimestampMixin, Base):
     competitor: Mapped[str | None] = mapped_column(String(255))
     closed_date: Mapped[date | None] = mapped_column(Date)
     lost_reason: Mapped[str | None] = mapped_column(Text)
+    stage_checklist_state: Mapped[dict | None] = mapped_column(JSON)
     owner_id: Mapped[str | None] = mapped_column(String(36), index=True)
 
     account: Mapped[Account] = relationship(back_populates="opportunities")

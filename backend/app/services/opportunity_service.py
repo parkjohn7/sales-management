@@ -6,6 +6,7 @@ from app.services.forecast_service import (
     get_stage_probability,
     normalize_stage,
 )
+from app.services.stage_checklist_service import ensure_stage_checklist_state
 
 
 def apply_stage_change(
@@ -37,6 +38,8 @@ def apply_stage_change(
         opportunity.lost_reason = None
     if normalized_stage == "CLOSED_LOST":
         opportunity.lost_reason = lost_reason
+
+    ensure_stage_checklist_state(opportunity, stage=normalized_stage)
 
     return StageHistory(
         opportunity_id=opportunity.id,

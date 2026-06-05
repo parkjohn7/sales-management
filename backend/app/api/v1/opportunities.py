@@ -4,8 +4,10 @@ from sqlalchemy.orm import Session
 from app.api.deps import Actor, get_current_actor
 from app.api.responses import fail, ok
 from app.db.session import get_db
-from app.models import Account, Opportunity
+from app.models import Account, Activity, Opportunity
 from app.schemas import (
+    OpportunityChecklistRead,
+    OpportunityChecklistToggleRequest,
     OpportunityCreate,
     OpportunityRead,
     OpportunityStageChangeRequest,
@@ -18,6 +20,14 @@ from app.services.forecast_service import (
     normalize_stage,
 )
 from app.services.opportunity_service import apply_stage_change, refresh_forecast
+from app.services.stage_checklist_service import (
+    checklist_completed,
+    ensure_stage_checklist_state,
+    has_stage_checklist,
+    next_stage_for,
+    serialize_stage_checklist,
+    set_stage_checklist_item,
+)
 
 router = APIRouter()
 
@@ -85,6 +95,7 @@ def create_opportunity(
         probability=probability,
         forecast_amount=calculate_forecast_amount(payload.amount, probability),
     )
+    ensure_stage_checklist_state(opportunity, stage=stage)
     db.add(opportunity)
     db.flush()
     record_audit_log(
@@ -100,6 +111,12 @@ def create_opportunity(
     return ok(OpportunityRead.model_validate(opportunity).model_dump(mode="json"))
 
 
+def _has_related_activity(db: Session, opportunity_id: str) -> bool:
+    return (
+        db.query(Activity.id).filter(Activity.opportunity_id == opportunity_id).first() is not None
+    )
+
+
 @router.get("/{opportunity_id}")
 def get_opportunity(
     opportunity_id: str,
@@ -110,6 +127,25 @@ def get_opportunity(
     if not actor.can_access_owner(opportunity.owner_id):
         raise fail(403, "FORBIDDEN", "영업기회 접근 권한이 없습니다.")
     return ok(OpportunityRead.model_validate(opportunity).model_dump(mode="json"))
+
+
+@router.get("/{opportunity_id}/checklist")
+def get_opportunity_checklist(
+    opportunity_id: str,
+    db: Session = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> dict:
+    opportunity = _get_opportunity_or_404(db, opportunity_id)
+    if not actor.can_access_owner(opportunity.owner_id):
+        raise fail(403, "FORBIDDEN", "영업기회 체크리스트 접근 권한이 없습니다.")
+    checklist = OpportunityChecklistRead.model_validate(
+        serialize_stage_checklist(
+            opportunity,
+            has_related_activity=_has_related_activity(db, opportunity.id),
+        )
+    )
+    db.flush()
+    return ok(checklist.model_dump(mode="json"))
 
 
 @router.patch("/{opportunity_id}")
@@ -198,6 +234,82 @@ def change_stage(
     db.commit()
     db.refresh(opportunity)
     return ok(OpportunityRead.model_validate(opportunity).model_dump(mode="json"))
+
+
+@router.patch("/{opportunity_id}/checklist")
+def toggle_opportunity_checklist(
+    opportunity_id: str,
+    payload: OpportunityChecklistToggleRequest,
+    db: Session = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> dict:
+    opportunity = _get_opportunity_or_404(db, opportunity_id)
+    if not actor.can_access_owner(opportunity.owner_id):
+        raise fail(403, "FORBIDDEN", "영업기회 체크리스트 수정 권한이 없습니다.")
+    if not has_stage_checklist(opportunity.stage):
+        raise fail(422, "CHECKLIST_NOT_AVAILABLE", "현재 단계에는 체크리스트가 없습니다.")
+
+    has_related_activity = _has_related_activity(db, opportunity.id)
+    if not has_related_activity:
+        raise fail(
+            422,
+            "CHECKLIST_REQUIRES_ACTIVITY",
+            "체크리스트를 진행하려면 먼저 이 영업기회에 활동을 등록해야 합니다.",
+        )
+
+    before = OpportunityRead.model_validate(opportunity).model_dump(mode="json")
+    current_stage = opportunity.stage
+    try:
+        set_stage_checklist_item(
+            opportunity,
+            stage=current_stage,
+            item_key=payload.item_key,
+            checked=payload.checked,
+        )
+    except ValueError as exc:
+        raise fail(422, "INVALID_CHECKLIST_ITEM", str(exc)) from exc
+
+    auto_advanced = False
+    auto_advanced_to: str | None = None
+    if checklist_completed(opportunity, current_stage):
+        next_stage = next_stage_for(current_stage)
+        if next_stage:
+            history = apply_stage_change(
+                opportunity,
+                new_stage=next_stage,
+                changed_by=actor.user_id,
+                reason=f"{current_stage} 체크리스트 완료 자동 전환",
+            )
+            db.add(history)
+            auto_advanced = True
+            auto_advanced_to = next_stage
+
+    after = OpportunityRead.model_validate(opportunity).model_dump(mode="json")
+    record_audit_log(
+        db,
+        actor_id=actor.user_id,
+        action="TOGGLE_CHECKLIST",
+        resource_type="Opportunity",
+        resource_id=opportunity.id,
+        before_value=before,
+        after_value=after,
+    )
+    checklist = OpportunityChecklistRead.model_validate(
+        serialize_stage_checklist(
+            opportunity,
+            has_related_activity=_has_related_activity(db, opportunity.id),
+        )
+    )
+    db.commit()
+    db.refresh(opportunity)
+    return ok(
+        {
+            "opportunity": OpportunityRead.model_validate(opportunity).model_dump(mode="json"),
+            "checklist": checklist.model_dump(mode="json"),
+            "auto_advanced": auto_advanced,
+            "auto_advanced_to": auto_advanced_to,
+        }
+    )
 
 
 @router.post("/{opportunity_id}/close-won")
