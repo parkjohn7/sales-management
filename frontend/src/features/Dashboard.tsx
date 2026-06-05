@@ -1690,7 +1690,7 @@ function OpportunitySection({
             <thead>
               <tr>
                 <th className={thClass}>영업기회</th>
-                <th className={`${thClass} hidden lg:table-cell`}>리드</th>
+                <th className={thClass}>리드</th>
                 <th className={`${thClass} hidden md:table-cell`}>유형</th>
                 <th className={thClass}>고객사</th>
                 <th className={thClass}>현재 단계</th>
@@ -1712,7 +1712,7 @@ function OpportunitySection({
                     }`}
                   >
                     <td className={`${tdClass} ${cherryTextClass}`}>{opportunity.name}</td>
-                    <td className={`${tdClass} hidden lg:table-cell`}>
+                    <td className={tdClass}>
                       {opportunity.lead_id && opportunity.lead_company_name ? (
                         <button
                           type="button"
