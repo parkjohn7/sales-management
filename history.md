@@ -65,7 +65,13 @@
   - 전체 검증 통과
 
 - 관련 커밋:
-  - 아직 이번 턴 최종 커밋 전
+  - `b35bead` feat: expand report metrics and add project history docs
+
+- 배포:
+  - Backend revision: `sales-management-backend-00030-jxp`
+  - Frontend revision: `sales-management-frontend-00014-gwj`
+  - Backend health 확인 완료
+  - Frontend root 응답 확인 완료
 
 ---
 
@@ -129,4 +135,3 @@
 관련 커밋 예시:
 - `b60d73b` Default local DB to PostgreSQL and add SQLite migration script
 - `4d1acd7` fix: stabilize sqlite to postgres migration for local postgres default
-
