@@ -47,3 +47,14 @@ codex/<agent>/<feature>
 ```
 
 The Test Agent verifies each branch before the Merge Agent merges it into `develop`.
+
+## Planning And Execution Log
+
+- Active plan management: [plan.md](/Users/thebestguy/Documents/SalesMangemetService/plan.md)
+- Execution history: [history.md](/Users/thebestguy/Documents/SalesMangemetService/history.md)
+
+Rule of thumb:
+
+1. Register new work in `plan.md`
+2. Implement and verify
+3. Move the executed result into `history.md`

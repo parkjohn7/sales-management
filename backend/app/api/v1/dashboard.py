@@ -5,7 +5,11 @@ from app.api.deps import Actor, get_current_actor
 from app.api.responses import ok
 from app.db.session import get_db
 from app.models import Activity, Lead, Opportunity
-from app.services.dashboard_service import build_dashboard_kpis, build_pipeline_summary
+from app.services.dashboard_service import (
+    build_dashboard_kpis,
+    build_pipeline_summary,
+    build_report_summary,
+)
 
 router = APIRouter()
 
@@ -102,6 +106,7 @@ def reports(
                 "website_leads": channels.get("website", {}).get("lead_count", 0),
                 "chatbot_leads": channels.get("chatbot", {}).get("lead_count", 0),
             },
+            "summary": build_report_summary(db),
         }
     )
 

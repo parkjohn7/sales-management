@@ -1,4 +1,14 @@
-import { Activity, Check, CircleHelp, Flame, Target, TrendingUp } from "lucide-react";
+import {
+  Activity,
+  CalendarClock,
+  Check,
+  CircleCheckBig,
+  CircleHelp,
+  Flame,
+  HandCoins,
+  Target,
+  TrendingUp,
+} from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import {
   Area,
@@ -2056,30 +2066,48 @@ function ActivitySection({
 function ReportSection({ reports }: { reports: DashboardReports }) {
   return (
     <section className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <MetricCard
           icon={Target}
-          label="홈페이지 리드"
-          value={`${reports.integration.website_leads}건`}
+          label="이번달 신규 리드"
+          value={`${reports.summary.monthly_new_leads}건`}
           tone="mint"
+          description="이번 달에 새로 생성된 리드 수입니다."
         />
         <MetricCard
           icon={Flame}
-          label="챗봇 리드"
-          value={`${reports.integration.chatbot_leads}건`}
+          label="리드 전환율"
+          value={`${reports.summary.conversion_rate}%`}
           tone="coral"
+          description="전환된 리드 수를 전체 리드 수로 나눈 비율입니다."
+        />
+        <MetricCard
+          icon={HandCoins}
+          label="평균 영업기회 금액"
+          value={money(reports.summary.avg_opportunity_amount)}
+          tone="ink"
+          description="등록된 전체 영업기회의 평균 금액입니다."
+        />
+        <MetricCard
+          icon={CircleCheckBig}
+          label="Won 비율"
+          value={`${reports.summary.won_rate}%`}
+          tone="gold"
+          description="종료된 영업기회 중 Won 비율입니다."
+        />
+        <MetricCard
+          icon={CalendarClock}
+          label="지연 영업기회"
+          value={`${reports.summary.overdue_opportunity_count}건`}
+          tone="coral"
+          description="마감일이 지났지만 아직 종료되지 않은 영업기회 수입니다."
         />
         <MetricCard
           icon={Activity}
-          label="담당자 활동"
-          value={`${reports.activities_by_owner.length}명`}
+          label="후속활동 필요 건수"
+          value={`${reports.summary.follow_up_needed_count}건`}
           tone="ink"
-        />
-        <MetricCard
-          icon={TrendingUp}
-          label="리포트 단계"
-          value={`${reports.pipeline.length}개`}
-          tone="gold"
+          description="최근 활동이 없거나 다음활동 정보가 비어 있는 영업기회 수입니다."
         />
       </div>
       <div className="grid gap-4 xl:grid-cols-2">

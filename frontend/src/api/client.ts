@@ -175,6 +175,14 @@ const mockActivities: ActivitySummary[] = [
 ];
 
 const mockReports: DashboardReports = {
+  summary: {
+    monthly_new_leads: 12,
+    conversion_rate: 58,
+    avg_opportunity_amount: "64000000",
+    won_rate: 67,
+    overdue_opportunity_count: 2,
+    follow_up_needed_count: 3
+  },
   channels: [
     { source_channel: "website", lead_count: 7, hot_lead_count: 3 },
     { source_channel: "chatbot", lead_count: 5, hot_lead_count: 1 }

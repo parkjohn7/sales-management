@@ -147,6 +147,14 @@ export interface AdminSettings {
 }
 
 export interface DashboardReports {
+  summary: {
+    monthly_new_leads: number;
+    conversion_rate: number;
+    avg_opportunity_amount: string;
+    won_rate: number;
+    overdue_opportunity_count: number;
+    follow_up_needed_count: number;
+  };
   channels: Array<{
     source_channel: string;
     lead_count: number;

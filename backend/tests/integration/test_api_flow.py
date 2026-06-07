@@ -147,6 +147,16 @@ def test_lead_to_opportunity_flow_and_dashboard() -> None:
     assert dashboard_response.status_code == 200
     assert dashboard_response.json()["data"]["kpis"]["hot_leads"] >= 1
 
+    reports_response = client.get("/api/v1/dashboard/reports", headers=headers)
+    assert reports_response.status_code == 200
+    summary = reports_response.json()["data"]["summary"]
+    assert summary["monthly_new_leads"] >= 1
+    assert summary["conversion_rate"] >= 0
+    assert summary["avg_opportunity_amount"] != "0"
+    assert "won_rate" in summary
+    assert "overdue_opportunity_count" in summary
+    assert "follow_up_needed_count" in summary
+
 
 def test_sales_rep_cannot_read_other_owner_lead() -> None:
     manager_headers = auth_headers(user_id="manager-1", role="SALES_MANAGER")

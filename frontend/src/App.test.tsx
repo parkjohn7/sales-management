@@ -77,6 +77,14 @@ describe("Dashboard", () => {
       }
     ],
     reports: {
+      summary: {
+        monthly_new_leads: 1,
+        conversion_rate: 100,
+        avg_opportunity_amount: "50000000",
+        won_rate: 50,
+        overdue_opportunity_count: 0,
+        follow_up_needed_count: 1
+      },
       channels: [{ source_channel: "website", lead_count: 1, hot_lead_count: 1 }],
       activities_by_owner: [{ owner_id: "김도현", activity_count: 1 }],
       pipeline: [{ stage: "PROPOSAL" as const, probability: 50, count: 1, amount: "50000000" }],
@@ -192,6 +200,14 @@ describe("Dashboard", () => {
 
     fireEvent.click(screen.getAllByRole("button", { name: "리포트" })[0]);
     expect(screen.getByRole("heading", { name: "채널 성과 리포트" })).toBeInTheDocument();
+    expect(screen.getByText("이번달 신규 리드")).toBeInTheDocument();
+    expect(screen.getByText("리드 전환율")).toBeInTheDocument();
+    expect(screen.getByText("평균 영업기회 금액")).toBeInTheDocument();
+    expect(screen.getByText("Won 비율")).toBeInTheDocument();
+    expect(screen.getByText("지연 영업기회")).toBeInTheDocument();
+    expect(screen.getByText("후속활동 필요 건수")).toBeInTheDocument();
+    expect(screen.getByText("이번 달에 새로 생성된 리드 수입니다.")).toBeInTheDocument();
+    expect(screen.getByText("전환된 리드 수를 전체 리드 수로 나눈 비율입니다.")).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole("button", { name: "연동" })[0]);
     expect(screen.getByRole("heading", { name: "연동 리드 테스트" })).toBeInTheDocument();

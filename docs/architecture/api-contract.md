@@ -52,6 +52,7 @@
 | GET | /dashboard/forecast | Forecast summary |
 | GET | /dashboard/channel-performance | Channel performance |
 | GET | /dashboard/activity-performance | Activity performance |
+| GET | /dashboard/reports | Report cards and report sections including monthly leads, conversion rate, average opportunity amount, won rate, overdue opportunities, and follow-up needed count |
 | POST | /integrations/web/leads | Create lead from website |
 | POST | /integrations/chatbot/leads | Create lead from chatbot |
 

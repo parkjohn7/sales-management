@@ -5,6 +5,7 @@ interface MetricCardProps {
   label: string;
   value: string;
   tone: "mint" | "gold" | "coral" | "ink";
+  description?: string;
 }
 
 const toneClass = {
@@ -14,7 +15,7 @@ const toneClass = {
   ink: "from-slate-100 to-white text-slate-700 ring-slate-200"
 };
 
-export function MetricCard({ icon: Icon, label, value, tone }: MetricCardProps) {
+export function MetricCard({ icon: Icon, label, value, tone, description }: MetricCardProps) {
   return (
     <section className={`rounded-lg bg-gradient-to-br p-4 shadow-sm ring-1 ${toneClass[tone]}`}>
       <div className="flex items-center justify-between gap-3">
@@ -24,6 +25,7 @@ export function MetricCard({ icon: Icon, label, value, tone }: MetricCardProps) 
         </span>
       </div>
       <strong className="mt-4 block text-2xl text-slate-950">{value}</strong>
+      {description && <p className="mt-2 text-xs leading-5 text-slate-500">{description}</p>}
     </section>
   );
 }
