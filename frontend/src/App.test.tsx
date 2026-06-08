@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import * as apiClient from "./api/client";
+import { App } from "./App";
 import { Dashboard } from "./features/Dashboard";
 
 describe("Dashboard", () => {
@@ -309,5 +310,60 @@ describe("Dashboard", () => {
 
     expect(screen.getByRole("heading", { name: "리드 수정" })).toBeInTheDocument();
     expect(screen.getByDisplayValue("체리랩")).toBeInTheDocument();
+  });
+
+  it("does not force the password modal on first login when enforcement is disabled", async () => {
+    vi.stubGlobal("localStorage", {
+      getItem: vi.fn(() => null),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    });
+    vi.spyOn(apiClient, "loadLoginUsers").mockResolvedValue([
+      {
+        name: "영업담당 박세일즈",
+        email: "sales@cherrylab.com",
+        role: "SALES_REP",
+        organization: "영업1팀",
+        mobile_phone: "010-0000-0003",
+        must_change_password: true,
+      },
+    ]);
+    vi.spyOn(apiClient, "loadDashboard").mockResolvedValue({
+      kpis: props.kpis,
+      pipeline: props.pipeline,
+      leads: props.leads,
+      opportunities: props.opportunities,
+      accounts: props.accounts,
+      contacts: props.contacts,
+      activities: props.activities,
+      reports: props.reports,
+      adminSettings: props.adminSettings,
+      rolePolicies: props.rolePolicies,
+      usingMockData: false,
+    });
+    vi.spyOn(apiClient, "authenticateLoginUser").mockResolvedValue({
+      name: "영업담당 박세일즈",
+      email: "sales@cherrylab.com",
+      role: "SALES_REP",
+      organization: "영업1팀",
+      mobile_phone: "010-0000-0003",
+      must_change_password: true,
+    });
+    vi.spyOn(apiClient, "syncDevTokenForLoginUser").mockResolvedValue();
+
+    render(<App />);
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "로그인" })).toBeInTheDocument());
+
+    fireEvent.change(screen.getByPlaceholderText("admin@cherrylab.com"), {
+      target: { value: "sales@cherrylab.com" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("password"), {
+      target: { value: "sales1234" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "로그인" }));
+
+    await waitFor(() => expect(screen.getAllByText("CherrySales")[0]).toBeInTheDocument());
+    expect(screen.queryByText("현재 비밀번호")).not.toBeInTheDocument();
   });
 });

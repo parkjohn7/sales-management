@@ -18,6 +18,31 @@
 
 ---
 
+## 2026-06-08
+
+### 최초 로그인 비밀번호 변경 강제 팝업 완화 및 서버 계정 비밀번호 재설정
+
+- 목적:
+  - 현재 환경에서는 최초 로그인 시 강제 비밀번호 변경 팝업을 띄우지 않고 메뉴에서만 변경 가능하게 조정
+  - 운영환경에서는 환경 플래그로 강제 변경을 다시 켤 수 있도록 유지
+  - 서버의 `sales@cherrylab.com` 계정 비밀번호를 `sales1234`로 재설정
+
+- 주요 변경 파일:
+  - [frontend/src/App.tsx](/Users/thebestguy/Documents/SalesMangemetService/frontend/src/App.tsx)
+  - [frontend/src/App.test.tsx](/Users/thebestguy/Documents/SalesMangemetService/frontend/src/App.test.tsx)
+
+- 변경 내용:
+  - `VITE_ENFORCE_INITIAL_PASSWORD_CHANGE`가 `true`일 때만 강제 비밀번호 변경 모달이 자동으로 뜨도록 변경
+  - 기본 동작은 `false`로 두어 현재 로컬/서버에서는 메뉴 기반 비밀번호 변경만 사용
+  - 서버 계정 `sales@cherrylab.com` 비밀번호를 `sales1234`로 갱신
+
+- 검증:
+  - `npm test -- --run src/App.test.tsx`
+  - `npm run typecheck`
+  - 서버 로그인 API로 `sales@cherrylab.com / sales1234` 인증 확인
+
+---
+
 ## 2026-06-07
 
 ### 리포트 KPI 고도화 및 설명 문구 반영

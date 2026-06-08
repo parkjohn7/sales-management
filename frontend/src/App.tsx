@@ -40,6 +40,8 @@ interface DashboardState {
 }
 
 export function App() {
+  const enforceInitialPasswordChange =
+    import.meta.env.VITE_ENFORCE_INITIAL_PASSWORD_CHANGE === "true";
   const [state, setState] = useState<DashboardState | null>(null);
   const [loginUsers, setLoginUsers] = useState<LoginUser[]>([]);
   const [currentUser, setCurrentUser] = useState<LoginUser | null>(null);
@@ -199,7 +201,7 @@ export function App() {
           setShowPasswordModal(true);
         }}
       />
-      {showPasswordModal || currentUser.must_change_password ? (
+      {showPasswordModal || (enforceInitialPasswordChange && currentUser.must_change_password) ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
           <form onSubmit={handleChangePassword} className="w-full max-w-md rounded-lg bg-white p-5 shadow-lg">
             <h3 className="text-lg font-bold text-ink">비밀번호 변경</h3>
