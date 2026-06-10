@@ -18,6 +18,37 @@
 
 ---
 
+## 2026-06-10
+
+### 영업관리시스템 v2.0 Proactive Action Layer 설계 및 구현 계획 문서화
+
+- 목적:
+  - 기존 영업관리시스템을 유지하면서 AI 기반 선제적 액션 레이어를 흡수하기 위한 v2.0 구조 정의
+  - 저장소는 유지하고 실행 단위를 분리하는 방향으로 설계 기준과 구현 순서를 확정
+  - 기능 요구사항과 기술 요구사항, worker 경계, 에이전트별 개발 단계를 문서로 정리
+
+- 주요 변경 파일:
+  - [docs/specs/v2-0001-sales-management-v2-proactive-action-layer.md](/Users/thebestguy/Documents/SalesMangemetService/docs/specs/v2-0001-sales-management-v2-proactive-action-layer.md)
+  - [docs/development/2026-06-10-sales-management-v2-implementation-plan.md](/Users/thebestguy/Documents/SalesMangemetService/docs/development/2026-06-10-sales-management-v2-implementation-plan.md)
+  - [plan.md](/Users/thebestguy/Documents/SalesMangemetService/plan.md)
+  - [history.md](/Users/thebestguy/Documents/SalesMangemetService/history.md)
+  - [.harness/runs/sales-management-v2-design/impact-map.md](/Users/thebestguy/Documents/SalesMangemetService/.harness/runs/sales-management-v2-design/impact-map.md)
+  - [.harness/runs/sales-management-v2-design/verification-report.md](/Users/thebestguy/Documents/SalesMangemetService/.harness/runs/sales-management-v2-design/verification-report.md)
+
+- 변경 내용:
+  - v2.0 Proactive Action Layer의 배경, 목표, 비목표 정의
+  - AI 액션 레이어, 위험 시그널 엔진, 외부 워크플로우, Bridge Insights 요구사항 분리
+  - `main-api`, `agent-worker`, `risk-worker`, `integration-worker`, `bridge-service` 실행 단위 분리안 정의
+  - 신규 데이터 모델 개념과 소스 구조 분리안 정리
+  - 에이전트별 작업 순서와 구현 단계 계획 문서화
+
+- 검증:
+  - `make verify`
+
+- 결과:
+  - 문서 기준의 v2.0 구조와 구현 순서가 정리됨
+  - 후속 구현 작업이 단계별로 분할 가능한 상태가 됨
+
 ## 2026-06-08
 
 ### 최초 로그인 비밀번호 변경 강제 팝업 완화 및 서버 계정 비밀번호 재설정
