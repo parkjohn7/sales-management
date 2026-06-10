@@ -49,6 +49,46 @@
   - 문서 기준의 v2.0 구조와 구현 순서가 정리됨
   - 후속 구현 작업이 단계별로 분할 가능한 상태가 됨
 
+### 영업관리시스템 v2.0 Phase A runtime split skeleton 구현
+
+- 목적:
+  - `main-api`를 유지하면서 `agent-worker`, `risk-worker`, `integration-worker`, `bridge-service`용 실행 단위 골격을 추가
+  - worker 전용 설정과 로컬 compose skeleton을 먼저 도입
+  - 후속 AI/알림/외부연동 기능을 붙일 수 있는 최소 runtime 경계를 만든다
+
+- 주요 변경 파일:
+  - [backend/app/core/config.py](/Users/thebestguy/Documents/SalesMangemetService/backend/app/core/config.py)
+  - [backend/Dockerfile](/Users/thebestguy/Documents/SalesMangemetService/backend/Dockerfile)
+  - [docker-compose.yml](/Users/thebestguy/Documents/SalesMangemetService/docker-compose.yml)
+  - [backend/workers/runtime.py](/Users/thebestguy/Documents/SalesMangemetService/backend/workers/runtime.py)
+  - [backend/workers/agent_worker/main.py](/Users/thebestguy/Documents/SalesMangemetService/backend/workers/agent_worker/main.py)
+  - [backend/workers/risk_worker/main.py](/Users/thebestguy/Documents/SalesMangemetService/backend/workers/risk_worker/main.py)
+  - [backend/workers/integration_worker/main.py](/Users/thebestguy/Documents/SalesMangemetService/backend/workers/integration_worker/main.py)
+  - [backend/insights/bridge_service/main.py](/Users/thebestguy/Documents/SalesMangemetService/backend/insights/bridge_service/main.py)
+  - [backend/tests/unit/test_runtime_split.py](/Users/thebestguy/Documents/SalesMangemetService/backend/tests/unit/test_runtime_split.py)
+  - [.harness/runs/sales-management-v2-runtime-split/impact-map.md](/Users/thebestguy/Documents/SalesMangemetService/.harness/runs/sales-management-v2-runtime-split/impact-map.md)
+  - [.harness/runs/sales-management-v2-runtime-split/execution-plan.md](/Users/thebestguy/Documents/SalesMangemetService/.harness/runs/sales-management-v2-runtime-split/execution-plan.md)
+  - [.harness/runs/sales-management-v2-runtime-split/verification-report.md](/Users/thebestguy/Documents/SalesMangemetService/.harness/runs/sales-management-v2-runtime-split/verification-report.md)
+
+- 변경 내용:
+  - `service_role`과 worker 전용 설정 값을 `Settings`에 추가
+  - worker runtime summary helper와 각 worker/insight entrypoint 추가
+  - 로컬 compose에 worker skeleton 서비스 추가
+  - backend image에 workers/insights 경로 포함
+  - runtime summary와 role validation을 검증하는 unit smoke test 추가
+
+- 검증:
+  - `cd backend && uv run pytest tests/unit/test_runtime_split.py -q`
+  - `docker compose config`
+  - `make verify`
+
+- 결과:
+  - unit smoke test `3 passed`
+  - 전체 backend unit test `8 passed`
+  - backend integration test `11 passed`
+  - frontend test `9 passed`
+  - 전체 `make verify` 통과
+
 ## 2026-06-08
 
 ### 최초 로그인 비밀번호 변경 강제 팝업 완화 및 서버 계정 비밀번호 재설정

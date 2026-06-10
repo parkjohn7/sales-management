@@ -1,0 +1,1 @@
+"""External workflow worker skeleton."""

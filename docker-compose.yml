@@ -20,12 +20,81 @@ services:
       context: ./backend
     environment:
       APP_ENV: local
+      SERVICE_ROLE: main-api
       DATABASE_URL: postgresql+psycopg://sales:sales@postgres:5432/sales_management
       DEV_TOKEN_SECRET: local-dev-token-secret-change-me
       INTEGRATION_API_KEY: local-integration-key
       CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
     ports:
       - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  agent-worker:
+    build:
+      context: ./backend
+    command: ["python", "-m", "workers.agent_worker.main", "--run-forever"]
+    environment:
+      APP_ENV: local
+      SERVICE_ROLE: agent-worker
+      DATABASE_URL: postgresql+psycopg://sales:sales@postgres:5432/sales_management
+      DEV_TOKEN_SECRET: local-dev-token-secret-change-me
+      INTEGRATION_API_KEY: local-integration-key
+      AGENT_ACTIONS_ENABLED: "true"
+      WORKER_POLL_INTERVAL_SECONDS: 30
+      WORKER_BATCH_SIZE: 50
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  risk-worker:
+    build:
+      context: ./backend
+    command: ["python", "-m", "workers.risk_worker.main", "--run-forever"]
+    environment:
+      APP_ENV: local
+      SERVICE_ROLE: risk-worker
+      DATABASE_URL: postgresql+psycopg://sales:sales@postgres:5432/sales_management
+      DEV_TOKEN_SECRET: local-dev-token-secret-change-me
+      INTEGRATION_API_KEY: local-integration-key
+      RISK_SIGNALS_ENABLED: "true"
+      WORKER_POLL_INTERVAL_SECONDS: 30
+      WORKER_BATCH_SIZE: 50
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  integration-worker:
+    build:
+      context: ./backend
+    command: ["python", "-m", "workers.integration_worker.main", "--run-forever"]
+    environment:
+      APP_ENV: local
+      SERVICE_ROLE: integration-worker
+      DATABASE_URL: postgresql+psycopg://sales:sales@postgres:5432/sales_management
+      DEV_TOKEN_SECRET: local-dev-token-secret-change-me
+      INTEGRATION_API_KEY: local-integration-key
+      EXTERNAL_SYNC_ENABLED: "true"
+      WORKER_POLL_INTERVAL_SECONDS: 30
+      WORKER_BATCH_SIZE: 50
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  bridge-service:
+    build:
+      context: ./backend
+    command: ["python", "-m", "insights.bridge_service.main", "--run-forever"]
+    environment:
+      APP_ENV: local
+      SERVICE_ROLE: bridge-service
+      DATABASE_URL: postgresql+psycopg://sales:sales@postgres:5432/sales_management
+      DEV_TOKEN_SECRET: local-dev-token-secret-change-me
+      INTEGRATION_API_KEY: local-integration-key
+      BRIDGE_INSIGHTS_ENABLED: "true"
+      WORKER_POLL_INTERVAL_SECONDS: 30
+      WORKER_BATCH_SIZE: 50
     depends_on:
       postgres:
         condition: service_healthy

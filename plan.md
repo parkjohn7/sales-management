@@ -23,6 +23,7 @@
 | ID | 작업 | 상태 | 비고 |
 |---|---|---|---|
 | P-2026-06-10-01 | 영업관리시스템 v2.0 Proactive Action Layer 설계 문서와 구현 계획 작성 | done | 실행 단위 분리, 기능/기술 요구사항, 에이전트별 계획 정리 및 `make verify` 완료 |
+| P-2026-06-10-02 | v2.0 Phase A runtime split skeleton 구현 | done | worker/shared 디렉터리, 설정 분리, compose 골격, smoke test 및 `make verify` 완료 |
 
 ### 2026-06-08
 

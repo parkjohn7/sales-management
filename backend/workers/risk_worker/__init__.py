@@ -1,0 +1,1 @@
+"""Risk signal worker skeleton."""
