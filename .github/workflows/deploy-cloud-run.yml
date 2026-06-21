@@ -16,6 +16,7 @@ env:
   CLOUD_SQL_INSTANCE: ${{ vars.GCP_CLOUD_SQL_INSTANCE != '' && vars.GCP_CLOUD_SQL_INSTANCE || 'sales-management-498110:asia-northeast3:free-trial-first-project' }}
   WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '' && vars.GCP_WORKLOAD_IDENTITY_PROVIDER || 'projects/57171998407/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider' }}
   GCP_SERVICE_ACCOUNT: ${{ vars.GCP_SERVICE_ACCOUNT != '' && vars.GCP_SERVICE_ACCOUNT || 'github-actions-deployer@sales-management-498110.iam.gserviceaccount.com' }}
+  RETAIN_IMAGE_COUNT: ${{ vars.RETAIN_IMAGE_COUNT != '' && vars.RETAIN_IMAGE_COUNT || '5' }}
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
@@ -117,17 +118,25 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ env.GAR_HOST }} --quiet
 
+      - name: Apply Artifact Registry Cleanup Policy
+        env:
+          GCP_BACKEND_SERVICE: ${{ env.BACKEND_SERVICE }}
+          GCP_FRONTEND_SERVICE: ${{ env.FRONTEND_SERVICE }}
+          KEEP_COUNT: ${{ env.RETAIN_IMAGE_COUNT }}
+        run: bash scripts/gcp/apply-artifact-cleanup-policy.sh
+
       # ── Backend ──────────────────────────────────────────
       - name: Build & Push Backend Image
         run: |
           IMAGE="${{ env.GAR_HOST }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPO }}/${{ env.BACKEND_SERVICE }}"
           docker buildx build \
             --platform linux/amd64 \
-            -t "${IMAGE}:${{ github.sha }}" \
+            --label "org.opencontainers.image.revision=${{ github.sha }}" \
+            -t "${IMAGE}:prod" \
             -t "${IMAGE}:latest" \
             --push \
             ./backend
-          echo "BACKEND_IMAGE=${IMAGE}:${{ github.sha }}" >> $GITHUB_ENV
+          echo "BACKEND_IMAGE=${IMAGE}:prod" >> $GITHUB_ENV
 
       - name: Deploy Backend to Cloud Run
         run: |
@@ -170,11 +179,12 @@ jobs:
           docker buildx build \
             --platform linux/amd64 \
             --build-arg VITE_API_BASE_URL="${{ env.BACKEND_URL }}/api/v1" \
-            -t "${IMAGE}:${{ github.sha }}" \
+            --label "org.opencontainers.image.revision=${{ github.sha }}" \
+            -t "${IMAGE}:prod" \
             -t "${IMAGE}:latest" \
             --push \
             ./frontend
-          echo "FRONTEND_IMAGE=${IMAGE}:${{ github.sha }}" >> $GITHUB_ENV
+          echo "FRONTEND_IMAGE=${IMAGE}:prod" >> $GITHUB_ENV
 
       - name: Deploy Frontend to Cloud Run
         run: |

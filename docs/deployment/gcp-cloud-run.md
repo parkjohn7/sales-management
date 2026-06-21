@@ -117,6 +117,46 @@ INTEGRATION_API_KEY
 
 `main` 브랜치 push 또는 GitHub Actions 수동 실행으로 배포됩니다.
 
+## 이미지 보존 정책
+
+운영 기본 전략은 아래를 권장합니다.
+
+- 유지 태그: `latest`, `prod`
+- 유지 개수: package별 최근 `5`개 digest
+- 정리 대상: `UNTAGGED` 상태이면서 `7일`이 지난 digest
+
+현재 저장소에서는 GitHub Actions가 배포 전에 cleanup policy를 다시 적용하므로,
+저장소 정책 drift가 생겨도 다음 배포 때 복원됩니다.
+
+정책 적용 스크립트:
+
+```bash
+export GCP_PROJECT_ID="your-project"
+export GCP_REGION="asia-northeast3"
+export GCP_ARTIFACT_REPOSITORY="your-repo"
+export GCP_BACKEND_SERVICE="sales-management-backend"
+export GCP_FRONTEND_SERVICE="sales-management-frontend"
+export KEEP_COUNT="5"
+
+bash scripts/gcp/apply-artifact-cleanup-policy.sh
+```
+
+즉시 오래된 이미지를 정리할 때는 현재 Cloud Run이 사용 중인 digest를 보존한 뒤
+최근 5개를 제외한 오래된 digest를 삭제합니다.
+
+```bash
+export GCP_PROJECT_ID="your-project"
+export GCP_REGION="asia-northeast3"
+export GCP_ARTIFACT_REPOSITORY="your-repo"
+export GCP_BACKEND_SERVICE="sales-management-backend"
+export GCP_FRONTEND_SERVICE="sales-management-frontend"
+export ACTIVE_BACKEND_DIGEST="sha256:..."
+export ACTIVE_FRONTEND_DIGEST="sha256:..."
+export KEEP_COUNT="5"
+
+bash scripts/gcp/prune-artifact-images.sh
+```
+
 ## 로컬 수동 배포
 
 로컬에서 `gcloud` 인증이 끝난 상태라면 아래처럼 실행할 수 있습니다.

@@ -18,6 +18,59 @@
 
 ---
 
+## 2026-06-21
+
+### Artifact Registry retention 정책 적용 및 오래된 이미지 정리
+
+- 목적:
+  - Artifact Registry에 누적되는 Cloud Run 이미지 비용을 줄이기 위해 retention 정책을 적용
+  - 배포 태그 전략을 `latest + prod`로 정리
+  - 현재 운영 중인 digest를 보호한 상태에서 오래된 이미지 즉시 정리
+
+- 주요 변경 파일:
+  - [.github/workflows/deploy-cloud-run.yml](/Users/thebestguy/Documents/SalesMangemetService/.github/workflows/deploy-cloud-run.yml)
+  - [scripts/gcp/deploy-cloud-run.sh](/Users/thebestguy/Documents/SalesMangemetService/scripts/gcp/deploy-cloud-run.sh)
+  - [scripts/gcp/apply-artifact-cleanup-policy.sh](/Users/thebestguy/Documents/SalesMangemetService/scripts/gcp/apply-artifact-cleanup-policy.sh)
+  - [scripts/gcp/prune-artifact-images.sh](/Users/thebestguy/Documents/SalesMangemetService/scripts/gcp/prune-artifact-images.sh)
+  - [docs/deployment/gcp-cloud-run.md](/Users/thebestguy/Documents/SalesMangemetService/docs/deployment/gcp-cloud-run.md)
+  - [.harness/runs/artifact-registry-retention/impact-map.md](/Users/thebestguy/Documents/SalesMangemetService/.harness/runs/artifact-registry-retention/impact-map.md)
+  - [.harness/runs/artifact-registry-retention/execution-plan.md](/Users/thebestguy/Documents/SalesMangemetService/.harness/runs/artifact-registry-retention/execution-plan.md)
+  - [.harness/runs/artifact-registry-retention/verification-report.md](/Users/thebestguy/Documents/SalesMangemetService/.harness/runs/artifact-registry-retention/verification-report.md)
+
+- 변경 내용:
+  - GitHub Actions 배포 시 SHA 태그 대신 `prod`, `latest` 태그를 사용하도록 수정
+  - 수동 배포 스크립트도 같은 태그 전략으로 정리
+  - Artifact Registry cleanup policy 적용 스크립트 추가
+  - 오래된 digest 즉시 정리 스크립트 추가
+  - 운영 문서에 retention 정책과 즉시 정리 절차 추가
+
+- 운영 적용 대상:
+  - GCP project: `cherrychat-prod-2026`
+  - Artifact Registry repository: `cherrychat-repo`
+  - Active backend digest: `sha256:bd8aec8b06cd19232b929107d2e553dad2b85a796d699ec568cddd4cd8d00e2c`
+  - Active frontend digest: `sha256:7540e847d5ca1fba42b1fe5f8870a0c755e61222594a7abe58b216f1a20ba921`
+
+- 검증:
+  - `bash -n scripts/gcp/deploy-cloud-run.sh`
+  - `bash -n scripts/gcp/apply-artifact-cleanup-policy.sh`
+  - `bash -n scripts/gcp/prune-artifact-images.sh`
+  - `python3 -c "import yaml, pathlib; yaml.safe_load(pathlib.Path('.github/workflows/deploy-cloud-run.yml').read_text())"`
+  - `make verify`
+  - `gcloud artifacts repositories describe ...`
+  - `gcloud artifacts docker images list ...`
+
+- 결과:
+  - cleanup policy 적용 완료
+    - keep tagged: `latest`, `prod`
+    - keep recent versions: backend `5`, frontend `5`
+    - delete untagged older than `7d`
+  - 운영 active digest에 `prod` 태그 부여 완료
+  - backend/frontend 오래된 digest 즉시 정리 완료
+  - 정리 후 남은 digest
+    - backend `5`
+    - frontend `5`
+  - Artifact Registry size field는 즉시 크게 감소하지 않았으며 추후 반영 지연 가능성이 있음
+
 ## 2026-06-10
 
 ### 영업관리시스템 v2.0 Proactive Action Layer 설계 및 구현 계획 문서화

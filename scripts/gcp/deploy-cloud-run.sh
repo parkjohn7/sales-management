@@ -13,8 +13,10 @@ set -euo pipefail
 IMAGE_TAG="${IMAGE_TAG:-$(git rev-parse --short HEAD)}"
 GAR_HOST="${GCP_REGION}-docker.pkg.dev"
 IMAGE_PREFIX="${GAR_HOST}/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REPOSITORY}"
-BACKEND_IMAGE="${IMAGE_PREFIX}/sales-management-backend:${IMAGE_TAG}"
-FRONTEND_IMAGE="${IMAGE_PREFIX}/sales-management-frontend:${IMAGE_TAG}"
+BACKEND_IMAGE_REPO="${IMAGE_PREFIX}/${GCP_BACKEND_SERVICE}"
+FRONTEND_IMAGE_REPO="${IMAGE_PREFIX}/${GCP_FRONTEND_SERVICE}"
+BACKEND_IMAGE="${BACKEND_IMAGE_REPO}:prod"
+FRONTEND_IMAGE="${FRONTEND_IMAGE_REPO}:prod"
 
 gcloud config set project "${GCP_PROJECT_ID}" >/dev/null
 gcloud services enable run.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com sqladmin.googleapis.com
@@ -30,7 +32,9 @@ gcloud auth configure-docker "${GAR_HOST}" --quiet
 
 docker buildx build \
   --platform linux/amd64 \
+  --label "org.opencontainers.image.revision=$(git rev-parse HEAD)" \
   -t "${BACKEND_IMAGE}" \
+  -t "${BACKEND_IMAGE_REPO}:latest" \
   --push \
   ./backend
 
@@ -61,7 +65,9 @@ BACKEND_URL="$(gcloud run services describe "${GCP_BACKEND_SERVICE}" \
 docker buildx build \
   --platform linux/amd64 \
   --build-arg "VITE_API_BASE_URL=${BACKEND_URL}/api/v1" \
+  --label "org.opencontainers.image.revision=$(git rev-parse HEAD)" \
   -t "${FRONTEND_IMAGE}" \
+  -t "${FRONTEND_IMAGE_REPO}:latest" \
   --push \
   ./frontend
 
